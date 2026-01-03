@@ -1,3 +1,5 @@
+import { onDestruct } from '../general/destructor';
+
 export interface InputState {
   moveLeft: boolean;
   moveRight: boolean;
@@ -32,9 +34,18 @@ export class InputManager {
     ['Space', 'fire']
   ]);
 
+
   constructor() {
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
-    window.addEventListener('keyup', this.handleKeyUp.bind(this));
+    
+    const keydownHandler = this.handleKeyDown.bind(this);
+    const keyupHandler = this.handleKeyUp.bind(this);
+    window.addEventListener('keydown', keydownHandler);
+    window.addEventListener('keyup', keyupHandler);
+    
+    onDestruct(this, () => {
+      window.removeEventListener('keydown', keydownHandler);
+      window.removeEventListener('keyup', keyupHandler);
+    });
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
