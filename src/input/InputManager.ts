@@ -9,6 +9,7 @@ export interface InputState {
   aimUp: boolean;
   aimDown: boolean;
   fire: boolean;
+  charging: boolean;
 }
 
 export class InputManager {
@@ -20,7 +21,8 @@ export class InputManager {
     aimRight: false,
     aimUp: false,
     aimDown: false,
-    fire: false
+    fire: false,
+    charging: false
   };
 
   private keyMap: Map<string, keyof InputState> = new Map([
@@ -53,8 +55,8 @@ export class InputManager {
     if (action && action !== 'fire') {
       this.state[action] = true;
     } else if (action === 'fire') {
-      // Fire should trigger on press, not hold
-      this.state.fire = true;
+      // Start charging when space is pressed
+      this.state.charging = true;
     }
   }
 
@@ -62,6 +64,12 @@ export class InputManager {
     const action = this.keyMap.get(event.code);
     if (action && action !== 'fire') {
       this.state[action] = false;
+    } else if (action === 'fire') {
+      // Fire when space is released
+      if (this.state.charging) {
+        this.state.fire = true;
+        this.state.charging = false;
+      }
     }
   }
 
@@ -84,7 +92,8 @@ export class InputManager {
       aimRight: false,
       aimUp: false,
       aimDown: false,
-      fire: false
+      fire: false,
+      charging: false
     };
   }
 }

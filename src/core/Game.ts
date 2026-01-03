@@ -18,7 +18,11 @@ export class Game {
   private renderer: Renderer;
   private running: boolean = false;
   private aimAngle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
-  private aimPower: number = 15; // Base projectile speed
+  private aimPower: number = 15; // Base projectile speed (deprecated, using currentPower now)
+  private currentPower: number = 10; // Current accumulated power
+  private maxPower: number = 100; // Maximum power
+  private minPower: number = 10; // Minimum power
+  private powerAccumulationRate: number = 1; // Power increase per frame (at 60fps)
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -49,13 +53,15 @@ export class Game {
     
     this.beavers.push(beaver1, beaver2);
     
-    // Start first turn
+        // Start first turn
     this.turnManager.startTurn();
     this.turnManager.beginPlayerInput();
+    this.currentPower = this.minPower;
   }
 
   start(): void {
     this.running = true;
+    this.currentPower = this.minPower;
     this.gameLoop();
   }
 
@@ -113,6 +119,7 @@ export class Game {
         }
         this.turnManager.endTurn();
         this.turnManager.beginPlayerInput();
+        this.currentPower = this.minPower;
       }
     }
   }
@@ -157,7 +164,20 @@ export class Game {
     const maxAngle = (2 * Math.PI) / 3;
     this.aimAngle = Math.max(-maxAngle, Math.min(maxAngle, this.aimAngle));
     
-    // Firing
+    // Power accumulation while charging
+    if (input.charging) {
+      this.currentPower = Math.min(
+        this.maxPower,
+        this.currentPower + this.powerAccumulationRate
+      );
+    } else {
+      // Reset power when not charging (but don't reset if we just fired)
+      if (!this.inputManager.getState().fire) {
+        this.currentPower = this.minPower;
+      }
+    }
+    
+    // Firing (on space release)
     if (this.inputManager.consumeFire()) {
       this.fireWeapon(beaver);
     }
@@ -173,8 +193,9 @@ export class Game {
       fireAngle = Math.PI - fireAngle;
     }
     
-    const velocityX = Math.cos(fireAngle) * this.aimPower;
-    const velocityY = Math.sin(fireAngle) * this.aimPower;
+    // Use accumulated power for velocity
+    const velocityX = Math.cos(fireAngle) * this.currentPower;
+    const velocityY = Math.sin(fireAngle) * this.currentPower;
     
     // Spawn projectile slightly in front of beaver
     const offsetX = Math.cos(fireAngle) * 15;
@@ -192,8 +213,9 @@ export class Game {
     this.projectiles.push(projectile);
     this.turnManager.fireWeapon();
     
-    // Reset aim for next turn
+    // Reset aim and power for next turn
     this.aimAngle = 0;
+    this.currentPower = this.minPower;
   }
 
   private render(): void {
@@ -215,7 +237,18 @@ export class Game {
           aimAngle = Math.PI - aimAngle;
         }
         
-        this.renderer.renderAimIndicator(pos.x, pos.y, aimAngle);
+        const input = this.inputManager.getState();
+        this.renderer.renderAimIndicator(
+          pos.x, 
+          pos.y, 
+          aimAngle, 
+          input.charging ? this.currentPower * 2 : 40
+        );
+        
+        // Render power indicator if charging
+        if (input.charging) {
+          this.renderer.renderPowerIndicator(pos.x, pos.y - 30, this.currentPower, this.minPower, this.maxPower);
+        }
       }
     }
   }

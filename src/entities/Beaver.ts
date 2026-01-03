@@ -8,8 +8,8 @@ export class Beaver {
   private radius: number = 10;
   private facing: number = 1; // 1 for right, -1 for left
   private isGrounded: boolean = false;
-  private jumpForce: number = -8;
-  private moveSpeed: number = 3;
+  private jumpForce: number = -15;
+  private moveSpeed: number = 20;
   private world: planck.World;
   private terrain: Terrain;
 
