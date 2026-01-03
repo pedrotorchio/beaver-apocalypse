@@ -9,15 +9,17 @@ A Worms-like turn-based game MVP built with TypeScript, Canvas 2D, and Planck.js
 npm install
 ```
 
-2. Build the project:
+2. Development (with hot reload):
 ```bash
-npm run build
+npm run dev
+# Then open http://localhost:8000 in your browser
 ```
 
-3. Serve the game:
+3. Build for production:
 ```bash
-npm run serve
-# Then open http://localhost:8000 in your browser
+npm run build
+# Preview production build:
+npm run preview
 ```
 
 ## Controls
