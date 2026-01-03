@@ -6,13 +6,16 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "serve": "python -m http.server 8000"
+    "serve": "python -m http.server 8000",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "@vitest/ui": "^4.0.16",
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "planck-js": "^0.3.31"
   }
 }
-
