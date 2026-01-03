@@ -17,11 +17,10 @@ export class Game {
   private projectiles: Projectile[] = [];
   private renderer: Renderer;
   private running: boolean = false;
-  private aimPower: number = 15; // Base projectile speed (deprecated, using currentPower now)
   private currentPower: number = 10; // Current accumulated power
-  private maxPower: number = 100; // Maximum power
+  private maxPower: number = 1000; // Maximum power
   private minPower: number = 10; // Minimum power
-  private powerAccumulationRate: number = 1; // Power increase per frame (at 60fps)
+  private powerAccumulationRate: number = 10; // Power increase per frame (at 60fps)
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -236,7 +235,7 @@ export class Game {
           pos.x, 
           pos.y, 
           aimAngle, 
-          input.charging ? this.currentPower * 2 : 40
+          input.charging ? this.currentPower * .1 : 40
         );
         
         // Render power indicator if charging

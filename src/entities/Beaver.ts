@@ -75,6 +75,10 @@ export class Beaver {
     this.aimAngle = Math.max(-maxAngle, Math.min(maxAngle, this.aimAngle));
   }
 
+  setPhysicsActive(active: boolean): void {
+    this.body.setActive(active);
+  }
+
   isAlive(): boolean {
     return this.health > 0;
   }

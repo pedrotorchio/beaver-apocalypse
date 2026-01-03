@@ -8,7 +8,7 @@ export class PhysicsWorld {
 
   constructor() {
     this.world = planck.World({
-      gravity: planck.Vec2(0, 10)
+      gravity: planck.Vec2(0, 50)
     });
   }
 
