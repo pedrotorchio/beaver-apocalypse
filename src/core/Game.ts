@@ -17,7 +17,6 @@ export class Game {
   private projectiles: Projectile[] = [];
   private renderer: Renderer;
   private running: boolean = false;
-  private aimAngle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
   private aimPower: number = 15; // Base projectile speed (deprecated, using currentPower now)
   private currentPower: number = 10; // Current accumulated power
   private maxPower: number = 100; // Maximum power
@@ -153,16 +152,11 @@ export class Game {
     // Left/Up: decrease angle (rotate counter-clockwise / aim higher)
     // Right/Down: increase angle (rotate clockwise / aim lower)
     if (input.aimLeft || input.aimUp) {
-      this.aimAngle -= angleStep;
+      beaver.adjustAimAngle(-angleStep);
     }
     if (input.aimRight || input.aimDown) {
-      this.aimAngle += angleStep;
+      beaver.adjustAimAngle(angleStep);
     }
-    
-    // Clamp angle to reasonable range: -2*PI/3 to 2*PI/3
-    // This allows aiming from up-left to down-right when facing right
-    const maxAngle = (2 * Math.PI) / 3;
-    this.aimAngle = Math.max(-maxAngle, Math.min(maxAngle, this.aimAngle));
     
     // Power accumulation while charging
     if (input.charging) {
@@ -186,9 +180,10 @@ export class Game {
   private fireWeapon(beaver: Beaver): void {
     const beaverPos = beaver.getPosition();
     const facing = beaver.getFacing();
+    const aimAngle = beaver.getAimAngle();
     
     // Adjust aim angle based on facing direction
-    let fireAngle = this.aimAngle;
+    let fireAngle = aimAngle;
     if (facing === -1) {
       fireAngle = Math.PI - fireAngle;
     }
@@ -213,8 +208,7 @@ export class Game {
     this.projectiles.push(projectile);
     this.turnManager.fireWeapon();
     
-    // Reset aim and power for next turn
-    this.aimAngle = 0;
+    // Reset power for next turn (aim angle persists)
     this.currentPower = this.minPower;
   }
 
@@ -232,7 +226,7 @@ export class Game {
       if (currentBeaver.isAlive()) {
         const pos = currentBeaver.getPosition();
         const facing = currentBeaver.getFacing();
-        let aimAngle = this.aimAngle;
+        let aimAngle = currentBeaver.getAimAngle();
         if (facing === -1) {
           aimAngle = Math.PI - aimAngle;
         }

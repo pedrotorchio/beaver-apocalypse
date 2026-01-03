@@ -10,6 +10,7 @@ export class Beaver {
   private isGrounded: boolean = false;
   private jumpForce: number = -15;
   private moveSpeed: number = 20;
+  private aimAngle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
   private world: planck.World;
   private terrain: Terrain;
 
@@ -60,6 +61,18 @@ export class Beaver {
 
   getFacing(): number {
     return this.facing;
+  }
+
+  getAimAngle(): number {
+    return this.aimAngle;
+  }
+
+  adjustAimAngle(delta: number): void {
+    this.aimAngle += delta;
+    // Clamp angle to reasonable range: -2*PI/3 to 2*PI/3
+    // This allows aiming from up-left to down-right when facing right
+    const maxAngle = (2 * Math.PI) / 3;
+    this.aimAngle = Math.max(-maxAngle, Math.min(maxAngle, this.aimAngle));
   }
 
   isAlive(): boolean {
