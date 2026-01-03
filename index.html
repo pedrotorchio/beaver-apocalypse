@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beaver Apocalypse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #gameCanvas {
+            border: 2px solid #fff;
+            background-color: #87CEEB;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .controls h2 {
+            margin-bottom: 10px;
+        }
+        .controls p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Beaver Apocalypse</h1>
+    <canvas id="gameCanvas"></canvas>
+    <div class="controls">
+        <h2>Controls</h2>
+        <p><strong>Movement:</strong> A (left), D (right), W (jump)</p>
+        <p><strong>Aim:</strong> Arrow Keys</p>
+        <p><strong>Fire:</strong> Space</p>
+    </div>
+    <script type="module" src="dist/index.js"></script>
+</body>
+</html>
+
