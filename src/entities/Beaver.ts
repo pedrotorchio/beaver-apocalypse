@@ -131,9 +131,11 @@ export class Beaver {
   private resolveTerrainCollision(): void {
     const pos = this.body.getPosition();
     const radius = this.radius;
+    const vel = this.body.getLinearVelocity();
     
-    // Check multiple points around the circle
-    const checkPoints = [
+    // Check multiple points around the circle, with extra points in movement direction
+    // Focus on bottom half for ground collision
+    const checkPoints: { x: number; y: number }[] = [
       { x: pos.x, y: pos.y }, // Center
       { x: pos.x + radius, y: pos.y }, // Right
       { x: pos.x - radius, y: pos.y }, // Left
@@ -141,11 +143,37 @@ export class Beaver {
       { x: pos.x, y: pos.y - radius }, // Top
       { x: pos.x + radius * 0.7, y: pos.y + radius * 0.7 }, // Bottom-right
       { x: pos.x - radius * 0.7, y: pos.y + radius * 0.7 }, // Bottom-left
+      { x: pos.x + radius * 0.7, y: pos.y - radius * 0.7 }, // Top-right
+      { x: pos.x - radius * 0.7, y: pos.y - radius * 0.7 }, // Top-left
     ];
+    
+    // Add more points along the bottom arc for better ground detection
+    for (let angle = -Math.PI * 0.75; angle <= -Math.PI * 0.25; angle += Math.PI / 8) {
+      checkPoints.push({
+        x: pos.x + Math.cos(angle) * radius,
+        y: pos.y + Math.sin(angle) * radius
+      });
+    }
+    
+    // Add check points in the direction of movement to catch terrain ahead
+    if (Math.abs(vel.x) > 0.1 || Math.abs(vel.y) > 0.1) {
+      const moveDirX = vel.x !== 0 ? vel.x / Math.abs(vel.x) : 0;
+      const moveDirY = vel.y !== 0 ? vel.y / Math.abs(vel.y) : 0;
+      const moveDist = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+      const normalizedSpeed = Math.min(moveDist / 10, 1); // Normalize speed
+      
+      // Check ahead in movement direction
+      checkPoints.push(
+        { x: pos.x + moveDirX * radius * 1.2, y: pos.y + moveDirY * radius * 1.2 },
+        { x: pos.x + moveDirX * radius * 0.8, y: pos.y },
+        { x: pos.x, y: pos.y + moveDirY * radius * 0.8 }
+      );
+    }
     
     let pushX = 0;
     let pushY = 0;
     let collisionCount = 0;
+    let maxPenetration = 0;
     
     for (const point of checkPoints) {
       if (this.terrain.isSolid(point.x, point.y)) {
@@ -153,10 +181,16 @@ export class Beaver {
         const dy = point.y - pos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist > 0) {
-          // Push away from terrain
-          const pushDist = radius - dist;
-          pushX += (-dx / dist) * pushDist;
-          pushY += (-dy / dist) * pushDist;
+          // Calculate penetration depth
+          const penetration = radius - dist;
+          if (penetration > maxPenetration) {
+            maxPenetration = penetration;
+          }
+          
+          // Push away from terrain (stronger push for deeper penetration)
+          const pushStrength = Math.max(penetration, radius * 0.1);
+          pushX += (-dx / dist) * pushStrength;
+          pushY += (-dy / dist) * pushStrength;
           collisionCount++;
         }
       }
@@ -166,11 +200,40 @@ export class Beaver {
       // Average push vector and apply
       pushX /= collisionCount;
       pushY /= collisionCount;
-      this.body.setPosition(planck.Vec2(pos.x + pushX, pos.y + pushY));
       
-      // Also reduce velocity when colliding
-      const vel = this.body.getLinearVelocity();
-      this.body.setLinearVelocity(planck.Vec2(vel.x * 0.5, vel.y * 0.5));
+      // Normalize push direction
+      const pushDist = Math.sqrt(pushX * pushX + pushY * pushY);
+      if (pushDist > 0) {
+        // Use actual penetration depth, but cap it to prevent over-correction
+        const pushMagnitude = Math.min(maxPenetration + radius * 0.1, radius * 0.5);
+        pushX = (pushX / pushDist) * pushMagnitude;
+        pushY = (pushY / pushDist) * pushMagnitude;
+      }
+      
+      // Apply smooth correction
+      const correctionFactor = Math.min(maxPenetration / radius + 0.2, 1.2);
+      this.body.setPosition(planck.Vec2(pos.x + pushX * correctionFactor, pos.y + pushY * correctionFactor));
+      
+      // Smoothly cancel velocity component going into terrain
+      const currentVel = this.body.getLinearVelocity();
+      const pushDirX = pushDist > 0 ? pushX / pushDist : 0;
+      const pushDirY = pushDist > 0 ? pushY / pushDist : 0;
+      
+      // Calculate velocity component in push direction
+      const velInPushDir = currentVel.x * pushDirX + currentVel.y * pushDirY;
+      
+      if (velInPushDir < 0) {
+        // Velocity is going into terrain, cancel it smoothly
+        const cancelX = -velInPushDir * pushDirX;
+        const cancelY = -velInPushDir * pushDirY;
+        this.body.setLinearVelocity(planck.Vec2(
+          currentVel.x + cancelX,
+          currentVel.y + cancelY
+        ));
+      } else {
+        // Just reduce velocity when colliding (but not too much to allow sliding)
+        this.body.setLinearVelocity(planck.Vec2(currentVel.x * 0.6, currentVel.y * 0.6));
+      }
     }
   }
 
