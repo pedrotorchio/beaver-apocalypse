@@ -14,10 +14,9 @@ npm install
 npm run build
 ```
 
-3. Serve the game (use any HTTP server):
+3. Serve the game:
 ```bash
 npm run serve
-# Or: python -m http.server 8000
 # Then open http://localhost:8000 in your browser
 ```
 
