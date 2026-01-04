@@ -77,17 +77,29 @@ export class InputManager {
     const action = this.keyMap.get(event.code);
     if (action && action !== "fire") {
       this.state[action] = false;
-    } else if (action === "fire") {
+      return;
+    }
+    if (action === "fire" && this.state.charging) {
       // Fire when space is released
-      if (this.state.charging) {
-        this.state.fire = true;
-        this.state.charging = false;
-      }
+      this.state.fire = true;
+      this.state.charging = false;
     }
   }
 
   getState(): InputState {
     return { ...this.state };
+  }
+
+  checkAction(action: keyof InputState): boolean {
+    return this.state[action];
+  }
+
+  isCharging(): boolean {
+    return this.state.charging;
+  }
+
+  shouldFire(): boolean {
+    return this.consumeFire();
   }
 
   consumeFire(): boolean {

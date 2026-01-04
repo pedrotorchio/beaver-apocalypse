@@ -54,10 +54,8 @@ export class HUDRenderer {
 
     // Phase names for display
     const phaseNames: Record<TurnPhase, string> = {
-      [TurnPhase.StartTurn]: "Initializing...",
       [TurnPhase.PlayerInput]: "Player Turn",
       [TurnPhase.ProjectileFlying]: "Projectile Flying",
-      [TurnPhase.Explosion]: "Explosion!",
       [TurnPhase.PhysicsSettling]: "Physics Settling",
       [TurnPhase.EndTurn]: "Ending Turn",
     };

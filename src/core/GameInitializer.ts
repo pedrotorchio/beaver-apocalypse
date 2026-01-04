@@ -1,6 +1,5 @@
 import { TurnManager } from "./managers/TurnManager";
 import { InputManager } from "./managers/InputManager";
-import { ActionManager } from "./managers/ActionManager";
 import { WeaponManager } from "./managers/WeaponManager";
 import { EntityManager } from "./managers/EntityManager";
 import { PhysicsWorld } from "./PhysicsWorld";
@@ -24,7 +23,6 @@ export interface GameInitializerOptions {
  * to access any core module they require.
  */
 export interface CoreModules {
-  actionManager: ActionManager;
   turnManager: TurnManager;
   weaponManager: WeaponManager;
   entityManager: EntityManager;
@@ -64,9 +62,6 @@ export class GameInitializer {
     const turnManager = new TurnManager(beaverCount);
     const inputManager = new InputManager();
     const entityManager = new EntityManager();
-    const actionManager = new ActionManager({
-      inputManager,
-    });
     const weaponManager = new WeaponManager({
       minPower,
       maxPower,
@@ -74,7 +69,6 @@ export class GameInitializer {
     });
 
     return {
-      actionManager,
       turnManager,
       weaponManager,
       entityManager,

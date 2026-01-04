@@ -5,7 +5,6 @@ import { Beaver } from "../entities/Beaver";
 import { Aim } from "../entities/Aim";
 import { GameLoop } from "./GameLoop";
 import { GameInitializer, CoreModules } from "./GameInitializer";
-import { ActionManager } from "./managers/ActionManager";
 import { WeaponManager } from "./managers/WeaponManager";
 import { EntityManager } from "./managers/EntityManager";
 import { InputManager } from "./managers/InputManager";
@@ -44,7 +43,6 @@ export class Game {
   private powerIndicator: PowerIndicatorRenderer;
 
   // Managers
-  private actionManager: ActionManager;
   private weaponManager: WeaponManager;
 
   // Weapon configuration
@@ -71,7 +69,6 @@ export class Game {
     this.turnManager = core.turnManager;
     this.entityManager = core.entityManager;
     this.inputManager = core.inputManager;
-    this.actionManager = core.actionManager;
     this.weaponManager = core.weaponManager;
 
     // Initialize non-core systems: terrain
@@ -141,76 +138,137 @@ export class Game {
     this.gameLoop.stop();
   }
 
+  // Handle turn logic based on current phase
+  private phaseUpdateMap: Record<TurnPhase, () => boolean> = {
+    [TurnPhase.PlayerInput]: () => this.updatePlayerInputPhase(),
+    [TurnPhase.ProjectileFlying]: () => this.updateProjectileFlyingPhase(),
+    [TurnPhase.PhysicsSettling]: () => this.updatePhysicsSettlingPhase(),
+    [TurnPhase.EndTurn]: () => this.updateEndTurnPhase(),
+  };
+  /**
+   * @param phase - The phase to check and run
+   * @returns True if the update cycle should be skipped, false otherwise
+   */
+  checkAndRun(phase: TurnPhase): boolean {
+    return this.turnManager.checkPhase(phase) && this.phaseUpdateMap[phase]();
+  }
+
   private update(): void {
+    /**
+     * Phase transitions:
+     * - PlayerInput -> ProjectileFlying: When player fires weapon (fireWeapon())
+     * - PlayerInput -> PlayerInput (next player): When current beaver is dead (endTurn() + startTurn())
+     * - ProjectileFlying -> PhysicsSettling: When no active projectiles remain (beginPhysicsSettling())
+     * - PhysicsSettling -> PlayerInput (next player): When physics has settled (endTurn() + beginPlayerInput())
+     * - EndTurn: Resets power for all beavers / any other cleanup logic
+     */
+
     // Update physics
     this.physicsWorld.step();
 
-    // If the physics are still settling, skip the update until it is settled
-    if (this.turnManager.checkPhase(TurnPhase.PhysicsSettling) && !this.physicsWorld.isSettled()) return;
-
-    // Handle turn logic
-    const phase = this.turnManager.getPhase();
-    const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
-    const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
-
-    const isTakingInput = phase === TurnPhase.PlayerInput && this.turnManager.canAcceptInput();
-    const hasNoLiveCurrentBeaver = !currentBeaver || !currentBeaver.isAlive();
-    if (isTakingInput && hasNoLiveCurrentBeaver) {
-      // Handle dead beaver: end turn and begin player input
-      this.turnManager.endTurn();
-      this.turnManager.startTurn();
-      return;
-    }
-
-    if (currentBeaver && isTakingInput) {
-      this.handlePlayerInput(currentBeaver);
-    }
+    if (this.checkAndRun(TurnPhase.PlayerInput)) return;
+    if (this.checkAndRun(TurnPhase.ProjectileFlying)) return;
+    if (this.checkAndRun(TurnPhase.PhysicsSettling)) return;
+    if (this.checkAndRun(TurnPhase.EndTurn)) return;
 
     // Update projectiles
     this.entityManager.updateProjectiles(this.entityManager.getBeavers());
 
-    // Handle phase transitions
-    const hasActiveProjectiles = this.entityManager.hasActiveProjectiles();
-
-    // Check if projectile phase is complete
-    if (this.turnManager.checkPhase(TurnPhase.ProjectileFlying) && !hasActiveProjectiles) {
-      this.turnManager.beginPhysicsSettling();
-    }
-
-    // Check if physics has settled
-    if (
-      this.turnManager.checkPhase(TurnPhase.PhysicsSettling) &&
-      this.physicsWorld.isSettled()
-    ) {
-      // Handle turn end: check for game over, end turn, and begin player input
-      const aliveBeavers = this.entityManager.getAliveBeavers();
-      if (aliveBeavers.length <= 1) alert("Beaver wins!");
-
-      this.turnManager.endTurn();
-      this.turnManager.beginPlayerInput();
-    }
-
-    // Reset power for all beavers when turn ends
-    if (phase === TurnPhase.EndTurn) {
-      for (const beaver of this.entityManager.getBeavers()) {
-        beaver.getAim().resetPower();
-      }
-    }
-
     // Update entities
     this.entityManager.getBeavers().forEach(beaver => beaver.update());
     this.entityManager.getProjectiles().forEach(projectile => projectile.update(this.entityManager.getBeavers()));  
+  }
 
+  private updatePlayerInputPhase(): boolean {
+    const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
+    const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
+    const isCurrentBeaverDead = !currentBeaver || !currentBeaver.isAlive();
+
+    // Handle dead beaver: end turn and start next turn
+    if (isCurrentBeaverDead) {
+      this.turnManager.endTurn();
+      this.turnManager.startTurn();
+      return true;
+    }
+
+    // Handle player input
+    if (currentBeaver && this.turnManager.checkPhase(TurnPhase.PlayerInput)) {
+      this.handlePlayerInput(currentBeaver);
+    }
+
+    return false;
+  }
+
+  private updateProjectileFlyingPhase(): boolean {
+    const hasActiveProjectiles = this.entityManager.hasActiveProjectiles();
+
+    // Check if projectile phase is complete
+    if (!hasActiveProjectiles) {
+      this.turnManager.beginPhysicsSettling();
+    }
+
+    return false;
+  }
+
+  private updatePhysicsSettlingPhase(): boolean {
+    // If the physics are still settling, skip the update until it is settled
+    if (!this.physicsWorld.isSettled()) return true;
+    // Handle turn end: check for game over, end turn, and begin player input
+    const aliveBeavers = this.entityManager.getAliveBeavers();
+    if (aliveBeavers.length <= 1) alert("Beaver wins!");
+
+    this.turnManager.endTurn();
+    this.turnManager.beginPlayerInput();
+
+    return false;
+  }
+
+  private updateEndTurnPhase(): boolean {
+    // Reset power for all beavers when turn ends
+    for (const beaver of this.entityManager.getBeavers()) {
+      beaver.getAim().resetPower();
+    }
+
+    return false;
   }
 
   private handlePlayerInput(beaver: Beaver): void {
-    // Process input (handles movement and aiming)
-    this.actionManager.processInput(beaver);
+    if (!beaver.isAlive()) {
+      return;
+    }
+
+    const input = this.inputManager.getState();
+    const aim = beaver.getAim();
+
+    // Movement
+    if (input.moveLeft) {
+      beaver.walk(-1);
+    }
+    if (input.moveRight) {
+      beaver.walk(1);
+    }
+    if (input.jump) {
+      beaver.jump();
+    }
+
+    // Aiming: arrow keys adjust the aim angle
+    // The angle is stored relative to "facing right" (0 = forward/right) and will be transformed when facing left
+    // Angle convention: 0 = right, PI/2 = down, -PI/2 = up, PI = left
+    const angleStep = 0.05;
+
+    // Adjust angle based on arrow key inputs
+    // Left/Up: decrease angle (rotate counter-clockwise / aim higher)
+    // Right/Down: increase angle (rotate clockwise / aim lower)
+    if (input.aimLeft || input.aimUp) {
+      aim.adjustAngle(-angleStep);
+    }
+    if (input.aimRight || input.aimDown) {
+      aim.adjustAngle(angleStep);
+    }
 
     // Update aim power
-    const aim = beaver.getAim();
-    const justFired = this.actionManager.shouldFire();
-    aim.updatePower(this.actionManager.isCharging(), justFired);
+    const justFired = this.inputManager.shouldFire();
+    aim.updatePower(this.inputManager.isCharging(), justFired);
 
     // Handle firing
     if (justFired) {
