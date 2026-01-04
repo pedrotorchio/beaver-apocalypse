@@ -99,12 +99,14 @@ export class Game {
     const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
     const currentBeaver = this.entityManager.getCurrentBeaver(currentPlayerIndex);
     
-    if (phase === TurnPhase.PlayerInput && this.turnManager.canAcceptInput()) {
-      if (!currentBeaver || !currentBeaver.isAlive()) {
-        this.phaseService.handleDeadBeaver();
-        return;
-      }
-      
+    const isTakingInput = phase === TurnPhase.PlayerInput && this.turnManager.canAcceptInput();
+    const hasNoLiveCurrentBeaver = !currentBeaver || !currentBeaver.isAlive();
+    if (isTakingInput && hasNoLiveCurrentBeaver) {
+      this.phaseService.handleDeadBeaver();
+      return;
+    }
+    
+    if (currentBeaver && isTakingInput) {
       this.handlePlayerInput(currentBeaver);
     }
     

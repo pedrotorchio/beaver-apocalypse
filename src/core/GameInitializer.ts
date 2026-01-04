@@ -76,7 +76,7 @@ export class GameInitializer {
     
     // Start first turn
     turnManager.startTurn();
-    turnManager.beginPlayerInput();
+    turnManager.beginPhysicsSettling();
     
     return {
       turnManager,
