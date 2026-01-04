@@ -23,7 +23,7 @@ export class EntityManager {
     return this.projectiles;
   }
 
-  getCurrentBeaver(currentPlayerIndex: number): Beaver | undefined {
+  getBeaver(currentPlayerIndex: number): Beaver | undefined {
     return this.beavers[currentPlayerIndex];
   }
 

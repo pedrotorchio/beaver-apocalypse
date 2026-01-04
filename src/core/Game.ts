@@ -97,7 +97,7 @@ export class Game {
     // Handle turn logic
     const phase = this.turnManager.getPhase();
     const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
-    const currentBeaver = this.entityManager.getCurrentBeaver(currentPlayerIndex);
+    const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
     
     const isTakingInput = phase === TurnPhase.PlayerInput && this.turnManager.canAcceptInput();
     const hasNoLiveCurrentBeaver = !currentBeaver || !currentBeaver.isAlive();
@@ -167,18 +167,16 @@ export class Game {
     );
     
     // Draw aim indicator if in input phase
-    if (this.turnManager.canAcceptInput()) {
-      const currentBeaver = this.entityManager.getCurrentBeaver(
-        this.turnManager.getCurrentPlayerIndex()
-      );
-      
-      if (currentBeaver && currentBeaver.isAlive()) {
+    const currentBeaver = this.entityManager.getBeaver(
+      this.turnManager.getCurrentPlayerIndex()
+    );
+      if (this.turnManager.canAcceptInput()  && currentBeaver && currentBeaver.isAlive()) {
         this.renderService.renderAimIndicator(
           currentBeaver,
           this.inputManager,
           this.weaponService
         );
       }
-    }
+    
   }
 }
