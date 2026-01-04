@@ -30,19 +30,20 @@ export class PhaseManager {
     this.options = options;
   }
 
-  handlePhaseTransitions(hasActiveProjectiles: boolean): void {
-    const phase = this.options.turnManager.getPhase();
+  handlePhaseTransitions(): void {
+    const hasActiveProjectiles = this.options.entityManager.hasActiveProjectiles();
 
     // Check if projectile phase is complete
-    if (phase === TurnPhase.ProjectileFlying && !hasActiveProjectiles) {
+    if (this.options.turnManager.checkPhase(TurnPhase.ProjectileFlying) && !hasActiveProjectiles) {
       this.options.turnManager.beginPhysicsSettling();
     }
 
     // Check if physics has settled
-    if (phase === TurnPhase.PhysicsSettling) {
-      if (this.options.physicsWorld.isSettled(0.5)) {
-        this.handleTurnEnd();
-      }
+    if (
+      this.options.turnManager.checkPhase(TurnPhase.PhysicsSettling) &&
+      this.options.physicsWorld.isSettled()
+    ) {
+      this.handleTurnEnd();
     }
   }
 
@@ -54,9 +55,7 @@ export class PhaseManager {
   private handleTurnEnd(): void {
     // Check for game over
     const aliveBeavers = this.options.entityManager.getAliveBeavers();
-    if (aliveBeavers.length <= 1) {
-      // Game over logic could go here
-    }
+    if (aliveBeavers.length <= 1) alert("Beaver wins!");
 
     this.options.turnManager.endTurn();
     this.options.turnManager.beginPlayerInput();

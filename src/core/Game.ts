@@ -7,7 +7,6 @@ import { GameLoop } from "./GameLoop";
 import { GameInitializer, CoreModules } from "./GameInitializer";
 import { ActionManager } from "./managers/ActionManager";
 import { WeaponManager } from "./managers/WeaponManager";
-import { PhaseManager } from "./managers/PhaseManager";
 import { EntityManager } from "./managers/EntityManager";
 import { InputManager } from "./managers/InputManager";
 import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
@@ -47,7 +46,6 @@ export class Game {
   // Managers
   private actionManager: ActionManager;
   private weaponManager: WeaponManager;
-  private phaseManager: PhaseManager;
 
   // Weapon configuration
   private readonly minPower: number = 10;
@@ -75,7 +73,6 @@ export class Game {
     this.inputManager = core.inputManager;
     this.actionManager = core.actionManager;
     this.weaponManager = core.weaponManager;
-    this.phaseManager = core.phaseManager;
 
     // Initialize non-core systems: terrain
     this.terrain = new Terrain({
@@ -129,7 +126,6 @@ export class Game {
     });
 
     // Start first turn
-    this.turnManager.startTurn();
     this.turnManager.beginPhysicsSettling();
   }
 
@@ -149,10 +145,8 @@ export class Game {
     // Update physics
     this.physicsWorld.step();
 
-    // Update beavers
-    for (const beaver of this.entityManager.getBeavers()) {
-      beaver.update();
-    }
+    // If the physics are still settling, skip the update until it is settled
+    if (this.turnManager.checkPhase(TurnPhase.PhysicsSettling) && !this.physicsWorld.isSettled()) return;
 
     // Handle turn logic
     const phase = this.turnManager.getPhase();
@@ -162,7 +156,9 @@ export class Game {
     const isTakingInput = phase === TurnPhase.PlayerInput && this.turnManager.canAcceptInput();
     const hasNoLiveCurrentBeaver = !currentBeaver || !currentBeaver.isAlive();
     if (isTakingInput && hasNoLiveCurrentBeaver) {
-      this.phaseManager.handleDeadBeaver();
+      // Handle dead beaver: end turn and begin player input
+      this.turnManager.endTurn();
+      this.turnManager.startTurn();
       return;
     }
 
@@ -174,7 +170,25 @@ export class Game {
     this.entityManager.updateProjectiles(this.entityManager.getBeavers());
 
     // Handle phase transitions
-    this.phaseManager.handlePhaseTransitions(this.entityManager.hasActiveProjectiles());
+    const hasActiveProjectiles = this.entityManager.hasActiveProjectiles();
+
+    // Check if projectile phase is complete
+    if (this.turnManager.checkPhase(TurnPhase.ProjectileFlying) && !hasActiveProjectiles) {
+      this.turnManager.beginPhysicsSettling();
+    }
+
+    // Check if physics has settled
+    if (
+      this.turnManager.checkPhase(TurnPhase.PhysicsSettling) &&
+      this.physicsWorld.isSettled()
+    ) {
+      // Handle turn end: check for game over, end turn, and begin player input
+      const aliveBeavers = this.entityManager.getAliveBeavers();
+      if (aliveBeavers.length <= 1) alert("Beaver wins!");
+
+      this.turnManager.endTurn();
+      this.turnManager.beginPlayerInput();
+    }
 
     // Reset power for all beavers when turn ends
     if (phase === TurnPhase.EndTurn) {
@@ -182,6 +196,11 @@ export class Game {
         beaver.getAim().resetPower();
       }
     }
+
+    // Update entities
+    this.entityManager.getBeavers().forEach(beaver => beaver.update());
+    this.entityManager.getProjectiles().forEach(projectile => projectile.update(this.entityManager.getBeavers()));  
+
   }
 
   private handlePlayerInput(beaver: Beaver): void {

@@ -31,6 +31,10 @@ export class TurnManager {
     this.playerCount = playerCount;
   }
 
+  checkPhase(phase: TurnPhase): boolean {
+    return this.phase === phase;
+  }
+
   getCurrentPlayerIndex(): number {
     return this.currentPlayerIndex;
   }
@@ -44,7 +48,7 @@ export class TurnManager {
   }
 
   startTurn(): void {
-    this.phase = TurnPhase.StartTurn;
+    this.beginPlayerInput();
   }
 
   beginPlayerInput(): void {
@@ -64,9 +68,7 @@ export class TurnManager {
   }
 
   endTurn(): void {
-    this.phase = TurnPhase.EndTurn;
     this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.playerCount;
-    this.phase = TurnPhase.StartTurn;
   }
 
   canAcceptInput(): boolean {

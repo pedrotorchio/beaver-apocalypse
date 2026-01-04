@@ -1,7 +1,6 @@
 import { TurnManager } from "./managers/TurnManager";
 import { InputManager } from "./managers/InputManager";
 import { ActionManager } from "./managers/ActionManager";
-import { PhaseManager } from "./managers/PhaseManager";
 import { WeaponManager } from "./managers/WeaponManager";
 import { EntityManager } from "./managers/EntityManager";
 import { PhysicsWorld } from "./PhysicsWorld";
@@ -26,7 +25,6 @@ export interface GameInitializerOptions {
  */
 export interface CoreModules {
   actionManager: ActionManager;
-  phaseManager: PhaseManager;
   turnManager: TurnManager;
   weaponManager: WeaponManager;
   entityManager: EntityManager;
@@ -74,15 +72,9 @@ export class GameInitializer {
       maxPower,
       powerAccumulationRate,
     });
-    const phaseManager = new PhaseManager({
-      turnManager,
-      physicsWorld,
-      entityManager,
-    });
 
     return {
       actionManager,
-      phaseManager,
       turnManager,
       weaponManager,
       entityManager,

@@ -34,14 +34,15 @@ export class PhysicsWorld {
     this.world.step(this.timeStep, this.velocityIterations, this.positionIterations);
   }
 
-  isSettled(threshold: number = 0.1): boolean {
-    for (let body = this.world.getBodyList(); body; body = body.getNext()) {
+  isSettled(): boolean {
+    const threshold = 0.1;
+    const bodyList = this.world.getBodyList();
+    let isSettled = true;
+    for (let body = bodyList; body; body = body.getNext()) {
       const vel = body.getLinearVelocity();
-      if (Math.abs(vel.x) > threshold || Math.abs(vel.y) > threshold) {
-        return false;
-      }
+      isSettled &&= Math.hypot(vel.x, vel.y) > threshold;
     }
-    return true;
+    return isSettled;
   }
 
   clear(): void {
