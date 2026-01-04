@@ -1,7 +1,37 @@
 import * as planck from "planck-js";
-import { Terrain } from "../terrain/Terrain";
+import { Terrain } from "./Terrain";
+import { Aim } from "./Aim";
+import { Projectile } from "./Projectile";
+import { CoreModules } from "../core/GameInitializer";
 
+export interface BeaverOptions {
+  world: planck.World;
+  terrain: Terrain;
+  aim: Aim;
+  core: CoreModules;
+  x: number;
+  y: number;
+}
+
+/**
+ * Represents a player-controlled beaver entity in the game.
+ *
+ * This class is responsible for:
+ * - Managing the beaver's physics body (position, velocity, collisions)
+ * - Tracking health, facing direction, and aiming state
+ * - Handling movement (walk, jump) and ground detection
+ * - Resolving collisions with destructible terrain using pixel sampling
+ * - Applying damage and knockback from explosions
+ * - Firing projectiles using the aim state
+ * - Rendering the beaver's visual representation (body, facing indicator, health bar)
+ *
+ * Beavers are the primary player entities that can move, aim, and fire weapons.
+ * Each beaver has a physics body that interacts with the terrain and can be
+ * damaged by projectile explosions. The beaver's state (alive/dead, position,
+ * health) is managed internally and queried by other systems.
+ */
 export class Beaver {
+  private options: BeaverOptions;
   private body: planck.Body;
   private health: number = 100;
   private maxHealth: number = 100;
@@ -10,22 +40,18 @@ export class Beaver {
   private isGrounded: boolean = false;
   private jumpForce: number = -15;
   private moveSpeed: number = 20;
-  private aimAngle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
-  private world: planck.World;
-  private terrain: Terrain;
 
-  constructor(world: planck.World, terrain: Terrain, x: number, y: number) {
-    this.world = world;
-    this.terrain = terrain;
+  constructor(options: BeaverOptions) {
+    this.options = options;
 
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
-      position: planck.Vec2(x, y),
+      position: planck.Vec2(options.x, options.y),
       fixedRotation: false,
       linearDamping: 0.5,
     };
 
-    this.body = world.createBody(bodyDef);
+    this.body = options.world.createBody(bodyDef);
 
     const shape = planck.Circle(this.radius);
     const fixtureDef: planck.FixtureDef = {
@@ -58,16 +84,8 @@ export class Beaver {
     return this.facing;
   }
 
-  getAimAngle(): number {
-    return this.aimAngle;
-  }
-
-  adjustAimAngle(delta: number): void {
-    this.aimAngle += delta;
-    // Clamp angle to reasonable range: -2*PI/3 to 2*PI/3
-    // This allows aiming from up-left to down-right when facing right
-    const maxAngle = (2 * Math.PI) / 3;
-    this.aimAngle = Math.max(-maxAngle, Math.min(maxAngle, this.aimAngle));
+  getAim(): Aim {
+    return this.options.aim;
   }
 
   setPhysicsActive(active: boolean): void {
@@ -78,25 +96,75 @@ export class Beaver {
     return this.health > 0;
   }
 
-  moveLeft(): void {
+  /**
+   * Makes the beaver walk in the specified direction.
+   * @param direction -1 for left, 1 for right
+   */
+  walk(direction: number): void {
     if (!this.isAlive()) return;
     const vel = this.body.getLinearVelocity();
-    this.body.setLinearVelocity(planck.Vec2(-this.moveSpeed, vel.y));
-    this.facing = -1;
+    this.body.setLinearVelocity(planck.Vec2(direction * this.moveSpeed, vel.y));
+    this.facing = direction;
   }
 
-  moveRight(): void {
-    if (!this.isAlive()) return;
-    const vel = this.body.getLinearVelocity();
-    this.body.setLinearVelocity(planck.Vec2(this.moveSpeed, vel.y));
-    this.facing = 1;
-  }
-
+  /**
+   * Makes the beaver jump if it is grounded.
+   */
   jump(): void {
     if (!this.isAlive() || !this.isGrounded) return;
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(vel.x, this.jumpForce));
     this.isGrounded = false;
+  }
+
+  /**
+   * Makes the beaver attack by firing a projectile using the current aim state.
+   * @param aim - The aim object containing direction and power
+   * @returns The created projectile
+   */
+  attack(aim: Aim): Projectile {
+    if (!this.isAlive()) {
+      throw new Error("Cannot attack when beaver is dead");
+    }
+
+    const pos = this.body.getPosition();
+    const aimAngle = aim.getAngle();
+
+    // Adjust aim angle based on facing direction
+    let fireAngle = aimAngle;
+    if (this.facing === -1) {
+      fireAngle = Math.PI - fireAngle;
+    }
+
+    // Calculate velocity from fire angle and power
+    const power = aim.getPower();
+    const velocityX = Math.cos(fireAngle) * power;
+    const velocityY = Math.sin(fireAngle) * power;
+
+    // Calculate spawn offset
+    const offsetDistance = 15;
+    const offsetX = Math.cos(fireAngle) * offsetDistance;
+    const offsetY = Math.sin(fireAngle) * offsetDistance;
+
+    // Create projectile
+    const projectile = new Projectile({
+      world: this.options.world,
+      terrain: this.options.terrain,
+      core: this.options.core,
+      x: pos.x + offsetX,
+      y: pos.y + offsetY,
+      velocityX,
+      velocityY,
+    });
+
+    return projectile;
+  }
+
+  /**
+   * Kills the beaver by setting health to 0.
+   */
+  die(): void {
+    this.health = 0;
   }
 
   applyDamage(amount: number): void {
@@ -114,7 +182,7 @@ export class Beaver {
     // Check if grounded by checking position below
     const pos = this.body.getPosition();
     const checkY = pos.y + this.radius + 2;
-    this.isGrounded = this.terrain.isSolid(pos.x, checkY);
+    this.isGrounded = this.options.terrain.isSolid(pos.x, checkY);
 
     // Apply friction when grounded
     if (this.isGrounded) {
@@ -154,8 +222,6 @@ export class Beaver {
     if (Math.abs(vel.x) > 0.1 || Math.abs(vel.y) > 0.1) {
       const moveDirX = vel.x !== 0 ? vel.x / Math.abs(vel.x) : 0;
       const moveDirY = vel.y !== 0 ? vel.y / Math.abs(vel.y) : 0;
-      const moveDist = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
-      const normalizedSpeed = Math.min(moveDist / 10, 1); // Normalize speed
 
       // Check ahead in movement direction
       checkPoints.push(
@@ -171,7 +237,7 @@ export class Beaver {
     let maxPenetration = 0;
 
     for (const point of checkPoints) {
-      if (this.terrain.isSolid(point.x, point.y)) {
+      if (this.options.terrain.isSolid(point.x, point.y)) {
         const dx = point.x - pos.x;
         const dy = point.y - pos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -270,7 +336,7 @@ export class Beaver {
 
   destroy(): void {
     if (this.body) {
-      this.world.destroyBody(this.body);
+      this.options.world.destroyBody(this.body);
     }
   }
 }

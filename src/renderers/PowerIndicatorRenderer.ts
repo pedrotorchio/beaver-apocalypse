@@ -10,6 +10,21 @@ export interface PowerIndicatorRendererOptions {
   ctx: CanvasRenderingContext2D;
 }
 
+/**
+ * Renders the weapon power charging indicator bar.
+ * 
+ * This class is responsible for:
+ * - Drawing a power bar showing current weapon charge level
+ * - Displaying a color gradient (green to yellow to red) based on power level
+ * - Positioning the bar above the beaver during charging
+ * - Providing visual feedback for weapon power accumulation
+ * 
+ * The PowerIndicatorRenderer displays a horizontal bar that fills as the
+ * weapon charges. The bar changes color from green (low power) through
+ * yellow (medium) to red (high power) to give players visual feedback
+ * about their shot strength. This renderer is only active when the weapon
+ * is being charged.
+ */
 export class PowerIndicatorRenderer {
   private ctx: CanvasRenderingContext2D;
 

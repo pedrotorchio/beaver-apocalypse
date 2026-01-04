@@ -1,18 +1,27 @@
-import { Beaver } from "../entities/Beaver";
-import { Projectile } from "../entities/Projectile";
+import { Beaver } from "../../entities/Beaver";
+import { Projectile } from "../../entities/Projectile";
 
-export interface EntityManagerOptions {
-  beavers: Beaver[];
-  projectiles: Projectile[];
-}
-
+/**
+ * Manages collections of game entities (beavers and projectiles).
+ * 
+ * This class is responsible for:
+ * - Maintaining lists of all beavers and projectiles in the game
+ * - Providing access to entities by index or filtering (e.g., alive beavers)
+ * - Adding new projectiles to the collection
+ * - Updating all projectiles and removing inactive ones
+ * - Determining whether any active projectiles exist
+ * 
+ * The EntityManager serves as the central repository for game entities.
+ * Other systems should use this class to query entities rather than
+ * maintaining their own collections. This ensures a single source of truth
+ * for entity state.
+ */
 export class EntityManager {
-  private beavers: Beaver[];
-  private projectiles: Projectile[];
+  private beavers: Beaver[] = [];
+  private projectiles: Projectile[] = [];
 
-  constructor(options: EntityManagerOptions) {
-    this.beavers = options.beavers;
-    this.projectiles = options.projectiles;
+  addBeaver(beaver: Beaver): void {
+    this.beavers.push(beaver);
   }
 
   getBeavers(): Beaver[] {
@@ -52,3 +61,4 @@ export class EntityManager {
     return this.projectiles.length > 0;
   }
 }
+

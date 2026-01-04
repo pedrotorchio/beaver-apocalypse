@@ -3,14 +3,24 @@ export interface GameLoopOptions {
   onRender: () => void;
 }
 
+/**
+ * Manages the game's main update and render loop using requestAnimationFrame.
+ * 
+ * This class is responsible for:
+ * - Starting and stopping the game loop execution
+ * - Coordinating the timing of update and render callbacks
+ * - Ensuring smooth frame-based execution synchronized with the browser's refresh rate
+ * 
+ * The loop continues running until explicitly stopped, calling the update callback
+ * followed by the render callback on each frame. This class does not contain game
+ * logic itself, but provides the timing infrastructure for game execution.
+ */
 export class GameLoop {
+  private options: GameLoopOptions;
   private running: boolean = false;
-  private onUpdate: () => void;
-  private onRender: () => void;
 
   constructor(options: GameLoopOptions) {
-    this.onUpdate = options.onUpdate;
-    this.onRender = options.onRender;
+    this.options = options;
   }
 
   start(): void {
@@ -25,8 +35,8 @@ export class GameLoop {
   private loop(): void {
     if (!this.running) return;
 
-    this.onUpdate();
-    this.onRender();
+    this.options.onUpdate();
+    this.options.onRender();
 
     requestAnimationFrame(() => this.loop());
   }

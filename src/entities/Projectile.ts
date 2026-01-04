@@ -1,33 +1,50 @@
 import * as planck from "planck-js";
-import { Terrain } from "../terrain/Terrain";
+import { Terrain } from "./Terrain";
+import { CoreModules } from "../core/GameInitializer";
 
+export interface ProjectileOptions {
+  world: planck.World;
+  terrain: Terrain;
+  core: CoreModules;
+  x: number;
+  y: number;
+  velocityX: number;
+  velocityY: number;
+}
+
+/**
+ * Represents a weapon projectile (bazooka shell) fired by a beaver.
+ *
+ * This class is responsible for:
+ * - Managing the projectile's physics body and flight trajectory
+ * - Detecting collisions with terrain using pixel sampling
+ * - Triggering explosions when colliding with terrain or going out of bounds
+ * - Destroying terrain in a circular area upon explosion
+ * - Applying damage and knockback to nearby beavers based on explosion radius
+ * - Rendering the projectile's visual representation (body and trail)
+ *
+ * Projectiles are created when a beaver fires a weapon and become inactive
+ * after exploding. The projectile continuously checks for terrain collisions
+ * and automatically triggers its explosion effect when contact is detected.
+ */
 export class Projectile {
+  private options: ProjectileOptions;
   private body: planck.Body;
   private active: boolean = true;
   private radius: number = 4;
-  private world: planck.World;
-  private terrain: Terrain;
   private explosionRadius: number = 30;
   private damage: number = 50;
 
-  constructor(
-    world: planck.World,
-    terrain: Terrain,
-    x: number,
-    y: number,
-    velocityX: number,
-    velocityY: number
-  ) {
-    this.world = world;
-    this.terrain = terrain;
+  constructor(options: ProjectileOptions) {
+    this.options = options;
 
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
-      position: planck.Vec2(x, y),
+      position: planck.Vec2(options.x, options.y),
       bullet: true, // Continuous collision detection
     };
 
-    this.body = world.createBody(bodyDef);
+    this.body = options.world.createBody(bodyDef);
 
     const shape = planck.Circle(this.radius);
     const fixtureDef: planck.FixtureDef = {
@@ -38,7 +55,7 @@ export class Projectile {
     };
 
     this.body.createFixture(fixtureDef);
-    this.body.setLinearVelocity(planck.Vec2(velocityX, velocityY));
+    this.body.setLinearVelocity(planck.Vec2(options.velocityX, options.velocityY));
   }
 
   getBody(): planck.Body {
@@ -59,7 +76,7 @@ export class Projectile {
     const pos = this.body.getPosition();
 
     // Check terrain collision via pixel sampling
-    if (this.terrain.isSolid(pos.x, pos.y)) {
+    if (this.options.terrain.isSolid(pos.x, pos.y)) {
       this.explode(beavers);
       return false;
     }
@@ -73,7 +90,7 @@ export class Projectile {
     ];
 
     for (const offset of checkOffsets) {
-      if (this.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
+      if (this.options.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
         this.explode(beavers);
         return false;
       }
@@ -82,9 +99,9 @@ export class Projectile {
     // Check if out of bounds
     if (
       pos.x < 0 ||
-      pos.x > this.terrain.getWidth() ||
+      pos.x > this.options.terrain.getWidth() ||
       pos.y < 0 ||
-      pos.y > this.terrain.getHeight()
+      pos.y > this.options.terrain.getHeight()
     ) {
       this.active = false;
       this.destroy();
@@ -100,7 +117,7 @@ export class Projectile {
     const pos = this.body.getPosition();
 
     // Destroy terrain
-    this.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
+    this.options.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
 
     // Damage and knockback beavers
     for (const beaver of beavers) {
@@ -143,7 +160,7 @@ export class Projectile {
 
   destroy(): void {
     if (this.body) {
-      this.world.destroyBody(this.body);
+      this.options.world.destroyBody(this.body);
     }
   }
 }

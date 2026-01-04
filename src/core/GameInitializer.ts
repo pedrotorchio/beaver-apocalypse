@@ -1,85 +1,94 @@
-import { TurnManager } from "./TurnManager";
-import { InputManager } from "../managers/InputManager";
+import { TurnManager } from "./managers/TurnManager";
+import { InputManager } from "./managers/InputManager";
+import { ActionManager } from "./managers/ActionManager";
+import { PhaseManager } from "./managers/PhaseManager";
+import { WeaponManager } from "./managers/WeaponManager";
+import { EntityManager } from "./managers/EntityManager";
 import { PhysicsWorld } from "./PhysicsWorld";
-import { Terrain } from "../terrain/Terrain";
-import { Beaver } from "../entities/Beaver";
-import { AimIndicatorRenderer } from "../render/AimIndicatorRenderer";
-import { PowerIndicatorRenderer } from "../render/PowerIndicatorRenderer";
-import { HUDRenderer } from "../render/HUDRenderer";
-import { RenderService } from "../services/RenderService";
-import { EntityManager } from "../managers/EntityManager";
+import { throwError } from "../general/errors";
 
 export interface GameInitializerOptions {
   canvas: HTMLCanvasElement;
   beaverCount?: number;
+  minPower?: number;
+  maxPower?: number;
+  powerAccumulationRate?: number;
 }
 
-export interface GameInitializationResult {
+/**
+ * Container for all core game modules.
+ *
+ * This interface provides access to all core systems including managers,
+ * physics world, and canvas context. This is what GameInitializer
+ * returns and what the Game class uses to initialize all non-core modules.
+ * All entities and systems receive a CoreModules instance in their constructor
+ * to access any core module they require.
+ */
+export interface CoreModules {
+  actionManager: ActionManager;
+  phaseManager: PhaseManager;
   turnManager: TurnManager;
+  weaponManager: WeaponManager;
+  entityManager: EntityManager;
   inputManager: InputManager;
   physicsWorld: PhysicsWorld;
-  terrain: Terrain;
-  entityManager: EntityManager;
-  renderService: RenderService;
+  canvasContext: CanvasRenderingContext2D;
 }
 
+/**
+ * Static factory class responsible for initializing all core game systems.
+ *
+ * This class provides a centralized initialization process that:
+ * - Creates and configures core game systems (managers, PhysicsWorld)
+ * - Extracts canvas context from the DOM
+ * - Returns only core modules that Game.ts uses to initialize all non-core systems
+ *
+ * Use this class to bootstrap the core systems needed for a Game instance.
+ * All non-core initialization (terrain, beavers, renderers) happens in Game.ts.
+ */
 export class GameInitializer {
-  static initialize(options: GameInitializerOptions): GameInitializationResult {
-    const { canvas, beaverCount = 2 } = options;
+  static initialize(options: GameInitializerOptions): CoreModules {
+    const {
+      canvas,
+      beaverCount = 2,
+      minPower = 10,
+      maxPower = 1000,
+      powerAccumulationRate = 10,
+    } = options;
+
+    // Extract canvas context from DOM
+    const canvasContext = canvas.getContext("2d") ?? throwError("Failed to get 2d context");
 
     // Create core systems
+    const physicsWorld = new PhysicsWorld();
+
+    // Create managers
     const turnManager = new TurnManager(beaverCount);
     const inputManager = new InputManager();
-    const physicsWorld = new PhysicsWorld();
-    const terrain = new Terrain(canvas.width, canvas.height);
-
-    // Create beavers
-    const beavers: Beaver[] = [];
-    for (let i = 0; i < beaverCount; i++) {
-      const x = canvas.width * (0.25 + i * 0.5);
-      const y = canvas.height * 0.3;
-      const beaver = new Beaver(physicsWorld.getWorld(), terrain, x, y);
-      beavers.push(beaver);
-    }
-
-    // Create entity manager
-    const entityManager = new EntityManager({
-      beavers,
-      projectiles: [],
+    const entityManager = new EntityManager();
+    const actionManager = new ActionManager({
+      inputManager,
     });
-
-    // Create renderer dependencies
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("Failed to get 2d context");
-    }
-    const aimIndicator = new AimIndicatorRenderer({ ctx });
-    const powerIndicator = new PowerIndicatorRenderer({ ctx });
-    const hudRenderer = new HUDRenderer({
-      ctx,
-      canvas,
-      beavers,
+    const weaponManager = new WeaponManager({
+      minPower,
+      maxPower,
+      powerAccumulationRate,
+    });
+    const phaseManager = new PhaseManager({
       turnManager,
+      physicsWorld,
+      entityManager,
     });
-
-    const renderService = new RenderService({
-      canvas,
-      aimIndicator,
-      powerIndicator,
-      hudRenderer,
-    });
-
-    // Start first turn
-    turnManager.startTurn();
-    turnManager.beginPhysicsSettling();
 
     return {
+      actionManager,
+      phaseManager,
       turnManager,
+      weaponManager,
+      entityManager,
       inputManager,
       physicsWorld,
-      terrain,
-      entityManager,
-      renderService,
+      canvasContext,
     };
   }
 }

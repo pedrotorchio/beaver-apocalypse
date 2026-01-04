@@ -1,4 +1,4 @@
-import { onDestruct } from "../general/destructor";
+import { onDestruct } from "../../general/destructor";
 
 export interface InputState {
   moveLeft: boolean;
@@ -12,6 +12,21 @@ export interface InputState {
   charging: boolean;
 }
 
+/**
+ * Manages keyboard input state and event handling.
+ *
+ * This class is responsible for:
+ * - Listening to keyboard events (keydown/keyup) and maintaining input state
+ * - Mapping keyboard codes to game actions (movement, aiming, firing)
+ * - Tracking charging state (when spacebar is held down)
+ * - Providing a snapshot of current input state
+ * - Consuming fire events (to prevent multiple fires from a single key release)
+ * - Cleaning up event listeners when the manager is destroyed
+ *
+ * The InputManager maintains the raw input state but does not interpret
+ * what actions should be taken. Other systems (like InputService) query
+ * this manager to determine what the player is currently pressing.
+ */
 export class InputManager {
   private state: InputState = {
     moveLeft: false,
@@ -95,3 +110,4 @@ export class InputManager {
     };
   }
 }
+

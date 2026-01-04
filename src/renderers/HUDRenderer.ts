@@ -1,27 +1,40 @@
 import { Beaver } from "../entities/Beaver";
-import { TurnManager, TurnPhase } from "../core/TurnManager";
+import { TurnManager, TurnPhase } from "../core/managers/TurnManager";
 
 export interface HUDRendererOptions {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
-  beavers: Beaver[];
   turnManager: TurnManager;
 }
 
+/**
+ * Renders the Heads-Up Display (HUD) overlay showing game state information.
+ *
+ * This class is responsible for:
+ * - Drawing the HUD background and border at the top of the screen
+ * - Displaying the current player's turn indicator
+ * - Showing the current turn phase name
+ * - Rendering health bars for all beavers with color coding
+ * - Highlighting the active player's health bar
+ * - Positioning HUD elements with proper spacing and layout
+ *
+ * The HUDRenderer provides visual feedback about game state to players.
+ * It displays turn information, phase status, and health for all beavers
+ * in a consistent overlay format. This renderer should be called each frame
+ * to keep the HUD information current.
+ */
 export class HUDRenderer {
   private ctx: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
-  private beavers: Beaver[];
   private turnManager: TurnManager;
 
   constructor(options: HUDRendererOptions) {
     this.ctx = options.ctx;
     this.canvas = options.canvas;
-    this.beavers = options.beavers;
     this.turnManager = options.turnManager;
   }
 
-  render(): void {
+  render(beavers: Beaver[]): void {
     const hudHeight = 70;
     const padding = 15;
     const sectionSpacing = 20;
@@ -76,8 +89,8 @@ export class HUDRenderer {
     const barY = 30;
     let rightX = this.canvas.width - padding;
 
-    for (let i = this.beavers.length - 1; i >= 0; i--) {
-      const beaver = this.beavers[i];
+    for (let i = beavers.length - 1; i >= 0; i--) {
+      const beaver = beavers[i];
       const health = beaver.getHealth();
       const maxHealth = beaver.getMaxHealth();
       const healthPercent = health / maxHealth;
