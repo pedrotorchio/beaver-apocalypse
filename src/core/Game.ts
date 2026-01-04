@@ -10,9 +10,9 @@ import { WeaponManager } from "./managers/WeaponManager";
 import { PhaseManager } from "./managers/PhaseManager";
 import { EntityManager } from "./managers/EntityManager";
 import { InputManager } from "./managers/InputManager";
-import { AimIndicatorRenderer } from "../renderers/AimIndicatorRenderer";
-import { PowerIndicatorRenderer } from "../renderers/PowerIndicatorRenderer";
-import { HUDRenderer } from "../renderers/HUDRenderer";
+import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
+import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
+import { HUDRenderer } from "../ui/HUDRenderer";
 
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
