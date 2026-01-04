@@ -1,7 +1,7 @@
-import { Projectile } from '../entities/Projectile';
-import { Beaver } from '../entities/Beaver';
-import * as planck from 'planck-js';
-import { Terrain } from '../terrain/Terrain';
+import { Projectile } from "../entities/Projectile";
+import { Beaver } from "../entities/Beaver";
+import * as planck from "planck-js";
+import { Terrain } from "../terrain/Terrain";
 
 export interface ProjectileServiceOptions {
   world: planck.World;
@@ -20,24 +20,10 @@ export class ProjectileService {
     this.entityManager = options.entityManager;
   }
 
-  createProjectile(
-    x: number,
-    y: number,
-    velocityX: number,
-    velocityY: number
-  ): Projectile {
-    const projectile = new Projectile(
-      this.world,
-      this.terrain,
-      x,
-      y,
-      velocityX,
-      velocityY
-    );
-    
+  createProjectile(x: number, y: number, velocityX: number, velocityY: number): Projectile {
+    const projectile = new Projectile(this.world, this.terrain, x, y, velocityX, velocityY);
+
     this.entityManager.addProjectile(projectile);
     return projectile;
   }
 }
-
-

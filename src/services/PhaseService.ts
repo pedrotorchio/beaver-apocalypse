@@ -1,6 +1,6 @@
-import { TurnManager, TurnPhase } from '../core/TurnManager';
-import { PhysicsWorld } from '../core/PhysicsWorld';
-import { Beaver } from '../entities/Beaver';
+import { TurnManager, TurnPhase } from "../core/TurnManager";
+import { PhysicsWorld } from "../core/PhysicsWorld";
+import { Beaver } from "../entities/Beaver";
 
 export interface PhaseServiceOptions {
   turnManager: TurnManager;
@@ -49,11 +49,9 @@ export class PhaseService {
     if (aliveBeavers.length <= 1) {
       // Game over logic could go here
     }
-    
+
     this.turnManager.endTurn();
     this.turnManager.beginPlayerInput();
     this.onPowerReset();
   }
 }
-
-

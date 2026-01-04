@@ -4,7 +4,7 @@ export enum TurnPhase {
   ProjectileFlying,
   Explosion,
   PhysicsSettling,
-  EndTurn
+  EndTurn,
 }
 
 export class TurnManager {
@@ -59,9 +59,10 @@ export class TurnManager {
   }
 
   isProjectileActive(): boolean {
-    return this.phase === TurnPhase.ProjectileFlying || 
-           this.phase === TurnPhase.Explosion ||
-           this.phase === TurnPhase.PhysicsSettling;
+    return (
+      this.phase === TurnPhase.ProjectileFlying ||
+      this.phase === TurnPhase.Explosion ||
+      this.phase === TurnPhase.PhysicsSettling
+    );
   }
 }
-

@@ -19,10 +19,7 @@ export class WeaponService {
 
   updatePower(charging: boolean, justFired: boolean): void {
     if (charging) {
-      this.currentPower = Math.min(
-        this.maxPower,
-        this.currentPower + this.powerAccumulationRate
-      );
+      this.currentPower = Math.min(this.maxPower, this.currentPower + this.powerAccumulationRate);
     } else {
       // Reset power when not charging (but don't reset if we just fired)
       if (!justFired) {
@@ -51,14 +48,14 @@ export class WeaponService {
   calculateVelocity(fireAngle: number): { x: number; y: number } {
     return {
       x: Math.cos(fireAngle) * this.currentPower,
-      y: Math.sin(fireAngle) * this.currentPower
+      y: Math.sin(fireAngle) * this.currentPower,
     };
   }
 
   calculateSpawnOffset(fireAngle: number, offsetDistance: number = 15): { x: number; y: number } {
     return {
       x: Math.cos(fireAngle) * offsetDistance,
-      y: Math.sin(fireAngle) * offsetDistance
+      y: Math.sin(fireAngle) * offsetDistance,
     };
   }
 
@@ -66,8 +63,7 @@ export class WeaponService {
     return {
       minPower: this.minPower,
       maxPower: this.maxPower,
-      currentPower: this.currentPower
+      currentPower: this.currentPower,
     };
   }
 }
-

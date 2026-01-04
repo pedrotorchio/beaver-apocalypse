@@ -1,5 +1,5 @@
-import { InputManager } from '../managers/InputManager';
-import { Beaver } from '../entities/Beaver';
+import { InputManager } from "../managers/InputManager";
+import { Beaver } from "../entities/Beaver";
 
 export interface InputServiceOptions {
   inputManager: InputManager;
@@ -58,5 +58,3 @@ export class InputService {
     return this.inputManager.getState();
   }
 }
-
-

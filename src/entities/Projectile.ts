@@ -1,5 +1,5 @@
-import * as planck from 'planck-js';
-import { Terrain } from '../terrain/Terrain';
+import * as planck from "planck-js";
+import { Terrain } from "../terrain/Terrain";
 
 export class Projectile {
   private body: planck.Body;
@@ -22,19 +22,19 @@ export class Projectile {
     this.terrain = terrain;
 
     const bodyDef: planck.BodyDef = {
-      type: 'dynamic',
+      type: "dynamic",
       position: planck.Vec2(x, y),
-      bullet: true // Continuous collision detection
+      bullet: true, // Continuous collision detection
     };
 
     this.body = world.createBody(bodyDef);
-    
+
     const shape = planck.Circle(this.radius);
     const fixtureDef: planck.FixtureDef = {
       shape: shape,
       density: 0.1,
       friction: 0.0,
-      restitution: 0.5
+      restitution: 0.5,
     };
 
     this.body.createFixture(fixtureDef);
@@ -57,7 +57,7 @@ export class Projectile {
     if (!this.active) return false;
 
     const pos = this.body.getPosition();
-    
+
     // Check terrain collision via pixel sampling
     if (this.terrain.isSolid(pos.x, pos.y)) {
       this.explode(beavers);
@@ -69,9 +69,9 @@ export class Projectile {
       { x: this.radius, y: 0 },
       { x: -this.radius, y: 0 },
       { x: 0, y: this.radius },
-      { x: 0, y: -this.radius }
+      { x: 0, y: -this.radius },
     ];
-    
+
     for (const offset of checkOffsets) {
       if (this.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
         this.explode(beavers);
@@ -80,8 +80,12 @@ export class Projectile {
     }
 
     // Check if out of bounds
-    if (pos.x < 0 || pos.x > this.terrain.getWidth() || 
-        pos.y < 0 || pos.y > this.terrain.getHeight()) {
+    if (
+      pos.x < 0 ||
+      pos.x > this.terrain.getWidth() ||
+      pos.y < 0 ||
+      pos.y > this.terrain.getHeight()
+    ) {
       this.active = false;
       this.destroy();
       return false;
@@ -92,45 +96,45 @@ export class Projectile {
 
   explode(beavers: any[]): void {
     if (!this.active) return;
-    
+
     const pos = this.body.getPosition();
-    
+
     // Destroy terrain
     this.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
-    
+
     // Damage and knockback beavers
     for (const beaver of beavers) {
       const beaverPos = beaver.getPosition();
       const dx = beaverPos.x - pos.x;
       const dy = beaverPos.y - pos.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (distance < this.explosionRadius + 10) {
         const damage = this.damage * (1 - distance / (this.explosionRadius + 10));
         beaver.applyDamage(damage);
-        
+
         const knockback = 10;
         const impulseX = (dx / distance) * knockback;
         const impulseY = (dy / distance) * knockback;
         beaver.applyKnockback(impulseX, impulseY);
       }
     }
-    
+
     this.active = false;
     this.destroy();
   }
 
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.active) return;
-    
+
     const pos = this.body.getPosition();
-    ctx.fillStyle = '#FFA500';
+    ctx.fillStyle = "#FFA500";
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Draw trail
-    ctx.strokeStyle = '#FFD700';
+    ctx.strokeStyle = "#FFD700";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.radius + 2, 0, Math.PI * 2);
@@ -143,4 +147,3 @@ export class Projectile {
     }
   }
 }
-

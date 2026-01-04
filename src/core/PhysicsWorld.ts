@@ -1,4 +1,4 @@
-import * as planck from 'planck-js';
+import * as planck from "planck-js";
 
 export class PhysicsWorld {
   private world: planck.World;
@@ -8,7 +8,7 @@ export class PhysicsWorld {
 
   constructor() {
     this.world = planck.World({
-      gravity: planck.Vec2(0, 50)
+      gravity: planck.Vec2(0, 50),
     });
   }
 
@@ -39,4 +39,3 @@ export class PhysicsWorld {
     }
   }
 }
-

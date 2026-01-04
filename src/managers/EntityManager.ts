@@ -1,5 +1,5 @@
-import { Beaver } from '../entities/Beaver';
-import { Projectile } from '../entities/Projectile';
+import { Beaver } from "../entities/Beaver";
+import { Projectile } from "../entities/Projectile";
 
 export interface EntityManagerOptions {
   beavers: Beaver[];
@@ -28,7 +28,7 @@ export class EntityManager {
   }
 
   getAliveBeavers(): Beaver[] {
-    return this.beavers.filter(b => b.isAlive());
+    return this.beavers.filter((b) => b.isAlive());
   }
 
   addProjectile(projectile: Projectile): void {
@@ -52,5 +52,3 @@ export class EntityManager {
     return this.projectiles.length > 0;
   }
 }
-
-

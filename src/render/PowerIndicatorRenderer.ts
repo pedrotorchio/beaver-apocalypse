@@ -23,15 +23,15 @@ export class PowerIndicatorRenderer {
     const barHeight = 8;
     const barX = x - barWidth / 2;
     const barY = y;
-    
+
     // Calculate power percentage
     const powerRange = maxPower - minPower;
     const powerPercent = (currentPower - minPower) / powerRange;
-    
+
     // Draw background
-    this.ctx.fillStyle = '#333333';
+    this.ctx.fillStyle = "#333333";
     this.ctx.fillRect(barX, barY, barWidth, barHeight);
-    
+
     // Draw power bar with color gradient (green to yellow to red)
     let color: string;
     if (powerPercent < 0.5) {
@@ -49,14 +49,13 @@ export class PowerIndicatorRenderer {
       const b = 0;
       color = `rgb(${r}, ${g}, ${b})`;
     }
-    
+
     this.ctx.fillStyle = color;
     this.ctx.fillRect(barX, barY, barWidth * powerPercent, barHeight);
-    
+
     // Draw border
-    this.ctx.strokeStyle = '#FFFFFF';
+    this.ctx.strokeStyle = "#FFFFFF";
     this.ctx.lineWidth = 1;
     this.ctx.strokeRect(barX, barY, barWidth, barHeight);
   }
 }
-

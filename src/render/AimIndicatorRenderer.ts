@@ -20,8 +20,8 @@ export class AimIndicatorRenderer {
     const { x, y, angle, length = 40 } = options;
     const endX = x + Math.cos(angle) * length;
     const endY = y + Math.sin(angle) * length;
-    
-    this.ctx.strokeStyle = '#FFFF00';
+
+    this.ctx.strokeStyle = "#FFFF00";
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(x, y);
@@ -29,4 +29,3 @@ export class AimIndicatorRenderer {
     this.ctx.stroke();
   }
 }
-

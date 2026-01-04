@@ -24,12 +24,10 @@ export class GameLoop {
 
   private loop(): void {
     if (!this.running) return;
-    
+
     this.onUpdate();
     this.onRender();
-    
+
     requestAnimationFrame(() => this.loop());
   }
 }
-
-

@@ -1,16 +1,16 @@
-import { TurnManager, TurnPhase } from './TurnManager';
-import { PhysicsWorld } from './PhysicsWorld';
-import { Terrain } from '../terrain/Terrain';
-import { Beaver } from '../entities/Beaver';
-import { GameLoop } from './GameLoop';
-import { GameInitializer } from './GameInitializer';
-import { EntityManager } from '../managers/EntityManager';
-import { InputManager } from '../managers/InputManager';
-import { InputService } from '../services/InputService';
-import { WeaponService } from '../services/WeaponService';
-import { ProjectileService } from '../services/ProjectileService';
-import { PhaseService } from '../services/PhaseService';
-import { RenderService } from '../services/RenderService';
+import { TurnManager, TurnPhase } from "./TurnManager";
+import { PhysicsWorld } from "./PhysicsWorld";
+import { Terrain } from "../terrain/Terrain";
+import { Beaver } from "../entities/Beaver";
+import { GameLoop } from "./GameLoop";
+import { GameInitializer } from "./GameInitializer";
+import { EntityManager } from "../managers/EntityManager";
+import { InputManager } from "../managers/InputManager";
+import { InputService } from "../services/InputService";
+import { WeaponService } from "../services/WeaponService";
+import { ProjectileService } from "../services/ProjectileService";
+import { PhaseService } from "../services/PhaseService";
+import { RenderService } from "../services/RenderService";
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -21,13 +21,13 @@ export class Game {
   private renderService: RenderService;
   private gameLoop: GameLoop;
   private inputManager: InputManager;
-  
+
   // Services
   private inputService: InputService;
   private weaponService: WeaponService;
   private projectileService: ProjectileService;
   private phaseService: PhaseService;
-  
+
   // Weapon configuration
   private readonly minPower: number = 10;
   private readonly maxPower: number = 1000;
@@ -35,7 +35,7 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    
+
     // Initialize game systems
     const initResult = GameInitializer.initialize({ canvas });
     this.turnManager = initResult.turnManager;
@@ -44,35 +44,35 @@ export class Game {
     this.entityManager = initResult.entityManager;
     this.renderService = initResult.renderService;
     this.inputManager = initResult.inputManager;
-    
+
     // Create services
     this.inputService = new InputService({
-      inputManager: this.inputManager
+      inputManager: this.inputManager,
     });
-    
+
     this.weaponService = new WeaponService({
       minPower: this.minPower,
       maxPower: this.maxPower,
-      powerAccumulationRate: this.powerAccumulationRate
+      powerAccumulationRate: this.powerAccumulationRate,
     });
-    
+
     this.projectileService = new ProjectileService({
       world: this.physicsWorld.getWorld(),
       terrain: this.terrain,
-      entityManager: this.entityManager
+      entityManager: this.entityManager,
     });
-    
+
     this.phaseService = new PhaseService({
       turnManager: this.turnManager,
       physicsWorld: this.physicsWorld,
       getAliveBeavers: () => this.entityManager.getAliveBeavers(),
-      onPowerReset: () => this.weaponService.resetPower()
+      onPowerReset: () => this.weaponService.resetPower(),
     });
-    
+
     // Create game loop
     this.gameLoop = new GameLoop({
       onUpdate: () => this.update(),
-      onRender: () => this.render()
+      onRender: () => this.render(),
     });
   }
 
@@ -88,48 +88,43 @@ export class Game {
   private update(): void {
     // Update physics
     this.physicsWorld.step();
-    
+
     // Update beavers
     for (const beaver of this.entityManager.getBeavers()) {
       beaver.update();
     }
-    
+
     // Handle turn logic
     const phase = this.turnManager.getPhase();
     const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
     const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
-    
+
     const isTakingInput = phase === TurnPhase.PlayerInput && this.turnManager.canAcceptInput();
     const hasNoLiveCurrentBeaver = !currentBeaver || !currentBeaver.isAlive();
     if (isTakingInput && hasNoLiveCurrentBeaver) {
       this.phaseService.handleDeadBeaver();
       return;
     }
-    
+
     if (currentBeaver && isTakingInput) {
       this.handlePlayerInput(currentBeaver);
     }
-    
+
     // Update projectiles
     this.entityManager.updateProjectiles(this.entityManager.getBeavers());
-    
+
     // Handle phase transitions
-    this.phaseService.handlePhaseTransitions(
-      this.entityManager.hasActiveProjectiles()
-    );
+    this.phaseService.handlePhaseTransitions(this.entityManager.hasActiveProjectiles());
   }
 
   private handlePlayerInput(beaver: Beaver): void {
     // Process input
     this.inputService.processInput(beaver);
-    
+
     // Update power
     const justFired = this.inputService.shouldFire();
-    this.weaponService.updatePower(
-      this.inputService.isCharging(),
-      justFired
-    );
-    
+    this.weaponService.updatePower(this.inputService.isCharging(), justFired);
+
     // Handle firing
     if (justFired) {
       this.fireWeapon(beaver);
@@ -140,12 +135,12 @@ export class Game {
     const beaverPos = beaver.getPosition();
     const facing = beaver.getFacing();
     const aimAngle = beaver.getAimAngle();
-    
+
     // Calculate fire angle and velocity
     const fireAngle = this.weaponService.calculateFireAngle(aimAngle, facing);
     const velocity = this.weaponService.calculateVelocity(fireAngle);
     const offset = this.weaponService.calculateSpawnOffset(fireAngle);
-    
+
     // Create projectile
     this.projectileService.createProjectile(
       beaverPos.x + offset.x,
@@ -153,7 +148,7 @@ export class Game {
       velocity.x,
       velocity.y
     );
-    
+
     this.turnManager.fireWeapon();
     this.weaponService.resetPower();
   }
@@ -165,18 +160,11 @@ export class Game {
       this.entityManager.getBeavers(),
       this.entityManager.getProjectiles()
     );
-    
+
     // Draw aim indicator if in input phase
-    const currentBeaver = this.entityManager.getBeaver(
-      this.turnManager.getCurrentPlayerIndex()
-    );
-      if (this.turnManager.canAcceptInput()  && currentBeaver && currentBeaver.isAlive()) {
-        this.renderService.renderAimIndicator(
-          currentBeaver,
-          this.inputManager,
-          this.weaponService
-        );
-      }
-    
+    const currentBeaver = this.entityManager.getBeaver(this.turnManager.getCurrentPlayerIndex());
+    if (this.turnManager.canAcceptInput() && currentBeaver && currentBeaver.isAlive()) {
+      this.renderService.renderAimIndicator(currentBeaver, this.inputManager, this.weaponService);
+    }
   }
 }
