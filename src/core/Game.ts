@@ -13,6 +13,7 @@ import { InputManager } from "./managers/InputManager";
 import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
 import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
 import { HUDRenderer } from "../ui/HUDRenderer";
+import { iterate } from "../general/utils";
 
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
@@ -84,10 +85,8 @@ export class Game {
     });
 
     // Initialize non-core systems: beavers
-    const beavers: Beaver[] = [];
     const beaverCount = 2;
-
-    for (let i = 0; i < beaverCount; i++) {
+    const beavers = iterate(beaverCount, (i) => {
       const x = canvas.width * (0.25 + i * 0.5);
       const y = canvas.height * 0.3;
       const aim = new Aim({
@@ -96,17 +95,16 @@ export class Game {
         powerAccumulationRate: this.powerAccumulationRate,
         core,
       });
-      beavers.push(
-        new Beaver({
+      return new Beaver({
           world: this.physicsWorld.getWorld(),
           terrain: this.terrain,
           aim,
           core,
           x,
           y,
-        })
+        }
       );
-    }
+    });
 
     // Add beavers to entity manager
     beavers.forEach((b) => this.entityManager.addBeaver(b));
