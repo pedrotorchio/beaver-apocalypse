@@ -1,6 +1,6 @@
 import { InputManager } from "./InputManager";
 import { Beaver } from "../../entities/Beaver";
-import { Aim } from "../../entities/BeaverAim";
+import { Aim } from "../../entities/Aim";
 
 export interface ActionManagerOptions {
   inputManager: InputManager;

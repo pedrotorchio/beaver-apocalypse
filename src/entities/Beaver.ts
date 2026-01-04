@@ -1,6 +1,6 @@
 import * as planck from "planck-js";
 import { Terrain } from "./Terrain";
-import { Aim } from "./BeaverAim";
+import { Aim } from "./Aim";
 import { Projectile } from "./Projectile";
 import { CoreModules } from "../core/GameInitializer";
 
