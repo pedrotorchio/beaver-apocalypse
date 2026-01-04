@@ -61,3 +61,4 @@ export class EntityManager {
     return this.projectiles.length > 0;
   }
 }
+

@@ -1,7 +1,5 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import prettierPlugin from "eslint-plugin-prettier";
-import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
   {
@@ -9,16 +7,12 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  prettierConfig,
   {
     files: ["src/**/*.ts"],
     languageOptions: {
       parserOptions: {
         project: true,
       },
-    },
-    plugins: {
-      prettier: prettierPlugin,
     },
     rules: {
       "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -30,7 +24,6 @@ export default tseslint.config(
           varsIgnorePattern: "^_",
         },
       ],
-      "prettier/prettier": "warn",
       "max-depth": ["error", 1],
     },
   }

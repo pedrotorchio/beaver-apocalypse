@@ -10,9 +10,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "format": "prettier --write \"src/**/*.{ts,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,json,md}\""
+    "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "devDependencies": {
     "@vitest/ui": "^4.0.16",
@@ -21,6 +19,7 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "consola": "^3.4.2",
     "planck-js": "^0.3.31"
   }
 }

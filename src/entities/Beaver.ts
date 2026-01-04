@@ -38,7 +38,7 @@ export class Beaver {
   private radius: number = 10;
   private facing: number = 1; // 1 for right, -1 for left
   private isGrounded: boolean = false;
-  private jumpForce: number = -15;
+  private jumpForce: number = -50;
   private moveSpeed: number = 20;
 
   constructor(options: BeaverOptions) {
@@ -138,8 +138,9 @@ export class Beaver {
 
     // Calculate velocity from fire angle and power
     const power = aim.getPower();
-    const velocityX = Math.cos(fireAngle) * power;
-    const velocityY = Math.sin(fireAngle) * power;
+    const powerMultiplier = 10; // Increase projectile velocity
+    const velocityX = Math.cos(fireAngle) * power * powerMultiplier;
+    const velocityY = Math.sin(fireAngle) * power * powerMultiplier;
 
     // Calculate spawn offset
     const offsetDistance = 15;
@@ -237,24 +238,23 @@ export class Beaver {
     let maxPenetration = 0;
 
     for (const point of checkPoints) {
-      if (this.options.terrain.isSolid(point.x, point.y)) {
-        const dx = point.x - pos.x;
-        const dy = point.y - pos.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 0) {
-          // Calculate penetration depth
-          const penetration = radius - dist;
-          if (penetration > maxPenetration) {
-            maxPenetration = penetration;
-          }
+      if (!this.options.terrain.isSolid(point.x, point.y)) continue;
 
-          // Push away from terrain (stronger push for deeper penetration)
-          const pushStrength = Math.max(penetration, radius * 0.1);
-          pushX += (-dx / dist) * pushStrength;
-          pushY += (-dy / dist) * pushStrength;
-          collisionCount++;
-        }
-      }
+      const dx = point.x - pos.x;
+      const dy = point.y - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist <= 0) continue;
+
+      // Calculate penetration depth
+      const penetration = radius - dist;
+      if (penetration > maxPenetration) maxPenetration = penetration;
+
+      // Push away from terrain (stronger push for deeper penetration)
+      const pushStrength = Math.max(penetration, radius * 0.1);
+      pushX += (-dx / dist) * pushStrength;
+      pushY += (-dy / dist) * pushStrength;
+      collisionCount++;
     }
 
     if (collisionCount > 0) {

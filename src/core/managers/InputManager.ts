@@ -1,4 +1,5 @@
 import { onDestruct } from "../../general/destructor";
+import { spy } from "../../general/devtools";
 
 export interface InputState {
   moveLeft: boolean;
@@ -52,8 +53,8 @@ export class InputManager {
   ]);
 
   constructor() {
-    const keydownHandler = this.handleKeyDown.bind(this);
-    const keyupHandler = this.handleKeyUp.bind(this);
+    const keydownHandler = spy(this.handleKeyDown.bind(this), "keydownHandler");
+    const keyupHandler = spy(this.handleKeyUp.bind(this), "keyupHandler");
     window.addEventListener("keydown", keydownHandler);
     window.addEventListener("keyup", keyupHandler);
 
