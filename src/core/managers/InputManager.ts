@@ -110,4 +110,3 @@ export class InputManager {
     };
   }
 }
-

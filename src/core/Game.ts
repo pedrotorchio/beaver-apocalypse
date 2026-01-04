@@ -17,7 +17,7 @@ import { iterate } from "../general/utils";
 
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
- * 
+ *
  * This class serves as the central hub that:
  * - Initializes core systems via GameInitializer
  * - Initializes non-core systems (terrain, beavers, renderers)
@@ -25,7 +25,7 @@ import { iterate } from "../general/utils";
  * - Handles turn-based gameplay flow and player input processing
  * - Manages weapon firing, projectile creation, and phase transitions
  * - Delegates specific responsibilities to specialized services and managers
- * 
+ *
  * The Game class should be instantiated once per game session and controls the
  * entire lifecycle from initialization through gameplay execution.
  */
@@ -58,17 +58,17 @@ export class Game {
     this.canvas = canvas;
 
     // Initialize core systems
-    const core: CoreModules = GameInitializer.initialize({ 
+    const core: CoreModules = GameInitializer.initialize({
       canvas,
       minPower: this.minPower,
       maxPower: this.maxPower,
       powerAccumulationRate: this.powerAccumulationRate,
     });
-    
+
     // Extract core modules
     this.physicsWorld = core.physicsWorld;
     this.ctx = core.canvasContext;
-    
+
     // Extract managers
     this.turnManager = core.turnManager;
     this.entityManager = core.entityManager;
@@ -96,14 +96,13 @@ export class Game {
         core,
       });
       return new Beaver({
-          world: this.physicsWorld.getWorld(),
-          terrain: this.terrain,
-          aim,
-          core,
-          x,
-          y,
-        }
-      );
+        world: this.physicsWorld.getWorld(),
+        terrain: this.terrain,
+        aim,
+        core,
+        x,
+        y,
+      });
     });
 
     // Add beavers to entity manager

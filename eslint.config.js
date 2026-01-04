@@ -31,6 +31,7 @@ export default tseslint.config(
         },
       ],
       "prettier/prettier": "warn",
+      "max-depth": ["error", 1],
     },
   }
 );

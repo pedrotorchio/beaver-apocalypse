@@ -5,12 +5,12 @@ export interface GameLoopOptions {
 
 /**
  * Manages the game's main update and render loop using requestAnimationFrame.
- * 
+ *
  * This class is responsible for:
  * - Starting and stopping the game loop execution
  * - Coordinating the timing of update and render callbacks
  * - Ensuring smooth frame-based execution synchronized with the browser's refresh rate
- * 
+ *
  * The loop continues running until explicitly stopped, calling the update callback
  * followed by the render callback on each frame. This class does not contain game
  * logic itself, but provides the timing infrastructure for game execution.
