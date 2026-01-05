@@ -11,6 +11,7 @@ import { InputManager } from "./managers/InputManager";
 import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
 import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
 import { HUDRenderer } from "../ui/HUDRenderer";
+import { ControlsRenderer } from "../ui/ControlsRenderer";
 import { iterate } from "../general/utils";
 
 /**
@@ -41,6 +42,7 @@ export class Game {
   private aimIndicator: AimIndicatorRenderer;
   private hudRenderer: HUDRenderer;
   private powerIndicator: PowerIndicatorRenderer;
+  private controlsRenderer: ControlsRenderer;
 
   // Managers
   private weaponManager: WeaponManager;
@@ -114,6 +116,11 @@ export class Game {
       inputManager: this.inputManager,
       weaponService: this.weaponManager,
       powerIndicator: this.powerIndicator,
+    });
+    this.controlsRenderer = new ControlsRenderer({
+      ctx: this.ctx,
+      canvas,
+      inputManager: this.inputManager,
     });
 
     // Create game loop (needs Game-specific callbacks)
@@ -312,5 +319,8 @@ export class Game {
     if (currentBeaver?.isAlive() && this.turnManager.canAcceptInput()) {
       this.aimIndicator.renderForBeaver(currentBeaver);
     }
+
+    // Draw controls indicator
+    this.controlsRenderer.render();
   }
 }
