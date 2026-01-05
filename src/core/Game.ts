@@ -118,9 +118,8 @@ export class Game {
       powerIndicator: this.powerIndicator,
     });
     this.controlsRenderer = new ControlsRenderer({
-      ctx: this.ctx,
       canvas,
-      inputManager: this.inputManager,
+      core
     });
 
     // Create game loop (needs Game-specific callbacks)

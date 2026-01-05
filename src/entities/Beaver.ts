@@ -37,9 +37,13 @@ export class Beaver {
   private maxHealth: number = 100;
   private radius: number = 10;
   private facing: number = 1; // 1 for right, -1 for left
-  private isGrounded: boolean = false;
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
+  #isGrounded: boolean = false;
+
+  get isGrounded(): boolean {
+    return this.#isGrounded;
+  }
 
   constructor(options: BeaverOptions) {
     this.options = options;
@@ -111,10 +115,10 @@ export class Beaver {
    * Makes the beaver jump if it is grounded.
    */
   jump(): void {
-    if (!this.isAlive() || !this.isGrounded) return;
+    if (!this.isAlive() || !this.#isGrounded) return;
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(vel.x, this.jumpForce));
-    this.isGrounded = false;
+    this.#isGrounded = false;
   }
 
   /**
@@ -180,16 +184,38 @@ export class Beaver {
     // Resolve terrain collision via pixel sampling
     this.resolveTerrainCollision();
 
-    // Check if grounded by checking position below
-    const pos = this.body.getPosition();
-    const checkY = pos.y + this.radius + 2;
-    this.isGrounded = this.options.terrain.isSolid(pos.x, checkY);
+    // Check if grounded by sampling bottom 180 degrees within threshold distance
+    this.#isGrounded = this.checkGrounded();
 
     // Apply friction when grounded
-    if (this.isGrounded) {
+    if (this.#isGrounded) {
       const vel = this.body.getLinearVelocity();
       this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, vel.y));
     }
+  }
+
+  private checkGrounded(): boolean {
+    const pos = this.body.getPosition();
+    const radius = this.radius;
+    const threshold = radius/4; // 1/4th of beaver's height (height = 2 * radius)
+
+    // Sample points along the bottom 180 degrees (semicircle)
+    // Angle range: -Math.PI to 0 (bottom half of circle)
+    const sampleCount = 12; // Number of points to sample
+    const angleStep = 4/3*Math.PI / sampleCount;
+
+    let isGrounded = false;
+    for (let i = 0; i <= sampleCount; i++) {
+      const angle = Math.PI + i * angleStep;
+      // Calculate point on the circle perimeter
+      const checkX = pos.x + Math.cos(angle) * radius;
+      const checkY = pos.y + Math.sin(angle) * radius;
+      // Check if there's solid terrain within threshold distance below this point
+      const groundCheckY = checkY + threshold;
+      isGrounded ||= this.options.terrain.isSolid(checkX, groundCheckY);
+    }
+
+    return isGrounded;
   }
 
   private resolveTerrainCollision(): void {

@@ -1,9 +1,11 @@
+import { CoreModules } from "../core/GameInitializer";
+import { TurnManager } from "../core/TurnManager";
+import { EntityManager } from "../core/managers/EntityManager";
 import { InputManager } from "../core/managers/InputManager";
 
-export interface ControlsRendererOptions {
-  ctx: CanvasRenderingContext2D;
+export type ControlsRendererOptions = {
+  core: CoreModules;
   canvas: HTMLCanvasElement;
-  inputManager: InputManager;
 }
 
 /**
@@ -19,9 +21,6 @@ export interface ControlsRendererOptions {
  * bloody red when pressed. This provides visual feedback for player inputs.
  */
 export class ControlsRenderer {
-  private ctx: CanvasRenderingContext2D;
-  private canvas: HTMLCanvasElement;
-  private inputManager: InputManager;
 
   // Colors
   private readonly inactiveColor = "#808080"; // Grey
@@ -33,14 +32,21 @@ export class ControlsRenderer {
   private readonly squareSpacing = 5;
   private readonly gridPadding = 10;
 
-  constructor(options: ControlsRendererOptions) {
-    this.ctx = options.ctx;
-    this.canvas = options.canvas;
-    this.inputManager = options.inputManager;
+  private get totalGridSize(): number {
+    return this.gridSize * this.squareSize + (this.gridSize - 1) * this.squareSpacing;
   }
 
+  private get startX(): number {
+    return this.options.canvas.width - 2 * this.totalGridSize - this.gridPadding;
+  }
+  private get startY(): number {
+    return this.options.canvas.height - this.totalGridSize - this.gridPadding - 20;
+  }
+
+  constructor(private options: ControlsRendererOptions) {}
+
   render(): void {
-    const input = this.inputManager.getState();
+    const input = this.options.core.inputManager.getState();
 
     // Draw Up (top middle) - grid position (1, 0), 1 square wide
     this.drawRectangle(1, 0, 1, 1, input.jump);
@@ -53,6 +59,10 @@ export class ControlsRenderer {
 
     // Draw Fire (bottom row - all 3 positions) - grid position (0, 2), 3 squares wide
     this.drawRectangle(0, 2, 3, 1, input.fire || input.charging);
+
+    const currentBeaver = this.options.core.entityManager.getBeaver(this.options.core.turnManager.getCurrentPlayerIndex());
+    this.writeText(currentBeaver?.isGrounded ? "Grounded" : "In the air");
+    
   }
 
   /**
@@ -64,13 +74,10 @@ export class ControlsRenderer {
    * @param isActive - Whether the control is currently active/pressed
    */
   private drawRectangle(gridCol: number, gridRow: number, width: number, height: number, isActive: boolean): void {
-    const totalGridSize = this.gridSize * this.squareSize + (this.gridSize - 1) * this.squareSpacing;
-    const startX = this.canvas.width - 2 * totalGridSize - this.gridPadding;
-    const startY = this.canvas.height - totalGridSize - this.gridPadding - 20;
 
     // Convert grid coordinates to pixel coordinates
-    const pixelX = startX + gridCol * (this.squareSize + this.squareSpacing);
-    const pixelY = startY + gridRow * (this.squareSize + this.squareSpacing);
+    const pixelX = this.startX + gridCol * (this.squareSize + this.squareSpacing);
+    const pixelY = this.startY + gridRow * (this.squareSize + this.squareSpacing);
 
     // Calculate pixel width: width squares + (width - 1) spacings
     const pixelWidth = width * this.squareSize + (width - 1) * this.squareSpacing;
@@ -78,13 +85,28 @@ export class ControlsRenderer {
     const pixelHeight = height * this.squareSize + (height - 1) * this.squareSpacing;
 
     // Draw the rectangle
-    this.ctx.fillStyle = isActive ? this.activeColor : this.inactiveColor;
-    this.ctx.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
+    this.options.core.canvasContext.fillStyle = isActive ? this.activeColor : this.inactiveColor;
+    this.options.core.canvasContext.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
 
     // Draw border
-    this.ctx.strokeStyle = "#FFFFFF";
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeRect(pixelX, pixelY, pixelWidth, pixelHeight);
+    this.options.core.canvasContext.strokeStyle = "#FFFFFF";
+    this.options.core.canvasContext.lineWidth = 1;
+    this.options.core.canvasContext.strokeRect(pixelX, pixelY, pixelWidth, pixelHeight);
+  }
+
+  /**
+   * Writes text just below the grid.
+   * @param text - The text to display
+   */
+  writeText(text: string): void {
+    const textY = this.startY + this.totalGridSize + 10; // Position just below the grid
+
+    this.options.core.canvasContext.fillStyle = "#FFFFFF";
+    this.options.core.canvasContext.font = "14px Arial";
+    this.options.core.canvasContext.textAlign = "center";
+    this.options.core.canvasContext.textBaseline = "top";
+    const textX = this.startX + this.totalGridSize / 2;
+    this.options.core.canvasContext.fillText(text, textX, textY);
   }
 }
 
