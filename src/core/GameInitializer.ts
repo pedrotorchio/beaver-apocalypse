@@ -51,9 +51,8 @@ export class GameInitializer {
       maxPower = 1000,
       powerAccumulationRate = 10,
     } = options;
-
     // Extract canvas context from DOM
-    const canvasContext = canvas.getContext("2d") ?? throwError("Failed to get 2d context");
+    const canvasContext = canvas.getContext("2d", { willReadFrequently: true }) ?? throwError("Failed to get 2d context");
 
     // Create core systems
     const physicsWorld = new PhysicsWorld();

@@ -75,8 +75,7 @@ export class Game {
 
     // Initialize non-core systems: terrain
     this.terrain = new Terrain({
-      width: canvas.width,
-      height: canvas.height,
+      canvas,
       core,
     });
 

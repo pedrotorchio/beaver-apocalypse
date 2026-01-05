@@ -39,7 +39,10 @@ export class Beaver {
   private facing: number = 1; // 1 for right, -1 for left
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
+  private aliveColor = "#FF6B6B";
+  private deadColor = "#666";
   #isGrounded: boolean = false;
+  private groundCheckPoints: { x: number; y: number }[] = [];
 
   get isGrounded(): boolean {
     return this.#isGrounded;
@@ -194,25 +197,39 @@ export class Beaver {
     }
   }
 
+  get checkGroundedVariables() {
+    const sampleCount = 3; // Number of points to sample
+    const startingAngle = 1/4 * Math.PI;
+    const endingAngle = 3/4 * Math.PI;
+    const angleStep = (endingAngle - startingAngle) / sampleCount;
+    const thresholdRatio = 1.5;
+    return {
+      thresholdRatio,
+      sampleCount,
+      angleStep,
+      startingAngle,
+    }
+  }
+
   private checkGrounded(): boolean {
     const pos = this.body.getPosition();
     const radius = this.radius;
-    const threshold = radius/4; // 1/4th of beaver's height (height = 2 * radius)
 
-    // Sample points along the bottom 180 degrees (semicircle)
-    // Angle range: -Math.PI to 0 (bottom half of circle)
-    const sampleCount = 12; // Number of points to sample
-    const angleStep = 4/3*Math.PI / sampleCount;
+    const { sampleCount, angleStep, startingAngle, thresholdRatio } = this.checkGroundedVariables;
+
+    // Store check points for rendering
+    this.groundCheckPoints = [];
 
     let isGrounded = false;
     for (let i = 0; i <= sampleCount; i++) {
-      const angle = Math.PI + i * angleStep;
+      const angle = startingAngle + i * angleStep;
       // Calculate point on the circle perimeter
-      const checkX = pos.x + Math.cos(angle) * radius;
-      const checkY = pos.y + Math.sin(angle) * radius;
-      // Check if there's solid terrain within threshold distance below this point
-      const groundCheckY = checkY + threshold;
-      isGrounded ||= this.options.terrain.isSolid(checkX, groundCheckY);
+      const checkX = pos.x + Math.cos(angle) * radius * thresholdRatio;
+      const checkY = pos.y + Math.sin(angle) * radius * thresholdRatio;
+      
+      // Store point for rendering
+      this.groundCheckPoints.push({ x: checkX, y: checkY });
+      isGrounded ||= this.options.terrain.isSolid(checkX, checkY);
     }
 
     return isGrounded;
@@ -324,14 +341,17 @@ export class Beaver {
   }
 
   render(ctx: CanvasRenderingContext2D): void {
+
+
+    // draw black circle at pos.x and pos.y
     const pos = this.body.getPosition();
     const pixelX = pos.x;
     const pixelY = pos.y;
 
     if (!this.isAlive()) {
-      ctx.fillStyle = "#666";
+      ctx.fillStyle = this.deadColor;
     } else {
-      ctx.fillStyle = "#FF6B6B";
+      ctx.fillStyle = this.aliveColor;
     }
 
     ctx.beginPath();
@@ -358,6 +378,16 @@ export class Beaver {
     ctx.fillRect(barX, barY, barWidth, barHeight);
     ctx.fillStyle = "#00FF00";
     ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+
+    // Draw ground check lines
+    ctx.strokeStyle = this.aliveColor;
+    ctx.lineWidth = 2;
+    this.groundCheckPoints.forEach(point => { 
+      ctx.beginPath();
+      ctx.moveTo(pixelX, pixelY);
+      ctx.lineTo(point.x, point.y);
+      ctx.stroke();
+    });
   }
 
   destroy(): void {

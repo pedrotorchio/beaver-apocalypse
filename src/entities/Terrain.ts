@@ -1,10 +1,9 @@
-import { throwError } from "../general/errors";
 import { CoreModules } from "../core/GameInitializer";
+import { throwError } from "../general/errors";
 
 export interface TerrainOptions {
-  width: number;
-  height: number;
   core: CoreModules;
+  canvas: HTMLCanvasElement;
 }
 
 /**
@@ -25,89 +24,94 @@ export interface TerrainOptions {
  */
 export class Terrain {
   private options: TerrainOptions;
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  private terrainCanvas: HTMLCanvasElement;
+  private terrainCtx: CanvasRenderingContext2D;
 
   constructor(options: TerrainOptions) {
     this.options = options;
-    this.canvas = document.createElement("canvas");
-    this.canvas.width = options.width;
-    this.canvas.height = options.height;
-    this.ctx =
-      this.canvas.getContext("2d") ?? throwError("Failed to get 2d context for terrain canvas");
+    
+    // Create a separate canvas for terrain
+    this.terrainCanvas = document.createElement("canvas");
+    this.terrainCanvas.width = options.canvas.width;
+    this.terrainCanvas.height = options.canvas.height;
+    this.terrainCtx =
+      this.terrainCanvas.getContext("2d", { willReadFrequently: true }) ?? throwError("Failed to get 2d context for terrain canvas");
+    
     this.generateDefaultTerrain();
   }
 
+  get ctx(): CanvasRenderingContext2D {
+    return this.terrainCtx;
+  }
+
   private generateDefaultTerrain(): void {
+    const { width, height } = this.options.canvas;
     // Clear canvas (transparent = air, not solid)
-    this.ctx.clearRect(0, 0, this.options.width, this.options.height);
+    this.terrainCtx.clearRect(0, 0, width, height);
 
     // Draw solid terrain: everything below the surface curve is solid
-    const baseGroundY = this.options.height * 0.7;
+    const baseGroundY = height * 0.7;
 
     // Generate surface curve points
     const surfaceY: number[] = [];
-    for (let x = 0; x <= this.options.width; x += 2) {
+    for (let x = 0; x <= width; x += 2) {
       surfaceY.push(baseGroundY + Math.sin(x / 100) * 30 + Math.cos(x / 150) * 15);
     }
 
     // Brown terrain body (everything below surface)
-    this.ctx.fillStyle = "#8B4513";
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, surfaceY[0]);
+    this.terrainCtx.fillStyle = "#8B4513";
+    this.terrainCtx.beginPath();
+    this.terrainCtx.moveTo(0, surfaceY[0]);
     for (let i = 0; i < surfaceY.length; i++) {
-      this.ctx.lineTo(i * 2, surfaceY[i]);
+      this.terrainCtx.lineTo(i * 2, surfaceY[i]);
     }
-    this.ctx.lineTo(this.options.width, this.options.height);
-    this.ctx.lineTo(0, this.options.height);
-    this.ctx.closePath();
-    this.ctx.fill();
+    this.terrainCtx.lineTo(width, height);
+    this.terrainCtx.lineTo(0, height);
+    this.terrainCtx.closePath();
+    this.terrainCtx.fill();
 
     // Green surface layer (follows terrain shape, 8 pixels thick)
-    this.ctx.fillStyle = "#228B22";
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, surfaceY[0]);
+    this.terrainCtx.fillStyle = "#228B22";
+    this.terrainCtx.beginPath();
+    this.terrainCtx.moveTo(0, surfaceY[0]);
     for (let i = 0; i < surfaceY.length; i++) {
-      this.ctx.lineTo(i * 2, surfaceY[i]);
+      this.terrainCtx.lineTo(i * 2, surfaceY[i]);
     }
     for (let i = surfaceY.length - 1; i >= 0; i--) {
-      this.ctx.lineTo(i * 2, surfaceY[i] + 8);
+      this.terrainCtx.lineTo(i * 2, surfaceY[i] + 8);
     }
-    this.ctx.closePath();
-    this.ctx.fill();
+    this.terrainCtx.closePath();
+    this.terrainCtx.fill();
   }
 
   isSolid(x: number, y: number): boolean {
-    if (x < 0 || x >= this.options.width || y < 0 || y >= this.options.height) {
+    const { width, height } = this.options.canvas;
+    if (x < 0 || x >= width || y < 0 || y >= height) {
       return true; // Out of bounds is solid
     }
-    const imageData = this.ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1);
+    const imageData = this.terrainCtx.getImageData(Math.floor(x), Math.floor(y), 1, 1);
     const alpha = imageData.data[3];
-    return alpha > 128; // Consider it solid if alpha > 128
+    return alpha > 0; // Consider it solid if alpha > 128
   }
 
   destroyCircle(centerX: number, centerY: number, radius: number): void {
-    this.ctx.save();
-    this.ctx.globalCompositeOperation = "destination-out";
-    this.ctx.beginPath();
-    this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.restore();
+    this.terrainCtx.save();
+    this.terrainCtx.globalCompositeOperation = "destination-out";
+    this.terrainCtx.beginPath();
+    this.terrainCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    this.terrainCtx.fill();
+    this.terrainCtx.restore();
   }
 
   render(ctx: CanvasRenderingContext2D): void {
-    ctx.drawImage(this.canvas, 0, 0);
+    ctx.drawImage(this.terrainCanvas, 0, 0);
   }
 
   getWidth(): number {
-    return this.options.width;
+    return this.options.canvas.width;
   }
 
   getHeight(): number {
-    return this.options.height;
-  }
-
-  getCanvas(): HTMLCanvasElement {
-    return this.canvas;
+    return this.options.canvas.height;
   }
 }
