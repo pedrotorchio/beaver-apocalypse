@@ -5,8 +5,6 @@ export interface InputState {
   moveLeft: boolean;
   moveRight: boolean;
   jump: boolean;
-  aimLeft: boolean;
-  aimRight: boolean;
   aimUp: boolean;
   aimDown: boolean;
   fire: boolean;

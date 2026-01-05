@@ -266,10 +266,10 @@ export class Game {
     // Adjust angle based on arrow key inputs
     // Left/Up: decrease angle (rotate counter-clockwise / aim higher)
     // Right/Down: increase angle (rotate clockwise / aim lower)
-    if (input.aimLeft || input.aimUp) {
+    if (input.aimUp) {
       aim.adjustAngle(-angleStep);
     }
-    if (input.aimRight || input.aimDown) {
+    if (input.aimDown) {
       aim.adjustAngle(angleStep);
     }
 
