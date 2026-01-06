@@ -39,10 +39,25 @@ export class Beaver {
   private facing: number = 1; // 1 for right, -1 for left
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
+  private readonly checkPoints = {
+    center: { x: 0, y: 0 },
+    right: { x: 0, y: 0 },
+    left: { x: 0, y: 0 },
+    bottom: { x: 0, y: 0 },
+    top: { x: 0, y: 0 },
+    bottomRight: { x: 0, y: 0 },
+    bottomLeft: { x: 0, y: 0 },
+    topRight: { x: 0, y: 0 },
+    topLeft: { x: 0, y: 0 },
+  };
   #isGrounded: boolean = false;
 
   get isGrounded(): boolean {
     return this.#isGrounded;
+  }
+
+  get checkPointsArray(): { x: number; y: number }[] {
+    return Object.values(this.checkPoints);
   }
 
   constructor(options: BeaverOptions) {
@@ -66,6 +81,18 @@ export class Beaver {
     };
 
     this.body.createFixture(fixtureDef);
+
+    // Initialize checkpoint structure with initial position values
+    const pos = this.body.getPosition();
+    const radius = this.radius;
+    this.checkPoints.bottom = { x: pos.x, y: pos.y + radius };
+    this.checkPoints.top = { x: pos.x, y: pos.y - radius };
+    this.checkPoints.right = { x: pos.x + radius, y: pos.y };
+    this.checkPoints.left = { x: pos.x - radius, y: pos.y };
+    this.checkPoints.bottomRight = { x: pos.x + radius * 0.7, y: pos.y + radius * 0.7 };
+    this.checkPoints.bottomLeft = { x: pos.x - radius * 0.7, y: pos.y + radius * 0.7 };
+    this.checkPoints.topRight = { x: pos.x + radius * 0.7, y: pos.y - radius * 0.7 };
+    this.checkPoints.topLeft = { x: pos.x - radius * 0.7, y: pos.y - radius * 0.7 };
   }
 
   getBody(): planck.Body {
@@ -199,17 +226,7 @@ export class Beaver {
 
     // Check multiple points around the circle, with extra points in movement direction
     // Focus on bottom half for ground collision
-    const checkPoints: { x: number; y: number }[] = [
-      { x: pos.x, y: pos.y }, // Center
-      { x: pos.x + radius, y: pos.y }, // Right
-      { x: pos.x - radius, y: pos.y }, // Left
-      { x: pos.x, y: pos.y + radius }, // Bottom
-      { x: pos.x, y: pos.y - radius }, // Top
-      { x: pos.x + radius * 0.7, y: pos.y + radius * 0.7 }, // Bottom-right
-      { x: pos.x - radius * 0.7, y: pos.y + radius * 0.7 }, // Bottom-left
-      { x: pos.x + radius * 0.7, y: pos.y - radius * 0.7 }, // Top-right
-      { x: pos.x - radius * 0.7, y: pos.y - radius * 0.7 }, // Top-left
-    ];
+    const checkPoints = [...this.checkPointsArray];
 
     // Add more points along the bottom arc for better ground detection
     for (let angle = -Math.PI * 0.75; angle <= -Math.PI * 0.25; angle += Math.PI / 8) {
