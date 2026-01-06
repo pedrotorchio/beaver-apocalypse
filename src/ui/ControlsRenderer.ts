@@ -1,7 +1,4 @@
 import { CoreModules } from "../core/GameInitializer";
-import { TurnManager } from "../core/TurnManager";
-import { EntityManager } from "../core/managers/EntityManager";
-import { InputManager } from "../core/managers/InputManager";
 
 export type ControlsRendererOptions = {
   core: CoreModules;

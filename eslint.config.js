@@ -1,30 +1,13 @@
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  {
-    ignores: ["dist/**", "node_modules/**", "*.config.js", "*.config.ts", "coverage/**"],
-  },
-  js.configs.recommended,
+  eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["src/**/*.ts"],
-    languageOptions: {
-      parserOptions: {
-        project: true,
-      },
-    },
+    files: ['**/*.ts'],
     rules: {
-      "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-        },
-      ],
-      "max-depth": ["error", 1],
+      // Add any custom rules here
     },
   }
 );

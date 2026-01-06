@@ -1,6 +1,7 @@
 import * as planck from "planck-js";
 import { Terrain } from "./Terrain";
 import { CoreModules } from "../core/GameInitializer";
+import { Beaver } from "./Beaver";
 
 export interface ProjectileOptions {
   world: planck.World;
@@ -70,7 +71,7 @@ export class Projectile {
     return this.active;
   }
 
-  update(beavers: any[]): boolean {
+  update(beavers: Beaver[]): boolean {
     if (!this.active) return false;
 
     const pos = this.body.getPosition();
@@ -111,7 +112,7 @@ export class Projectile {
     return true;
   }
 
-  explode(beavers: any[]): void {
+  explode(beavers: Beaver[]): void {
     if (!this.active) return;
 
     const pos = this.body.getPosition();
