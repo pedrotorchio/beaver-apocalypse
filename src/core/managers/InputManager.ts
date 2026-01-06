@@ -1,6 +1,3 @@
-import { onDestruct } from "../../general/destructor";
-import { spy } from "../../general/devtools";
-
 export interface InputState {
   moveLeft: boolean;
   moveRight: boolean;
@@ -12,108 +9,65 @@ export interface InputState {
 }
 
 /**
- * Manages keyboard input state and event handling.
+ * Manages keyboard input state for the game.
  *
  * This class is responsible for:
- * - Listening to keyboard events (keydown/keyup) and maintaining input state
- * - Mapping keyboard codes to game actions (movement, aiming, firing)
- * - Tracking charging state (when spacebar is held down)
- * - Providing a snapshot of current input state
- * - Consuming fire events (to prevent multiple fires from a single key release)
- * - Cleaning up event listeners when the manager is destroyed
+ * - Tracking keyboard key states (pressed/released)
+ * - Providing current input state to game systems
+ * - Detecting fire events (spacebar press)
+ * - Tracking charging state (spacebar held)
  *
- * The InputManager maintains the raw input state but does not interpret
- * what actions should be taken. Other systems (like InputService) query
- * this manager to determine what the player is currently pressing.
+ * The InputManager listens to keyboard events and maintains the current
+ * state of all game controls. It provides methods to query input state
+ * and detect specific events like firing.
  */
 export class InputManager {
-  private state: InputState = {
-    moveLeft: false,
-    moveRight: false,
-    jump: false,
-    aimUp: false,
-    aimDown: false,
-    fire: false,
-    charging: false,
-  };
-
-  private keyMap: Map<string, keyof InputState> = new Map([
-    ["KeyA", "moveLeft"],
-    ["KeyD", "moveRight"],
-    ["KeyW", "jump"],
-    ["ArrowUp", "aimUp"],
-    ["ArrowDown", "aimDown"],
-    ["Space", "fire"],
-  ]);
+  private keys: Set<string> = new Set();
+  private justFired: boolean = false;
+  private wasSpacePressed: boolean = false;
 
   constructor() {
-    const keydownHandler = spy(this.handleKeyDown.bind(this), "keydownHandler");
-    const keyupHandler = spy(this.handleKeyUp.bind(this), "keyupHandler");
-    window.addEventListener("keydown", keydownHandler);
-    window.addEventListener("keyup", keyupHandler);
-
-    onDestruct(this, () => {
-      window.removeEventListener("keydown", keydownHandler);
-      window.removeEventListener("keyup", keyupHandler);
-    });
+    window.addEventListener("keydown", (e) => this.handleKeyDown(e));
+    window.addEventListener("keyup", (e) => this.handleKeyUp(e));
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    const action = this.keyMap.get(event.code);
-    if (action && action !== "fire") {
-      this.state[action] = true;
-    } else if (action === "fire") {
-      // Start charging when space is pressed
-      this.state.charging = true;
+  private handleKeyDown(e: KeyboardEvent): void {
+    this.keys.add(e.key.toLowerCase());
+    
+    // Detect fire event (spacebar just pressed)
+    if (e.key.toLowerCase() === " " && !this.wasSpacePressed) {
+      this.justFired = true;
+      this.wasSpacePressed = true;
     }
   }
 
-  private handleKeyUp(event: KeyboardEvent): void {
-    const action = this.keyMap.get(event.code);
-    if (action && action !== "fire") {
-      this.state[action] = false;
-      return;
-    }
-    if (action === "fire" && this.state.charging) {
-      // Fire when space is released
-      this.state.fire = true;
-      this.state.charging = false;
+  private handleKeyUp(e: KeyboardEvent): void {
+    this.keys.delete(e.key.toLowerCase());
+    
+    if (e.key.toLowerCase() === " ") {
+      this.wasSpacePressed = false;
     }
   }
 
   getState(): InputState {
-    return { ...this.state };
-  }
-
-  checkAction(action: keyof InputState): boolean {
-    return this.state[action];
-  }
-
-  isCharging(): boolean {
-    return this.state.charging;
+    return {
+      moveLeft: this.keys.has("a"),
+      moveRight: this.keys.has("d"),
+      jump: this.keys.has("w"),
+      aimUp: this.keys.has("arrowup"),
+      aimDown: this.keys.has("arrowdown"),
+      fire: this.keys.has(" "),
+      charging: this.keys.has(" "),
+    };
   }
 
   shouldFire(): boolean {
-    return this.consumeFire();
-  }
-
-  consumeFire(): boolean {
-    const fired = this.state.fire;
-    this.state.fire = false;
+    const fired = this.justFired;
+    this.justFired = false; // Reset after reading
     return fired;
   }
 
-  clear(): void {
-    this.state = {
-      moveLeft: false,
-      moveRight: false,
-      jump: false,
-      aimLeft: false,
-      aimRight: false,
-      aimUp: false,
-      aimDown: false,
-      fire: false,
-      charging: false,
-    };
+  isCharging(): boolean {
+    return this.keys.has(" ");
   }
 }

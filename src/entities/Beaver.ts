@@ -182,48 +182,14 @@ export class Beaver {
 
   update(): void {
     // Resolve terrain collision via pixel sampling
+    // This also sets isGrounded based on bottom check points
     this.resolveTerrainCollision();
-
-    // Check if grounded by sampling bottom 180 degrees within threshold distance
-    this.#isGrounded = this.checkGrounded();
 
     // Apply friction when grounded
     if (this.#isGrounded) {
       const vel = this.body.getLinearVelocity();
       this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, vel.y));
     }
-  }
-
-  get checkGroundedVariables() {
-    const sampleCount = 3; // Number of points to sample
-    const startingAngle = 4 / 3 * Math.PI;
-    const endingAngle = 4 * Math.PI;
-    const angleStep = (endingAngle - startingAngle) / sampleCount;
-    return {
-      sampleCount,
-      angleStep
-    }
-  }
-
-  private checkGrounded(): boolean {
-    const pos = this.body.getPosition();
-    const radius = this.radius;
-
-    const { sampleCount, angleStep } = this.checkGroundedVariables;
-
-    let isGrounded = false;
-    for (let i = 0; i <= sampleCount; i++) {
-      const angle = Math.PI + i * angleStep;
-      // Calculate point on the circle perimeter
-      const checkX = pos.x + Math.cos(angle) * radius;
-      const checkY = pos.y + Math.sin(angle) * radius;
-      
-      // Store point for rendering
-      this.groundCheckPoints.push({ x: checkX, y: checkY });
-      isGrounded ||= this.options.terrain.isSolid(checkX, groundCheckY);
-    }
-
-    return isGrounded;
   }
 
   private resolveTerrainCollision(): void {
@@ -270,8 +236,15 @@ export class Beaver {
     let pushY = 0;
     let collisionCount = 0;
     let maxPenetration = 0;
-
+    
+    // Check if grounded by checking bottom points
+    this.#isGrounded = false;
     for (const point of checkPoints) {
+      // Check if this is a bottom point (y >= pos.y) and if it's on solid ground
+      if (point.y >= pos.y && this.options.terrain.isSolid(point.x, point.y)) {
+        this.#isGrounded = true;
+      }
+      
       if (!this.options.terrain.isSolid(point.x, point.y)) continue;
 
       const dx = point.x - pos.x;

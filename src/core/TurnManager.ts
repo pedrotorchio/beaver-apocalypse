@@ -1,8 +1,6 @@
 export enum TurnPhase {
-  StartTurn,
   PlayerInput,
   ProjectileFlying,
-  Explosion,
   PhysicsSettling,
   EndTurn,
 }
@@ -12,7 +10,7 @@ export enum TurnPhase {
  *
  * This class is responsible for:
  * - Tracking the current active player index
- * - Managing the turn phase state machine (StartTurn, PlayerInput, ProjectileFlying, etc.)
+ * - Managing the turn phase state machine (PlayerInput, ProjectileFlying, etc.)
  * - Providing methods to transition between phases
  * - Determining when player input is allowed
  * - Rotating turns between players
@@ -24,7 +22,7 @@ export enum TurnPhase {
  */
 export class TurnManager {
   private currentPlayerIndex: number = 0;
-  private phase: TurnPhase = TurnPhase.StartTurn;
+  private phase: TurnPhase = TurnPhase.PlayerInput;
   private playerCount: number;
 
   constructor(playerCount: number = 2) {
@@ -44,7 +42,7 @@ export class TurnManager {
   }
 
   startTurn(): void {
-    this.phase = TurnPhase.StartTurn;
+    this.beginPlayerInput();
   }
 
   beginPlayerInput(): void {
@@ -55,18 +53,12 @@ export class TurnManager {
     this.phase = TurnPhase.ProjectileFlying;
   }
 
-  beginExplosion(): void {
-    this.phase = TurnPhase.Explosion;
-  }
-
   beginPhysicsSettling(): void {
     this.phase = TurnPhase.PhysicsSettling;
   }
 
   endTurn(): void {
-    this.phase = TurnPhase.EndTurn;
     this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.playerCount;
-    this.phase = TurnPhase.StartTurn;
   }
 
   canAcceptInput(): boolean {
@@ -76,7 +68,6 @@ export class TurnManager {
   isProjectileActive(): boolean {
     return (
       this.phase === TurnPhase.ProjectileFlying ||
-      this.phase === TurnPhase.Explosion ||
       this.phase === TurnPhase.PhysicsSettling
     );
   }

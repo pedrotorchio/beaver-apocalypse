@@ -1,5 +1,4 @@
 import { CoreModules } from "../core/GameInitializer";
-import { throwError } from "../general/errors";
 
 export interface TerrainOptions {
   core: CoreModules;
@@ -29,14 +28,11 @@ export class Terrain {
 
   constructor(options: TerrainOptions) {
     this.options = options;
-    
-    // Create a separate canvas for terrain
+    // Create off-screen canvas for terrain bitmap
     this.terrainCanvas = document.createElement("canvas");
     this.terrainCanvas.width = options.canvas.width;
     this.terrainCanvas.height = options.canvas.height;
-    this.terrainCtx =
-      this.terrainCanvas.getContext("2d", { willReadFrequently: true }) ?? throwError("Failed to get 2d context for terrain canvas");
-    
+    this.terrainCtx = this.terrainCanvas.getContext("2d", { willReadFrequently: true })!;
     this.generateDefaultTerrain();
   }
 
@@ -91,7 +87,7 @@ export class Terrain {
     }
     const imageData = this.terrainCtx.getImageData(Math.floor(x), Math.floor(y), 1, 1);
     const alpha = imageData.data[3];
-    return alpha > 0; // Consider it solid if alpha > 128
+    return alpha > 128; // Consider it solid if alpha > 128
   }
 
   destroyCircle(centerX: number, centerY: number, radius: number): void {

@@ -10,11 +10,11 @@ export enum TurnPhase {
  *
  * This class is responsible for:
  * - Tracking the current active player index
- * - Managing the turn phase state machine (PlayerInput, ProjectileFlying, PhysicsSettling, EndTurn)
+ * - Managing the turn phase state machine (PlayerInput, ProjectileFlying, etc.)
  * - Providing methods to transition between phases
  * - Determining when player input is allowed
  * - Rotating turns between players
- * - Indicating when projectiles are active (flying or physics settling)
+ * - Indicating when projectiles are active (flying, exploding, or physics settling)
  *
  * The TurnManager acts as the authoritative source for turn and phase state.
  * Other systems should query this class to determine the current game phase
@@ -70,6 +70,9 @@ export class TurnManager {
   }
 
   isProjectileActive(): boolean {
-    return this.phase === TurnPhase.ProjectileFlying || this.phase === TurnPhase.PhysicsSettling;
+    return (
+      this.phase === TurnPhase.ProjectileFlying ||
+      this.phase === TurnPhase.PhysicsSettling
+    );
   }
 }
