@@ -259,7 +259,7 @@ export class Game {
     // Aiming: arrow keys adjust the aim angle
     // The angle is stored relative to "facing right" (0 = forward/right) and will be transformed when facing left
     // Angle convention: 0 = right, PI/2 = down, -PI/2 = up, PI = left
-    const angleStep = 0.05;
+    const angleStep = 0.02;
 
     // Adjust angle based on arrow key inputs
     // Left/Up: decrease angle (rotate counter-clockwise / aim higher)
