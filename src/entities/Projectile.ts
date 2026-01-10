@@ -2,6 +2,7 @@ import * as planck from "planck-js";
 import { Terrain } from "./Terrain";
 import { CoreModules } from "../core/GameInitializer";
 import { Beaver } from "./Beaver";
+import * as vec from "../general/vector";
 
 export interface ProjectileOptions {
   world: planck.World;
@@ -123,18 +124,16 @@ export class Projectile {
     // Damage and knockback beavers
     for (const beaver of beavers) {
       const beaverPos = beaver.getPosition();
-      const dx = beaverPos.x - pos.x;
-      const dy = beaverPos.y - pos.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      const distance = vec.distance(pos, beaverPos);
 
       if (distance < this.explosionRadius + 10) {
         const damage = this.damage * (1 - distance / (this.explosionRadius + 10));
         beaver.applyDamage(damage);
 
         const knockback = 10;
-        const impulseX = (dx / distance) * knockback;
-        const impulseY = (dy / distance) * knockback;
-        beaver.applyKnockback(impulseX, impulseY);
+        const direction = vec.normalize(vec.subtract(beaverPos, pos));
+        const impulse = vec.scale(direction, knockback);
+        beaver.applyKnockback(impulse.x, impulse.y);
       }
     }
 

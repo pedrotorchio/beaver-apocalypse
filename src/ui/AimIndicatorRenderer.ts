@@ -2,6 +2,7 @@ import { Beaver } from "../entities/Beaver";
 import { InputManager } from "../core/managers/InputManager";
 import { WeaponManager } from "../core/managers/WeaponManager";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
+import * as vec from "../general/vector";
 
 export interface AimIndicatorOptions {
   x: number;
@@ -81,14 +82,15 @@ export class AimIndicatorRenderer {
 
   render(options: AimIndicatorOptions): void {
     const { x, y, angle, length = 40 } = options;
-    const endX = x + Math.cos(angle) * length;
-    const endY = y + Math.sin(angle) * length;
+    const direction = vec.fromAngle(angle);
+    const offset = vec.scale(direction, length);
+    const end = { x: x + offset.x, y: y + offset.y };
 
     this.ctx.strokeStyle = "#FFFF00";
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(x, y);
-    this.ctx.lineTo(endX, endY);
+    this.ctx.lineTo(end.x, end.y);
     this.ctx.stroke();
   }
 }

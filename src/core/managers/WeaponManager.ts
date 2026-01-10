@@ -1,3 +1,5 @@
+import * as vec from "../../general/vector";
+
 export interface WeaponManagerOptions {
   minPower: number;
   maxPower: number;
@@ -61,17 +63,13 @@ export class WeaponManager {
   }
 
   calculateVelocity(fireAngle: number): { x: number; y: number } {
-    return {
-      x: Math.cos(fireAngle) * this.currentPower,
-      y: Math.sin(fireAngle) * this.currentPower,
-    };
+    const direction = vec.fromAngle(fireAngle);
+    return vec.scale(direction, this.currentPower);
   }
 
   calculateSpawnOffset(fireAngle: number, offsetDistance: number = 15): { x: number; y: number } {
-    return {
-      x: Math.cos(fireAngle) * offsetDistance,
-      y: Math.sin(fireAngle) * offsetDistance,
-    };
+    const direction = vec.fromAngle(fireAngle);
+    return vec.scale(direction, offsetDistance);
   }
 
   getPowerConfig(): { minPower: number; maxPower: number; currentPower: number } {
