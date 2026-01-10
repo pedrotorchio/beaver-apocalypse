@@ -201,10 +201,11 @@ export class Beaver {
     // This also sets isGrounded based on bottom check points
     this.resolveTerrainCollision();
 
-    // Apply friction when grounded
+    // Apply friction and stop sliding when grounded
     if (this.#isGrounded) {
       const vel = this.body.getLinearVelocity();
-      this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, vel.y));
+      // Apply horizontal friction and prevent downward sliding
+      this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, Math.max(0, vel.y * 0.8)));
     }
   }
 
@@ -363,8 +364,9 @@ export class Beaver {
         return planck.Vec2(adjustedVel.x, adjustedVel.y);
       }
       
-      if (isGrounded && pushDirection.y > 0.5) {
-        // When grounded and pushing up from below, cancel downward velocity completely
+      if (isGrounded) {
+        // When grounded, prevent downward velocity to stop sliding
+        // Apply slight horizontal friction to prevent excessive sliding
         return planck.Vec2(currentVel.x * 0.9, Math.max(0, currentVel.y));
       }
       

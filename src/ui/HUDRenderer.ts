@@ -79,13 +79,31 @@ export class HUDRenderer {
     this.ctx.fillStyle = "#FFFF00";
     const phaseText = phaseNames[phase] || "Unknown";
     this.ctx.fillText(phaseText, xPos, 28);
-    xPos += this.ctx.measureText(phaseText).width + sectionSpacing;
+    const leftSectionEnd = xPos + this.ctx.measureText(phaseText).width + sectionSpacing;
 
     // Right section: Health for all beavers (positioned from right)
     const barWidth = 100;
     const barHeight = 10;
     const barY = 30;
+    
+    // Calculate total space needed for health bars (width of all bars + spacing between them)
+    const totalHealthBarWidth = beavers.length * barWidth + (beavers.length - 1) * sectionSpacing;
+    const minLeftEdge = leftSectionEnd + padding; // Minimum left edge to avoid overlap with left section
+    
+    // Start from right edge of canvas
     let rightX = this.canvas.width - padding;
+    
+    // Check if health bars would overlap with left section
+    // Calculate where the leftmost bar would start if we position from the right edge
+    const leftmostBarLeftEdge = rightX - totalHealthBarWidth;
+    
+    // If bars would overlap with left section, adjust starting position
+    // Ensure bars stay within canvas bounds
+    if (leftmostBarLeftEdge < minLeftEdge) {
+      // Position bars so they start at minimum left edge, but clamp to canvas
+      const adjustedRightX = Math.min(minLeftEdge + totalHealthBarWidth, this.canvas.width - padding);
+      rightX = adjustedRightX;
+    }
 
     for (let i = beavers.length - 1; i >= 0; i--) {
       const beaver = beavers[i];
@@ -94,6 +112,11 @@ export class HUDRenderer {
       const healthPercent = health / maxHealth;
 
       rightX -= barWidth;
+      
+      // Skip if health bar would overlap with left section or go off left edge of canvas
+      if (rightX < minLeftEdge || rightX < 0) {
+        break;
+      }
 
       // Draw health bar background
       this.ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
