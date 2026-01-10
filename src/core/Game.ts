@@ -38,8 +38,6 @@ export class Game {
   private gameLoop: GameLoop;
   private inputManager: InputManager;
 
-  private devtools: Devtools;
-
   // Renderers
   private aimIndicator: AimIndicatorRenderer;
   private hudRenderer: HUDRenderer;
@@ -91,7 +89,7 @@ export class Game {
         powerAccumulationRate: this.powerAccumulationRate,
         core,
       });
-      return new Beaver({
+      return new Beaver(`Beaver ${i + 1}`, 	{
         world: this.physicsWorld.getWorld(),
         terrain: this.terrain,
         aim,

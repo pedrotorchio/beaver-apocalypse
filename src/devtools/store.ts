@@ -13,7 +13,7 @@ export const useDevtoolsStore = defineStore('devtools', {
         tabs: {} as Record<string, { key: string, value: unknown}[]>,
     }),
     actions: {
-        addTab(tab: string): TabUpdateObject {
+        addTab(tab: string): DevtoolsTab {
             // Use object spread to ensure reactivity for new properties
             this.tabs = { ...this.tabs, [tab]: [] };
             return {
@@ -27,7 +27,7 @@ export const useDevtoolsStore = defineStore('devtools', {
     },
 });
 
-export type TabUpdateObject = {
+export type DevtoolsTab = {
     update: (key: string, value: unknown) => void;
 }
 export type DevtoolsStore = ReturnType<typeof useDevtoolsStore>

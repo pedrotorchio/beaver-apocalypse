@@ -37,6 +37,7 @@ export class InputManager {
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
+    e.preventDefault();
     this.keys.add(e.key.toLowerCase());
     
     // Detect fire event (spacebar just pressed)
@@ -48,6 +49,7 @@ export class InputManager {
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
+    e.preventDefault();
     this.keys.delete(e.key.toLowerCase());
     
     if (e.key.toLowerCase() === " ") {

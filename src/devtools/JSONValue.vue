@@ -1,60 +1,30 @@
 <template>
   <div class="json-value" :class="{ 'json-nested': depth > 0 }">
-    <template v-if="value === null">
-      <span class="json-null">null</span>
-    </template>
-    <template v-else-if="typeof value === 'boolean'">
-      <span class="json-boolean">{{ value }}</span>
-    </template>
-    <template v-else-if="typeof value === 'number'">
-      <span class="json-number">{{ value }}</span>
-    </template>
-    <template v-else-if="typeof value === 'string'">
-      <span class="json-string">"{{ value }}"</span>
-    </template>
-    <template v-else-if="Array.isArray(value)">
-      <span class="json-bracket">[</span>
-      <div v-if="value.length > 0" class="json-content">
+    <span v-if="value === null" class="json-null">null</span>
+    <template v-else-if="Array.isArray(value) || typeof value === 'object'">
+      <span class="json-bracket">{{ Array.isArray(value) ? '[' : '{' }}</span>
+      <div v-if="entries.length > 0" class="json-content">
         <div
-          v-for="(item, index) in value"
-          :key="index"
+          v-for="([key, val], index) in entries"
+          :key="key"
           class="json-item"
-          :style="{ paddingLeft: `${(depth + 1) * 16}px` }"
+          :style="{ paddingLeft: `${(depth + 1) * INTENDATION}px` }"
         >
-          <span class="json-key">{{ index }}:</span>
-          <JSONValue :value="item" :depth="depth + 1" />
-          <span v-if="index < value.length - 1" class="json-comma">,</span>
+          <span class="json-key">{{ Array.isArray(value) ? `${key}:` : `"${key}":` }}</span>
+          <JSONValue :value="val" :depth="depth + 1" />
+          <span v-if="index < entries.length - 1" class="json-comma">,</span>
         </div>
       </div>
-      <span class="json-bracket">]</span>
+      <span class="json-bracket">{{ Array.isArray(value) ? ']' : '}' }}</span>
     </template>
-    <template v-else-if="typeof value === 'object'">
-      <span class="json-bracket">{</span>
-      <template v-if="objectEntries.length > 0">
-        <div class="json-content">
-          <div
-            v-for="([key, val], index) in objectEntries"
-            :key="key"
-            class="json-item"
-            :style="{ paddingLeft: `${(depth + 1) * 16}px` }"
-          >
-            <p style="display: flex; align-items: center;">
-                <span class="json-key">"{{ key }}":</span>
-                <JSONValue :value="val" :depth="depth + 1" />
-                <span
-                  v-if="index < objectEntries.length - 1"
-                  class="json-comma"
-                  >,</span
-                >
-            </p>
-          </div>
-        </div>
-      </template>
-      <span class="json-bracket">}</span>
-    </template>
+    <span v-else class="json-boolean">{{ value }}</span>
   </div>
 </template>
+<script lang="ts">
 
+export const INTENDATION = 5;
+
+</script>
 <script setup lang="ts">
 import { computed } from 'vue';
 
@@ -67,8 +37,11 @@ const props = withDefaults(defineProps<Props>(), {
   depth: 0,
 });
 
-const objectEntries = computed(() => {
-  if (typeof props.value === 'object' && props.value !== null && !Array.isArray(props.value)) {
+const entries = computed(() => {
+  if (Array.isArray(props.value)) {
+    return props.value.map((item, index) => [String(index), item] as [string, unknown]);
+  }
+  if (typeof props.value === 'object' && props.value !== null) {
     return Object.entries(props.value as Record<string, unknown>);
   }
   return [];
@@ -85,11 +58,15 @@ const objectEntries = computed(() => {
 }
 
 .json-content {
-  display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    letter-spacing: 1px;
 }
 
 .json-item {
-  display: block;
+  display: flex;
+  align-items: flex-start;
 }
 
 .json-key {

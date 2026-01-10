@@ -5,6 +5,7 @@ import { Projectile } from "./Projectile";
 import { CoreModules } from "../core/GameInitializer";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
+import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 
 export interface BeaverOptions {
   world: planck.World;
@@ -41,6 +42,7 @@ export class Beaver {
   private facing: number = 1; // 1 for right, -1 for left
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
+  private devtoolsTab: DevtoolsTab;
   private readonly checkPoints = {
     center: { x: 0, y: 0 },
     right: { x: 0, y: 0 },
@@ -62,7 +64,7 @@ export class Beaver {
     return Object.values(this.checkPoints);
   }
 
-  constructor(options: BeaverOptions) {
+  constructor(private readonly name: string, options: BeaverOptions) {
     this.options = options;
 
     const bodyDef: planck.BodyDef = {
@@ -83,6 +85,7 @@ export class Beaver {
     };
 
     this.body.createFixture(fixtureDef);
+    this.devtoolsTab = useDevtoolsStore().addTab(this.name);
   }
 
   getBody(): planck.Body {
@@ -202,11 +205,31 @@ export class Beaver {
     this.resolveTerrainCollision();
 
     // Apply friction and stop sliding when grounded
+    // Don't apply friction if jumping (upward velocity)
     if (this.#isGrounded) {
       const vel = this.body.getLinearVelocity();
-      // Apply horizontal friction and prevent downward sliding
-      this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, Math.max(0, vel.y * 0.8)));
+      // Only apply friction if not jumping (no significant upward velocity)
+      if (vel.y >= 0) {
+        // Apply horizontal friction and prevent downward sliding
+        this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, Math.max(0, vel.y * 0.8)));
+      } else {
+        // Jumping upward, only apply horizontal friction
+        this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, vel.y));
+      }
     }
+
+    this.devtoolsTab.update("", {
+      health: this.health,
+      maxHealth: this.maxHealth,
+      facing: this.facing,
+      isGrounded: this.#isGrounded,
+      position: this.body.getPosition(),
+      velocity: this.body.getLinearVelocity(),
+      checkPoints: this.checkPointsArray,
+      radius: this.radius,
+      moveSpeed: this.moveSpeed,
+      jumpForce: this.jumpForce,
+    });
   }
 
   private createCollisionCheckPoints(
@@ -280,13 +303,23 @@ export class Beaver {
     let maxPenetration = 0;
     
     // Check if grounded by checking bottom points
+    // Don't consider grounded if moving upward (jumping)
+    const currentVel = this.body.getLinearVelocity();
     this.#isGrounded = false;
-    for (const point of checkPoints) {
-      // Check if this is a bottom point (y >= pos.y) and if it's on solid ground
-      if (point.y >= pos.y && this.options.terrain.isSolid(point.x, point.y)) {
-        this.#isGrounded = true;
+    if (currentVel.y < -1) {
+      // Moving upward significantly, not grounded
+      this.#isGrounded = false;
+    } else {
+      for (const point of checkPoints) {
+        // Check if this is a bottom point (y >= pos.y) and if it's on solid ground
+        if (point.y >= pos.y && this.options.terrain.isSolid(point.x, point.y)) {
+          this.#isGrounded = true;
+          break;
+        }
       }
-      
+    }
+    
+    for (const point of checkPoints) {
       if (!this.options.terrain.isSolid(point.x, point.y)) continue;
 
       const dist = vec.distance(pos, point);
