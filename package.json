@@ -13,13 +13,17 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.3",
     "@vitest/ui": "^4.0.16",
     "typescript": "^5.3.0",
     "vite": "^7.3.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "vue-tsc": "^3.2.2"
   },
   "dependencies": {
     "consola": "^3.4.2",
-    "planck-js": "^0.3.31"
+    "pinia": "^3.0.4",
+    "planck-js": "^0.3.31",
+    "vue": "^3.5.26"
   }
 }

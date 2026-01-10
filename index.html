@@ -22,37 +22,12 @@
             border: 2px solid #fff;
             background-color: #87CEEB;
         }
-        .controls {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .controls h2 {
-            margin-bottom: 10px;
-        }
-        .controls p {
-            margin: 5px 0;
-        }
-        .controls .key {
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-            transition: background-color 0.1s ease;
-        }
-        .controls .key.active {
-            background-color: #8B4A4A;
-            color: #fff;
-        }
     </style>
 </head>
 <body>
     <h1>Beaver Apocalypse</h1>
     <canvas id="gameCanvas"></canvas>
-    <div class="controls">
-        <h2>Controls</h2>
-        <p><strong>Movement:</strong> <span class="key" data-key="a">A</span> (left), <span class="key" data-key="d">D</span> (right), <span class="key" data-key="w">W</span> (jump)</p>
-        <p><strong>Aim:</strong> <span class="key" data-key="arrow">Arrow Keys</span></p>
-        <p><strong>Fire:</strong> <span class="key" data-key="space">Space</span></p>
-    </div>
+    <div id="controls"></div>
     <script type="module" src="/src/index.ts"></script>
 </body>
 </html>

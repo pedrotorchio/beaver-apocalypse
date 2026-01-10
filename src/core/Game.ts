@@ -11,7 +11,7 @@ import { InputManager } from "./managers/InputManager";
 import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
 import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
 import { HUDRenderer } from "../ui/HUDRenderer";
-import { TextHighlightControlsRenderer } from "../ui/TextHighlightControlsRenderer";
+import { initDevtools } from "../devtools/index";
 import { iterate } from "../general/utils";
 
 /**
@@ -38,11 +38,12 @@ export class Game {
   private gameLoop: GameLoop;
   private inputManager: InputManager;
 
+  private devtools: Devtools;
+
   // Renderers
   private aimIndicator: AimIndicatorRenderer;
   private hudRenderer: HUDRenderer;
   private powerIndicator: PowerIndicatorRenderer;
-  private controlsRenderer: TextHighlightControlsRenderer;
 
   // Managers
   private weaponManager: WeaponManager;
@@ -116,9 +117,9 @@ export class Game {
       weaponService: this.weaponManager,
       powerIndicator: this.powerIndicator,
     });
-    this.controlsRenderer = new TextHighlightControlsRenderer({
-      core
-    });
+
+    // Initialize Vue devtools/controls UI
+    initDevtools(core);
 
     // Create game loop (needs Game-specific callbacks)
     this.gameLoop = new GameLoop({
@@ -318,7 +319,5 @@ export class Game {
       this.aimIndicator.renderForBeaver(currentBeaver);
     }
 
-    // Draw controls indicator
-    this.controlsRenderer.render();
   }
 }

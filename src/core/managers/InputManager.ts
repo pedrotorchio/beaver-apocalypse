@@ -1,3 +1,5 @@
+import { useDevtoolsStore } from "../../devtools/store";
+
 export interface InputState {
   moveLeft: boolean;
   moveRight: boolean;
@@ -25,6 +27,9 @@ export class InputManager {
   private keys: Set<string> = new Set();
   private justFired: boolean = false;
   private wasSpacePressed: boolean = false;
+  private listeners: EventTarget[] = [];
+  private devtools = useDevtoolsStore();
+  private controlsTab = this.devtools.addTab("controls");
 
   constructor() {
     window.addEventListener("keydown", (e) => this.handleKeyDown(e));
@@ -39,6 +44,7 @@ export class InputManager {
       this.justFired = true;
       this.wasSpacePressed = true;
     }
+    this.alert();
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
@@ -47,6 +53,16 @@ export class InputManager {
     if (e.key.toLowerCase() === " ") {
       this.wasSpacePressed = false;
     }
+    this.alert();
+  }
+
+  private alert(): void {
+    this.controlsTab.update("", this.getState());
+    this.listeners.forEach(listener => listener.dispatchEvent(new CustomEvent("input-state-changed", { detail: this.getState() })));
+  }
+
+  addListener(listener: EventTarget): void {
+    this.listeners.push(listener);
   }
 
   getState(): InputState {
