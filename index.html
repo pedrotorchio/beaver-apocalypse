@@ -17,6 +17,14 @@
             height: 100vh;
             box-sizing: border-box;
         }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            box-sizing: border-box;
+        }
         h1 {
             margin-bottom: 20px;
         }
@@ -24,12 +32,18 @@
             border: 2px solid #fff;
             background-color: #87CEEB;
         }
+        #controls {
+            width: 100%;
+            flex: 1 1 auto;
+        }
     </style>
 </head>
 <body>
-    <h1>Beaver Apocalypse</h1>
-    <canvas id="gameCanvas"></canvas>
-    <div id="controls"></div>
+    <div id="game-container">
+        <h1>Beaver Apocalypse</h1>
+        <canvas id="gameCanvas"></canvas>
+        <div id="controls"></div>
+    </div>
     <script type="module" src="/src/index.ts"></script>
 </body>
 </html>

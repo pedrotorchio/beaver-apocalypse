@@ -4,7 +4,7 @@
       <div v-for="(tabItems, tabName) in tabs" :key="tabName" class="tab-group">
         <div class="tab-name">{{ tabName }}</div>
         <div v-for="(item, index) in tabItems" :key="index" class="tab-item">
-          {{ item }}
+          <JSONValue :value="item" />
         </div>
       </div>
     </div>
@@ -14,32 +14,31 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useDevtoolsStore } from './store';
+import JSONValue from './JSONValue.vue';
 import type { CoreModules } from '../core/GameInitializer';
-
+  
 const props = defineProps<{
   core: CoreModules;
 }>();
+
 const devtoolsStore = useDevtoolsStore();
 const tabs = computed(() => devtoolsStore.tabs);
 </script>
 
 <style>
 #devtools {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.8);
   padding: 10px;
   color: #fff;
   font-family: Arial, sans-serif;
+  height: 100%;
 }
 
 .tabs-container {
+  height: 100%;
+  max-height: 100%;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  max-height: 150px;
   overflow-y: auto;
 }
 
