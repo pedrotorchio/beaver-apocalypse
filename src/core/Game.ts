@@ -11,7 +11,7 @@ import { InputManager } from "./managers/InputManager";
 import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
 import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
 import { HUDRenderer } from "../ui/HUDRenderer";
-import { ControlsRenderer } from "../ui/ControlsRenderer";
+import { TextHighlightControlsRenderer } from "../ui/TextHighlightControlsRenderer";
 import { iterate } from "../general/utils";
 
 /**
@@ -42,7 +42,7 @@ export class Game {
   private aimIndicator: AimIndicatorRenderer;
   private hudRenderer: HUDRenderer;
   private powerIndicator: PowerIndicatorRenderer;
-  private controlsRenderer: ControlsRenderer;
+  private controlsRenderer: TextHighlightControlsRenderer;
 
   // Managers
   private weaponManager: WeaponManager;
@@ -116,8 +116,7 @@ export class Game {
       weaponService: this.weaponManager,
       powerIndicator: this.powerIndicator,
     });
-    this.controlsRenderer = new ControlsRenderer({
-      canvas,
+    this.controlsRenderer = new TextHighlightControlsRenderer({
       core
     });
 
