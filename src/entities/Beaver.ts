@@ -217,29 +217,21 @@ export class Beaver {
 
     // Apply friction and stop sliding when grounded
     // Don't apply friction if jumping (upward velocity)
-    if (this.#isGrounded) {
+    const isJumping = this.body.getLinearVelocity().y < 0;
+    if (this.#isGrounded && !isJumping) {
+      const MIN_VELOCITY = .2;
+      const DESCELERATION_FACTOR = .2; 
       const vel = this.body.getLinearVelocity();
-      // Only apply friction if not jumping (no significant upward velocity)
-      if (vel.y >= 0) {
-        // Apply horizontal friction and prevent downward sliding
-        this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, Math.max(0, vel.y * 0.8)));
-      } else {
-        // Jumping upward, only apply horizontal friction
-        this.body.setLinearVelocity(planck.Vec2(vel.x * 0.8, vel.y));
-      }
+      const roundToZero = (v: number) => Math.sign(v) * (Math.abs(v) < MIN_VELOCITY ? 0 : v);
+      this.body.setLinearVelocity(planck.Vec2(roundToZero(vel.x * DESCELERATION_FACTOR), roundToZero(vel.y * DESCELERATION_FACTOR)));
     }
 
     this.devtoolsTab.update("", {
       health: this.health,
-      maxHealth: this.maxHealth,
       facing: this.facing,
       isGrounded: this.#isGrounded,
       position: this.body.getPosition(),
-      velocity: this.body.getLinearVelocity(),
-      checkPoints: this.checkPointsArray,
-      radius: this.radius,
-      moveSpeed: this.moveSpeed,
-      jumpForce: this.jumpForce,
+      velocity: this.body.getLinearVelocity()
     });
   }
 
