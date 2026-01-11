@@ -6,6 +6,7 @@ import { CoreModules } from "../core/GameInitializer";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
+import { useObservable } from "../general/observable";
 
 export interface BeaverOptions {
   world: planck.World;
@@ -55,6 +56,16 @@ export class Beaver {
     topLeft: { x: 0, y: 0 },
   };
   #isGrounded: boolean = false;
+
+  public readonly on = useObservable({
+    isGrounded: () => this.#isGrounded,
+  });
+
+  set isGrounded(value: boolean) {
+    const oldValue = this.#isGrounded;
+    this.#isGrounded = value;
+    if (oldValue !== value) this.on.notify("isGrounded", 'changed');
+  }
 
   get isGrounded(): boolean {
     return this.#isGrounded;
@@ -138,7 +149,7 @@ export class Beaver {
     if (!this.isAlive() || !this.#isGrounded) return;
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(vel.x, this.jumpForce));
-    this.#isGrounded = false;
+    this.isGrounded = false;
   }
 
   /**
@@ -305,15 +316,15 @@ export class Beaver {
     // Check if grounded by checking bottom points
     // Don't consider grounded if moving upward (jumping)
     const currentVel = this.body.getLinearVelocity();
-    this.#isGrounded = false;
+    this.isGrounded = false;
     if (currentVel.y < -1) {
       // Moving upward significantly, not grounded
-      this.#isGrounded = false;
+      this.isGrounded = false;
     } else {
       for (const point of checkPoints) {
         // Check if this is a bottom point (y >= pos.y) and if it's on solid ground
         if (point.y >= pos.y && this.options.terrain.isSolid(point.x, point.y)) {
-          this.#isGrounded = true;
+          this.isGrounded = true;
           break;
         }
       }

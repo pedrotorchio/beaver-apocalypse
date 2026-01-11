@@ -168,18 +168,20 @@ export class Game {
 
     // Update physics
     this.physicsWorld.step();
-
-    if (this.checkAndRun(TurnPhase.PlayerInput)) return;
-    if (this.checkAndRun(TurnPhase.ProjectileFlying)) return;
-    if (this.checkAndRun(TurnPhase.PhysicsSettling)) return;
-    if (this.checkAndRun(TurnPhase.EndTurn)) return;
-
     // Update projectiles
     this.entityManager.updateProjectiles(this.entityManager.getBeavers());
 
     // Update entities
     this.entityManager.getBeavers().forEach(beaver => beaver.update());
     this.entityManager.getProjectiles().forEach(projectile => projectile.update(this.entityManager.getBeavers()));  
+
+    if (this.checkAndRun(TurnPhase.PlayerInput)) return;
+    if (this.checkAndRun(TurnPhase.ProjectileFlying)) return;
+    if (this.checkAndRun(TurnPhase.PhysicsSettling)) return;
+    if (this.checkAndRun(TurnPhase.EndTurn)) return;
+
+
+    
   }
 
   private updatePlayerInputPhase(): boolean {

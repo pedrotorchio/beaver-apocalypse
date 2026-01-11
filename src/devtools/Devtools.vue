@@ -1,18 +1,20 @@
 <template>
-  <div id="devtools">
-    <div v-if="Object.keys(tabs).length > 0" class="tabs-container">
-      <div v-for="(tabItems, tabName) in tabs" :key="tabName" class="tab-group">
-        <div class="tab-name">{{ tabName }}</div>
-        <div v-for="(item, index) in tabItems" :key="index" class="tab-item">
-          <JSONValue :value="item" />
+  <Teleport to="body">
+    <div v-if="toggled" id="devtools">
+      <div v-if="Object.keys(tabs).length > 0" class="tabs-container">
+        <div v-for="(tabItems, tabName) in tabs" :key="tabName" class="tab-group">
+          <div class="tab-name">{{ tabName }}</div>
+          <div class="tab-content">
+            <JSONValue :value="tabItems" always-show />
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useDevtoolsStore } from './store';
 import JSONValue from './JSONValue.vue';
 import type { CoreModules } from '../core/GameInitializer';
@@ -23,23 +25,45 @@ const props = defineProps<{
 
 const devtoolsStore = useDevtoolsStore();
 const tabs = computed(() => devtoolsStore.tabs);
+const toggled = ref(false);
+// listen for keyboard events and toggle devtools when "ctrl" is pressed 
+// add cleanup as well
+
+const toggleDevtools = (e: KeyboardEvent) => {
+  if (e.altKey) toggled.value = !toggled.value;
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', toggleDevtools);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', toggleDevtools);
+});
 </script>
 
 <style>
 #devtools {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.95);
   padding: 10px;
+  box-sizing: border-box;
   color: #fff;
   font-family: Arial, sans-serif;
-  height: 100%;
 }
 
 .tabs-container {
   height: 100%;
   max-height: 100%;
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  overflow-y: auto;
+  gap: 5px;
+  flex-wrap: nowrap;
 }
 
 .tab-group {
@@ -48,17 +72,25 @@ const tabs = computed(() => devtoolsStore.tabs);
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   margin-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .tab-name {
   font-weight: bold;
-  margin-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding-bottom: 3px;
 }
 
-.tab-item {
-  padding: 2px 0;
-  font-size: 0.9em;
+.tab-content {
+  height: 100%;
+  overflow-y: auto;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  & {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 }
 </style>

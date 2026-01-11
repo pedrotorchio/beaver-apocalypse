@@ -1,23 +1,32 @@
 <template>
   <div class="json-value" :class="{ 'json-nested': depth > 0 }">
     <span v-if="value === null" class="json-null">null</span>
-    <template v-else-if="Array.isArray(value) || typeof value === 'object'">
+    <template v-else-if="isToggled && !isLeaf">  
       <span class="json-bracket">{{ Array.isArray(value) ? '[' : '{' }}</span>
       <div v-if="entries.length > 0" class="json-content">
         <div
-          v-for="([key, val], index) in entries"
-          :key="key"
-          class="json-item"
-          :style="{ paddingLeft: `${(depth + 1) * INTENDATION}px` }"
+        v-for="([key, val], index) in entries"
+        :key="key"
+        class="json-item"
+        :style="{ paddingLeft: `${(depth + 1) * INTENDATION}px` }"
         >
-          <span class="json-key">{{ Array.isArray(value) ? `${key}:` : `"${key}":` }}</span>
-          <JSONValue :value="val" :depth="depth + 1" />
-          <span v-if="index < entries.length - 1" class="json-comma">,</span>
-        </div>
+        <span v-if="key !== ''" 
+          @click.self="toggle"
+          :class="{ 
+            'json-key': true, 
+            'json-toggled': isToggled, 
+            clickable: !alwaysShow 
+          }">{{ Array.isArray(value) ? `${key}:` : `"${key}":` }}</span>
+        <JSONValue :value="val" :depth="depth + 1" />
+        <span v-if="index < entries.length - 1" class="json-comma">,</span>
       </div>
-      <span class="json-bracket">{{ Array.isArray(value) ? ']' : '}' }}</span>
-    </template>
-    <span v-else class="json-boolean">{{ value }}</span>
+    </div>
+    <span class="json-bracket">{{ Array.isArray(value) ? ']' : '}' }}</span>
+  </template>
+  <template v-else-if="!isToggled && !isLeaf">
+      <span @click.self="toggle" :class="{ 'json-bracket': true, clickable: !alwaysShow }">{{ Array.isArray(value) ? '[]' : '{}' }}</span>
+  </template>  
+  <span v-else-if="isLeaf" class="json-boolean">{{ value }}</span>
   </div>
 </template>
 <script lang="ts">
@@ -26,16 +35,22 @@ export const INTENDATION = 5;
 
 </script>
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Props {
   value: unknown;
   depth?: number;
+  alwaysShow?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   depth: 0,
 });
+const isToggled = ref(props.alwaysShow);
+const toggle = () => {
+  if (props.alwaysShow) return;
+  isToggled.value = !isToggled.value;
+}
 
 const entries = computed(() => {
   if (Array.isArray(props.value)) {
@@ -46,9 +61,16 @@ const entries = computed(() => {
   }
   return [];
 });
+const isLeaf = computed(() => {
+  return !Array.isArray(props.value) && typeof props.value !== 'object' && props.value !== null;
+});
+
 </script>
 
 <style scoped>
+  .clickable {
+    cursor: pointer;
+  }
 .json-value {
   display: inline;
 }

@@ -1,3 +1,4 @@
 - Always be brief in your answers.
 - If changes are going to be made to files outside the provided context, explain why and ask for confirmation before making changes.
 - Never change code proactively. Treat existing code as production and risks of regression are unnacceptable.
+- WHen I ask a question, answer the question without making changes to the code. Propose a change in at most a single paragraph and ask for confirmation before making changes.

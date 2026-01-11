@@ -1,4 +1,6 @@
 import * as planck from "planck-js";
+import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
+import { useObservable } from "../general/observable";
 
 /**
  * Wrapper class for the Planck.js physics simulation world.
@@ -19,17 +21,22 @@ export class PhysicsWorld {
   private velocityIterations: number = 8;
   private positionIterations: number = 3;
   private timeStep: number = 1 / 60;
+  private readonly devtoolsTab: DevtoolsTab;
+  public readonly on = useObservable({
+    isSettled: () => this.isSettled(),
+  });
 
   constructor() {
     this.world = planck.World({
       gravity: planck.Vec2(0, 50),
     });
+    this.devtoolsTab = useDevtoolsStore().addTab("Physics");
   }
 
   getWorld(): planck.World {
     return this.world;
   }
-
+  
   step(): void {
     this.world.step(this.timeStep, this.velocityIterations, this.positionIterations);
   }
@@ -40,8 +47,12 @@ export class PhysicsWorld {
     let isSettled = true;
     for (let body = bodyList; body; body = body.getNext()) {
       const vel = body.getLinearVelocity();
-      isSettled &&= Math.hypot(vel.x, vel.y) > threshold;
+      const velMagnitude = Math.hypot(vel.x, vel.y);
+      if (velMagnitude > threshold) isSettled = false;
     }
+    this.devtoolsTab.update('bodyCount', this.world.getBodyCount());
+    this.devtoolsTab.update('isSettled', isSettled);
+    this.on.notify('isSettled', 'changed');
     return isSettled;
   }
 

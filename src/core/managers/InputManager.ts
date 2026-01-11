@@ -16,7 +16,7 @@ export interface InputState {
  * This class is responsible for:
  * - Tracking keyboard key states (pressed/released)
  * - Providing current input state to game systems
- * - Detecting fire events (spacebar press)
+ * - Detecting fire events (spacebar release)
  * - Tracking charging state (spacebar held)
  *
  * The InputManager listens to keyboard events and maintains the current
@@ -40,9 +40,8 @@ export class InputManager {
     e.preventDefault();
     this.keys.add(e.key.toLowerCase());
     
-    // Detect fire event (spacebar just pressed)
+    // Track spacebar press for charging
     if (e.key.toLowerCase() === " " && !this.wasSpacePressed) {
-      this.justFired = true;
       this.wasSpacePressed = true;
     }
     this.alert();
@@ -52,7 +51,11 @@ export class InputManager {
     e.preventDefault();
     this.keys.delete(e.key.toLowerCase());
     
+    // Detect fire event (spacebar just released)
     if (e.key.toLowerCase() === " ") {
+      if (this.wasSpacePressed) {
+        this.justFired = true;
+      }
       this.wasSpacePressed = false;
     }
     this.alert();

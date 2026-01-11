@@ -22,7 +22,11 @@ export const useDevtoolsStore = defineStore('devtools', {
         },
         update(tab: string, key: string, data: unknown) {
             const existingTabData = this.tabs[tab];
-            this.tabs = { ...this.tabs, [tab]: { ...existingTabData, [key]: data }}
+            const newData = key === '' && typeof data === 'object'
+                ? { ...existingTabData, ...data }
+                : { ...existingTabData, [key]: data }
+
+            this.tabs = { ...this.tabs, [tab]: newData }
         },
     },
 });

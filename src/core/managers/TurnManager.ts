@@ -1,3 +1,5 @@
+import { DevtoolsTab, useDevtoolsStore } from "../../devtools/store";
+
 export enum TurnPhase {
   PlayerInput,
   ProjectileFlying,
@@ -25,15 +27,20 @@ export class TurnManager {
   private phase: TurnPhase = TurnPhase.PlayerInput;
   private playerCount: number;
 
+  private readonly devtoolsTab: DevtoolsTab;
+
   constructor(playerCount: number = 2) {
     this.playerCount = playerCount;
+    this.devtoolsTab = useDevtoolsStore().addTab("Turn");
   }
 
   checkPhase(phase: TurnPhase): boolean {
+    this.devtoolsTab.update('phase', TurnPhase[this.phase]);
     return this.phase === phase;
   }
 
   getCurrentPlayerIndex(): number {
+    this.devtoolsTab.update('currentPlayer', this.currentPlayerIndex + 1);
     return this.currentPlayerIndex;
   }
 
