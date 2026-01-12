@@ -98,56 +98,71 @@ export class Projectile {
   }
 
   private checkBeaverCollisions(beavers: Beaver[]): Beaver | null {
-    // Check for direct beaver collision via physics contacts
-    // This catches collisions that happen during the physics step
-    const pos = this.body.getPosition();
-    const contactList = this.options.world.getContactList();
-    for (let contact = contactList; contact; contact = contact.getNext()) {
-      if (!contact.isTouching()) continue;
-      
-      const fixtureA = contact.getFixtureA();
-      const fixtureB = contact.getFixtureB();
-      const bodyA = fixtureA.getBody();
-      const bodyB = fixtureB.getBody();
-      
-      // Check if this projectile is involved in the contact
-      let projectileBody: planck.Body | null = null;
-      let beaverBody: planck.Body | null = null;
-      
-      const userDataA = bodyA.getUserData() as { type?: string; instance?: unknown } | null;
-      const userDataB = bodyB.getUserData() as { type?: string; instance?: unknown } | null;
-      
-      if (userDataA && userDataA.type === 'projectile' && userDataA.instance === this) {
-        projectileBody = bodyA;
-        if (userDataB && userDataB.type === 'beaver') {
-          beaverBody = bodyB;
-        }
-      } else if (userDataB && userDataB.type === 'projectile' && userDataB.instance === this) {
-        projectileBody = bodyB;
-        if (userDataA && userDataA.type === 'beaver') {
-          beaverBody = bodyA;
+    const hitBeaver = this.checkPhysicsContactCollisions(beavers);
+    if (hitBeaver) return hitBeaver;
+
+    return this.checkDistanceCollisions(beavers);
+  }
+
+  private checkPhysicsContactCollisions(beavers: Beaver[]): Beaver | null {
+    let contact = this.options.world.getContactList();
+    while (contact !== null) {
+      if (contact.isTouching()) {
+        const beaverBody = this.findBeaverBodyInContact(contact);
+        if (beaverBody) {
+          const hitBeaver = beavers.find(b => b.getBody() === beaverBody);
+          if (hitBeaver && hitBeaver.isAlive()) {
+            return hitBeaver;
+          }
         }
       }
-      
-      if (projectileBody && beaverBody) {
-        // Direct hit detected - find the beaver instance
-        const hitBeaver = beavers.find(b => b.getBody() === beaverBody);
-        if (hitBeaver && hitBeaver.isAlive()) {
-          return hitBeaver;
-        }
-      }
+      contact = contact.getNext();
     }
 
-    // Also check distance as fallback (in case contact wasn't detected yet)
+    return null;
+  }
+
+  private findBeaverBodyInContact(contact: planck.Contact): planck.Body | null {
+    const fixtureA = contact.getFixtureA();
+    const fixtureB = contact.getFixtureB();
+    const bodyA = fixtureA.getBody();
+    const bodyB = fixtureB.getBody();
+    
+    const userDataA = bodyA.getUserData() as { type?: string; instance?: unknown } | null;
+    const userDataB = bodyB.getUserData() as { type?: string; instance?: unknown } | null;
+
+    const isThisProjectile = (userData: { type?: string; instance?: unknown } | null): boolean => {
+      return userData?.type === 'projectile' && userData?.instance === this;
+    };
+
+    const isBeaver = (userData: { type?: string; instance?: unknown } | null): boolean => {
+      return userData?.type === 'beaver';
+    };
+
+    if (isThisProjectile(userDataA) && isBeaver(userDataB)) {
+      return bodyB;
+    }
+
+    if (isThisProjectile(userDataB) && isBeaver(userDataA)) {
+      return bodyA;
+    }
+
+    return null;
+  }
+
+  private checkDistanceCollisions(beavers: Beaver[]): Beaver | null {
+    const pos = this.body.getPosition();
     const beaverRadius = 10;
     const directHitThreshold = beaverRadius + this.radius;
+
     for (const beaver of beavers) {
       if (!beaver.isAlive()) continue;
+
       const beaverPos = beaver.getPosition();
       const distance = vec.distance(pos, beaverPos);
-      if (distance <= directHitThreshold) {
-        return beaver;
-      }
+      if (distance > directHitThreshold) continue;
+
+      return beaver;
     }
 
     return null;
@@ -205,34 +220,40 @@ export class Projectile {
     if (!this.active) return;
 
     const pos = this.body.getPosition();
-
-    // Destroy terrain
     this.options.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
-
-    // Damage and knockback beavers
-    for (const beaver of beavers) {
-      const beaverPos = beaver.getPosition();
-      const distance = vec.distance(pos, beaverPos);
-
-      if (distance < this.explosionRadius + 10) {
-        let damage = this.damage * (1 - distance / (this.explosionRadius + 10));
-        
-        // Apply 1.2x damage multiplier for direct hits
-        if (directHitBeaver === beaver) {
-          damage *= 1.2;
-        }
-        
-        beaver.applyDamage(damage);
-
-        const knockback = 10;
-        const direction = vec.normalize(vec.subtract(beaverPos, pos));
-        const impulse = vec.scale(direction, knockback);
-        beaver.applyKnockback(impulse.x, impulse.y);
-      }
-    }
+    this.damageBeavers(beavers, pos, directHitBeaver);
 
     this.active = false;
     this.destroy();
+  }
+
+  private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): void {
+    const maxDistance = this.explosionRadius + 10;
+
+    for (const beaver of beavers) {
+      const beaverPos = beaver.getPosition();
+      const distance = vec.distance(explosionPos, beaverPos);
+      if (distance >= maxDistance) continue;
+
+      const damage = this.calculateDamage(distance, maxDistance, directHitBeaver === beaver);
+      beaver.applyDamage(damage);
+      this.applyKnockback(beaver, beaverPos, explosionPos);
+    }
+  }
+
+  private calculateDamage(distance: number, maxDistance: number, isDirectHit: boolean): number {
+    let damage = this.damage * (1 - distance / maxDistance);
+    if (isDirectHit) {
+      damage *= 1.2;
+    }
+    return damage;
+  }
+
+  private applyKnockback(beaver: Beaver, beaverPos: planck.Vec2, explosionPos: planck.Vec2): void {
+    const knockback = 10;
+    const direction = vec.normalize(vec.subtract(beaverPos, explosionPos));
+    const impulse = vec.scale(direction, knockback);
+    beaver.applyKnockback(impulse.x, impulse.y);
   }
 
   render(ctx: CanvasRenderingContext2D): void {
