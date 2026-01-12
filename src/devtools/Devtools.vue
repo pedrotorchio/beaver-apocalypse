@@ -11,6 +11,13 @@
       </div>
     </div>
   </Teleport>
+  <Teleport to="body">
+    <div id="alerts" v-if="!toggled && alerts.length > 0">
+      <div v-for="alert in alerts" :key="alert" class="alert">
+        {{ alert }}
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -25,6 +32,7 @@ const props = defineProps<{
 
 const devtoolsStore = useDevtoolsStore();
 const tabs = computed(() => devtoolsStore.tabs);
+const alerts = computed(() => devtoolsStore.alertMessages);
 const toggled = ref(false);
 // listen for keyboard events and toggle devtools when "ctrl" is pressed 
 // add cleanup as well
@@ -43,6 +51,15 @@ onUnmounted(() => {
 </script>
 
 <style>
+  #alerts {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    padding: 10px;
+    z-index: 1000;
+  }
 #devtools {
   position: fixed;
   top: 0;

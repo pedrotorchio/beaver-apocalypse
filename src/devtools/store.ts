@@ -7,12 +7,18 @@ import { createPinia, defineStore, setActivePinia } from 'pinia';
 
 export const pinia = createPinia();
 setActivePinia(pinia);
-
+const MAX_ALERT_MESSAGES = 3;
 export const useDevtoolsStore = defineStore('devtools', {
     state: () => ({
         tabs: {} as Record<string, { key: string, value: unknown}[]>,
+        alertMessages: [] as string[],
     }),
     actions: {
+        alert(message: string) {
+            const length = this.alertMessages.push(message);
+            console.log(new Date().toTimeString(), message);
+            if (length > MAX_ALERT_MESSAGES) this.alertMessages.shift();
+        },
         addTab(tab: string): DevtoolsTab {
             // Use object spread to ensure reactivity for new properties
             this.tabs = { ...this.tabs, [tab]: [] };

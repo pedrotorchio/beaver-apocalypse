@@ -225,7 +225,6 @@ export class Beaver {
       const roundToZero = (v: number) => Math.sign(v) * (Math.abs(v) < MIN_VELOCITY ? 0 : v);
       this.body.setLinearVelocity(planck.Vec2(roundToZero(vel.x * DESCELERATION_FACTOR), roundToZero(vel.y * DESCELERATION_FACTOR)));
     }
-
     this.devtoolsTab.update("", {
       health: this.health,
       facing: this.facing,
