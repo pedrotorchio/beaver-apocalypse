@@ -58,6 +58,9 @@ export class Projectile {
 
     this.body.createFixture(fixtureDef);
     this.body.setLinearVelocity(planck.Vec2(options.velocityX, options.velocityY));
+    
+    // Store reference to this projectile on the body for contact detection
+    this.body.setUserData({ type: 'projectile', instance: this });
   }
 
   getBody(): planck.Body {
@@ -75,12 +78,91 @@ export class Projectile {
   update(beavers: Beaver[]): boolean {
     if (!this.active) return false;
 
-    const pos = this.body.getPosition();
-
-    // Check terrain collision via pixel sampling
-    if (this.options.terrain.isSolid(pos.x, pos.y)) {
-      this.explode(beavers);
+    const hitBeaver = this.checkBeaverCollisions(beavers);
+    if (hitBeaver) {
+      this.handleBeaverCollision(beavers, hitBeaver);
       return false;
+    }
+
+    if (this.checkTerrainCollision()) {
+      this.handleTerrainCollision(beavers);
+      return false;
+    }
+
+    if (this.checkOutOfBounds()) {
+      this.handleOutOfBounds();
+      return false;
+    }
+
+    return true;
+  }
+
+  private checkBeaverCollisions(beavers: Beaver[]): Beaver | null {
+    // Check for direct beaver collision via physics contacts
+    // This catches collisions that happen during the physics step
+    const pos = this.body.getPosition();
+    const contactList = this.options.world.getContactList();
+    for (let contact = contactList; contact; contact = contact.getNext()) {
+      if (!contact.isTouching()) continue;
+      
+      const fixtureA = contact.getFixtureA();
+      const fixtureB = contact.getFixtureB();
+      const bodyA = fixtureA.getBody();
+      const bodyB = fixtureB.getBody();
+      
+      // Check if this projectile is involved in the contact
+      let projectileBody: planck.Body | null = null;
+      let beaverBody: planck.Body | null = null;
+      
+      const userDataA = bodyA.getUserData() as { type?: string; instance?: unknown } | null;
+      const userDataB = bodyB.getUserData() as { type?: string; instance?: unknown } | null;
+      
+      if (userDataA && userDataA.type === 'projectile' && userDataA.instance === this) {
+        projectileBody = bodyA;
+        if (userDataB && userDataB.type === 'beaver') {
+          beaverBody = bodyB;
+        }
+      } else if (userDataB && userDataB.type === 'projectile' && userDataB.instance === this) {
+        projectileBody = bodyB;
+        if (userDataA && userDataA.type === 'beaver') {
+          beaverBody = bodyA;
+        }
+      }
+      
+      if (projectileBody && beaverBody) {
+        // Direct hit detected - find the beaver instance
+        const hitBeaver = beavers.find(b => b.getBody() === beaverBody);
+        if (hitBeaver && hitBeaver.isAlive()) {
+          return hitBeaver;
+        }
+      }
+    }
+
+    // Also check distance as fallback (in case contact wasn't detected yet)
+    const beaverRadius = 10;
+    const directHitThreshold = beaverRadius + this.radius;
+    for (const beaver of beavers) {
+      if (!beaver.isAlive()) continue;
+      const beaverPos = beaver.getPosition();
+      const distance = vec.distance(pos, beaverPos);
+      if (distance <= directHitThreshold) {
+        return beaver;
+      }
+    }
+
+    return null;
+  }
+
+  private handleBeaverCollision(beavers: Beaver[], hitBeaver: Beaver): void {
+    this.explode(beavers, hitBeaver);
+  }
+
+  private checkTerrainCollision(): boolean {
+    const pos = this.body.getPosition();
+    
+    // Check terrain collision via pixel sampling at center
+    if (this.options.terrain.isSolid(pos.x, pos.y)) {
+      return true;
     }
 
     // Also check a few points around the projectile for better detection
@@ -93,27 +175,33 @@ export class Projectile {
 
     for (const offset of checkOffsets) {
       if (this.options.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
-        this.explode(beavers);
-        return false;
+        return true;
       }
     }
 
-    // Check if out of bounds
-    if (
+    return false;
+  }
+
+  private handleTerrainCollision(beavers: Beaver[]): void {
+    this.explode(beavers);
+  }
+
+  private checkOutOfBounds(): boolean {
+    const pos = this.body.getPosition();
+    return (
       pos.x < 0 ||
       pos.x > this.options.terrain.getWidth() ||
       pos.y < 0 ||
       pos.y > this.options.terrain.getHeight()
-    ) {
-      this.active = false;
-      this.destroy();
-      return false;
-    }
-
-    return true;
+    );
   }
 
-  explode(beavers: Beaver[]): void {
+  private handleOutOfBounds(): void {
+    this.active = false;
+    this.destroy();
+  }
+
+  explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
     if (!this.active) return;
 
     const pos = this.body.getPosition();
@@ -127,7 +215,13 @@ export class Projectile {
       const distance = vec.distance(pos, beaverPos);
 
       if (distance < this.explosionRadius + 10) {
-        const damage = this.damage * (1 - distance / (this.explosionRadius + 10));
+        let damage = this.damage * (1 - distance / (this.explosionRadius + 10));
+        
+        // Apply 1.2x damage multiplier for direct hits
+        if (directHitBeaver === beaver) {
+          damage *= 1.2;
+        }
+        
         beaver.applyDamage(damage);
 
         const knockback = 10;

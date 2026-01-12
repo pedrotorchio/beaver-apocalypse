@@ -96,6 +96,10 @@ export class Beaver {
     };
 
     this.body.createFixture(fixtureDef);
+    
+    // Store reference to this beaver on the body for contact detection
+    this.body.setUserData({ type: 'beaver', instance: this });
+    
     this.devtoolsTab = useDevtoolsStore().addTab(this.name);
   }
 
