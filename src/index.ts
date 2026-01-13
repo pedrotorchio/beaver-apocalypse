@@ -8,6 +8,5 @@ window.addEventListener("DOMContentLoaded", async () => {
   canvas.width = 1200;
   canvas.height = 600;
 
-  const game = new Game(canvas);
-  await game.start();
+  new Game(canvas).start();
 });

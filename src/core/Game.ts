@@ -75,6 +75,9 @@ export class Game {
     this.inputManager = core.inputManager;
     this.weaponManager = core.weaponManager;
 
+    // Load assets
+    AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
+
     // Initialize non-core systems: terrain
     this.terrain = new Terrain({
       canvas,
@@ -100,12 +103,10 @@ export class Game {
         x,
         y,
         tilesheet: new TileSheet({
-          image: AssetLoader.getImage("beaver1_sprites"),
-          tileWidth: 32,
-          tileHeight: 32,
+          image: AssetLoader.getAsset("beaver1_sprites"),
+          tileWidth: 223,
+          tileHeight: 223,
           states: ["idle", "walking", "jumping", "attacking", "dead"],
-          defaultHeight: 32,
-          defaultWidth: 32
         })
       });
     });
@@ -129,9 +130,6 @@ export class Game {
 
     // Initialize Vue devtools/controls UI
     initDevtools(core);
-
-    // Load assets
-    AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
 
     // Create game loop (needs Game-specific callbacks)
     this.gameLoop = new GameLoop({

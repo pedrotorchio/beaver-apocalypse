@@ -79,7 +79,7 @@ export class Beaver {
 
   constructor(private readonly name: string, options: BeaverOptions) {
     this.options = options;
-
+    this.options.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
       position: planck.Vec2(options.x, options.y),
@@ -425,25 +425,8 @@ export class Beaver {
     const pixelX = pos.x;
     const pixelY = pos.y;
 
-    if (!this.isAlive()) {
-      ctx.fillStyle = "#666";
-    } else {
-      ctx.fillStyle = "#FF6B6B";
-    }
-
-    ctx.beginPath();
-    ctx.arc(pixelX, pixelY, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw facing indicator
-    if (this.isAlive()) {
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(pixelX, pixelY);
-      ctx.lineTo(pixelX + this.facing * this.radius * 1.5, pixelY);
-      ctx.stroke();
-    }
+    // Draw beaver sprite using tilesheet
+    this.options.tilesheet.drawImage(ctx, "idle", pixelX, pixelY, this.facing as 1 | -1);
 
     // Draw health bar
     const barWidth = this.radius * 2;

@@ -1,3 +1,5 @@
+import { Asset } from "./AssetLoader";
+
 /**
  * Utility class for rendering sprite sheets with multiple animation states.
  * 
@@ -11,29 +13,32 @@
  * Each state maps to a tile index (0-based from left to right).
  */
 export interface TileSheetOptions<StateKey extends string> {
-  image: HTMLImageElement;
+  image: Asset<HTMLImageElement>;
   tileWidth: number;
   tileHeight: number;
   states: StateKey[];
-  defaultWidth: number;
-  defaultHeight: number;
 }
 
 export class TileSheet<const StateKey extends string> {
-  private image: HTMLImageElement;
+  private imageAsset: Asset<HTMLImageElement>;
   private tileWidth: number;
   private tileHeight: number;
   private states: StateKey[];
-  private defaultWidth: number;
-  private defaultHeight: number;
+  private renderWidth: number;
+  private renderHeight: number;
 
   constructor(options: TileSheetOptions<StateKey>) {
-    this.image = options.image;
+    this.imageAsset = options.image;
     this.tileWidth = options.tileWidth;
     this.tileHeight = options.tileHeight;
     this.states = options.states;
-    this.defaultWidth = options.defaultWidth;
-    this.defaultHeight = options.defaultHeight;
+    this.renderWidth = options.tileWidth
+    this.renderHeight = options.tileHeight
+  }
+
+  setRenderSize(width: number, height: number): void {
+    this.renderWidth = width;
+    this.renderHeight = height;
   }
 
   /**
@@ -56,8 +61,8 @@ export class TileSheet<const StateKey extends string> {
 
     const sx = tileIndex * this.tileWidth;
     const sy = 0;
-    const dx = x - this.defaultWidth / 2;
-    const dy = y - this.defaultHeight / 2;
+    const dx = x - this.renderWidth / 2;
+    const dy = y - this.renderHeight / 2;
 
     ctx.save();
 
@@ -68,16 +73,19 @@ export class TileSheet<const StateKey extends string> {
     }
 
     ctx.drawImage(
-      this.image,
+      this.imageAsset.value,
       sx,
       sy,
       this.tileWidth,
       this.tileHeight,
       dx,
       dy,
-      this.defaultWidth,
-      this.defaultHeight
+      this.renderWidth,
+      this.renderHeight
     );
+
+    ctx.strokeStyle = 'red';
+    ctx.strokeRect(dx, dy, this.renderWidth, this.renderHeight);
 
     ctx.restore();
   }
