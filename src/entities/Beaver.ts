@@ -41,7 +41,7 @@ export class Beaver {
   private body: planck.Body;
   private health: number = 100;
   private maxHealth: number = 100;
-  private radius: number = 10;
+  private radius: number = 50;
   private facing: number = 1; // 1 for right, -1 for left
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
@@ -427,6 +427,13 @@ export class Beaver {
 
     // Draw beaver sprite using tilesheet
     this.options.tilesheet.drawImage(ctx, "idle", pixelX, pixelY, this.facing as 1 | -1);
+
+    // Draw collision circle border for debugging
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(pixelX, pixelY, this.radius, 0, Math.PI * 2);
+    ctx.stroke();
 
     // Draw health bar
     const barWidth = this.radius * 2;
