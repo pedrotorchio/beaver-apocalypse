@@ -7,6 +7,7 @@ import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { useObservable } from "../general/observable";
+import { TileSheet } from "../general/TileSheet";
 
 export interface BeaverOptions {
   world: planck.World;
@@ -15,6 +16,7 @@ export interface BeaverOptions {
   core: CoreModules;
   x: number;
   y: number;
+  tilesheet: TileSheet<"idle" | "walking" | "jumping" | "attacking" | "dead">;
 }
 
 /**

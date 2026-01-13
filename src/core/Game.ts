@@ -13,6 +13,9 @@ import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
 import { HUDRenderer } from "../ui/HUDRenderer";
 import { initDevtools } from "../devtools/index";
 import { iterate } from "../general/utils";
+import { AssetLoader } from "../general/AssetLoader";
+import beaverSpriteUrl from "../assets/beaver1_sprites.png";
+import { TileSheet } from "../general/TileSheet";
 
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
@@ -96,6 +99,14 @@ export class Game {
         core,
         x,
         y,
+        tilesheet: new TileSheet({
+          image: AssetLoader.getImage("beaver1_sprites"),
+          tileWidth: 32,
+          tileHeight: 32,
+          states: ["idle", "walking", "jumping", "attacking", "dead"],
+          defaultHeight: 32,
+          defaultWidth: 32
+        })
       });
     });
 
@@ -119,6 +130,9 @@ export class Game {
     // Initialize Vue devtools/controls UI
     initDevtools(core);
 
+    // Load assets
+    AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
+
     // Create game loop (needs Game-specific callbacks)
     this.gameLoop = new GameLoop({
       onUpdate: () => this.update(),
@@ -129,7 +143,10 @@ export class Game {
     this.turnManager.beginPhysicsSettling();
   }
 
-  start(): void {
+  async start(): Promise<void> {
+    // Wait for all assets to load before starting the game
+    await AssetLoader.areAllAssetsLoaded();
+
     // Reset power for all beavers' aims
     for (const beaver of this.entityManager.getBeavers()) {
       beaver.getAim().resetPower();
