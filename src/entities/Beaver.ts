@@ -41,7 +41,7 @@ export class Beaver {
   private body: planck.Body;
   private health: number = 100;
   private maxHealth: number = 100;
-  private radius: number = 50;
+  private radius: number = 20;
   private facing: number = 1; // 1 for right, -1 for left
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
