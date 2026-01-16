@@ -36,6 +36,7 @@ export class Projectile {
   public static readonly radius: number = 4;
   private explosionRadius: number = 30;
   private damage: number = 50;
+  public static bounceOffMode = false;
 
   constructor(options: ProjectileOptions) {
     this.options = options;
@@ -48,7 +49,7 @@ export class Projectile {
 
     this.body = options.world.createBody(bodyDef);
 
-    const shape = planck.Circle(this.radius);
+    const shape = planck.Circle(Projectile.radius);
     const fixtureDef: planck.FixtureDef = {
       shape: shape,
       density: 0.1,
@@ -78,7 +79,7 @@ export class Projectile {
   update(beavers: Beaver[]): boolean {
     if (!this.active) return false;
 
-    const hitBeaver = this.checkBeaverCollisions(beavers);
+    const hitBeaver = Projectile.bounceOffMode ? false : this.checkBeaverCollisions(beavers);
     if (hitBeaver) {
       this.handleBeaverCollision(beavers, hitBeaver);
       return false;
@@ -158,7 +159,7 @@ export class Projectile {
 
       const beaverPos = beaver.getPosition();
       const beaverRadius = beaver.getRadius();
-      const directHitThreshold = beaverRadius + this.radius;
+      const directHitThreshold = beaverRadius + Projectile.radius;
       const distance = vec.distance(pos, beaverPos);
       if (distance > directHitThreshold) continue;
 
@@ -182,10 +183,10 @@ export class Projectile {
 
     // Also check a few points around the projectile for better detection
     const checkOffsets = [
-      { x: this.radius, y: 0 },
-      { x: -this.radius, y: 0 },
-      { x: 0, y: this.radius },
-      { x: 0, y: -this.radius },
+      { x: Projectile.radius, y: 0 },
+      { x: -Projectile.radius, y: 0 },
+      { x: 0, y: Projectile.radius },
+      { x: 0, y: -Projectile.radius },
     ];
 
     for (const offset of checkOffsets) {
@@ -264,14 +265,14 @@ export class Projectile {
     // Draw main projectile body
     ctx.fillStyle = "#FFA500";
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, this.radius, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, Projectile.radius, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw trail/border
     ctx.strokeStyle = "#FFD700";
     ctx.lineWidth = 20;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, this.radius + 2, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, Projectile.radius + 2, 0, Math.PI * 2);
     ctx.stroke();
 
   }
