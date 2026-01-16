@@ -125,6 +125,30 @@ export class Beaver {
     return this.facing;
   }
 
+  getRadius(): number {
+    return this.radius;
+  }
+
+  getProjectileSpawnPoint(): Vec2Like {
+    const pos = this.body.getPosition();
+    const aim = this.options.aim;
+    const aimAngle = aim.getAngle();
+
+    // Adjust aim angle based on facing direction
+    let fireAngle = aimAngle;
+    if (this.facing === -1) {
+      fireAngle = Math.PI - fireAngle;
+    }
+
+    // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
+    const projectileRadius = 4; // Projectile.radius
+    const fireDir = vec.fromAngle(fireAngle);
+    const offsetDistance = this.radius + projectileRadius;
+    const offset = vec.scale(fireDir, offsetDistance * 1.2);
+
+    return { x: pos.x + offset.x, y: pos.y + offset.y };
+  }
+
   getAim(): Aim {
     return this.options.aim;
   }
@@ -168,7 +192,7 @@ export class Beaver {
       throw new Error("Cannot attack when beaver is dead");
     }
 
-    const pos = this.body.getPosition();
+    const spawnPoint = this.getProjectileSpawnPoint();
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
@@ -183,17 +207,13 @@ export class Beaver {
     const fireDir = vec.fromAngle(fireAngle);
     const velocity = vec.scale(fireDir, power * powerMultiplier);
 
-    // Calculate spawn offset
-    const offsetDistance = 15;
-    const offset = vec.scale(fireDir, offsetDistance);
-
     // Create projectile
     const projectile = new Projectile({
       world: this.options.world,
       terrain: this.options.terrain,
       core: this.options.core,
-      x: pos.x + offset.x,
-      y: pos.y + offset.y,
+      x: spawnPoint.x,
+      y: spawnPoint.y,
       velocityX: velocity.x,
       velocityY: velocity.y,
     });

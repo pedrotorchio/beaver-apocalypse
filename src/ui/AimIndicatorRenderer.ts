@@ -50,26 +50,20 @@ export class AimIndicatorRenderer {
    * This method handles all the logic for displaying aim direction and power level.
    */
   renderForBeaver(beaver: Beaver): void {
+    const spawnPoint = beaver.getProjectileSpawnPoint();
     const pos = beaver.getPosition();
-    const facing = beaver.getFacing();
     const aim = beaver.getAim();
-    let aimAngle = aim.getAngle();
-    if (facing === -1) {
-      aimAngle = Math.PI - aimAngle;
-    }
 
-    const input = this.inputManager.getState();
-    const power = aim.getPower();
-
-    this.render({
-      x: pos.x,
-      y: pos.y,
-      angle: aimAngle,
-      length: input.charging ? power * 0.1 : 40,
-    });
+    // Draw circle at spawn point
+    this.ctx.fillStyle = "#FFFF00";
+    this.ctx.beginPath();
+    this.ctx.arc(spawnPoint.x, spawnPoint.y, 5, 0, Math.PI * 2);
+    this.ctx.fill();
 
     // Render power indicator if charging
+    const input = this.inputManager.getState();
     if (input.charging) {
+      const power = aim.getPower();
       this.powerIndicator.render({
         x: pos.x,
         y: pos.y - 30,

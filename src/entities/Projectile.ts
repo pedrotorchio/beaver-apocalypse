@@ -33,7 +33,7 @@ export class Projectile {
   private options: ProjectileOptions;
   private body: planck.Body;
   private active: boolean = true;
-  private radius: number = 4;
+  public static readonly radius: number = 4;
   private explosionRadius: number = 30;
   private damage: number = 50;
 
@@ -152,13 +152,13 @@ export class Projectile {
 
   private checkDistanceCollisions(beavers: Beaver[]): Beaver | null {
     const pos = this.body.getPosition();
-    const beaverRadius = 10;
-    const directHitThreshold = beaverRadius + this.radius;
 
     for (const beaver of beavers) {
       if (!beaver.isAlive()) continue;
 
       const beaverPos = beaver.getPosition();
+      const beaverRadius = beaver.getRadius();
+      const directHitThreshold = beaverRadius + this.radius;
       const distance = vec.distance(pos, beaverPos);
       if (distance > directHitThreshold) continue;
 
@@ -228,7 +228,7 @@ export class Projectile {
   }
 
   private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): void {
-    const maxDistance = this.explosionRadius + 10;
+    const maxDistance = this.explosionRadius * 1.1;
 
     for (const beaver of beavers) {
       const beaverPos = beaver.getPosition();
@@ -260,17 +260,20 @@ export class Projectile {
     if (!this.active) return;
 
     const pos = this.body.getPosition();
+
+    // Draw main projectile body
     ctx.fillStyle = "#FFA500";
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw trail
+    // Draw trail/border
     ctx.strokeStyle = "#FFD700";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 20;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.radius + 2, 0, Math.PI * 2);
     ctx.stroke();
+
   }
 
   destroy(): void {
