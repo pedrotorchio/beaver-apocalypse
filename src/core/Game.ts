@@ -15,6 +15,7 @@ import { initDevtools } from "../devtools/index";
 import { iterate } from "../general/utils";
 import { AssetLoader } from "../general/AssetLoader";
 import beaverSpriteUrl from "../assets/beaver1_sprites.png";
+import smallRockUrl from "../assets/small_rock.png";
 import { TileSheet } from "../general/TileSheet";
 
 /**
@@ -77,7 +78,7 @@ export class Game {
 
     // Load assets
     AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
-
+    AssetLoader.loadImage("small_rock", smallRockUrl);
     // Initialize non-core systems: terrain
     this.terrain = new Terrain({
       canvas,
@@ -144,7 +145,6 @@ export class Game {
   async start(): Promise<void> {
     // Wait for all assets to load before starting the game
     await AssetLoader.areAllAssetsLoaded();
-
     // Reset power for all beavers' aims
     for (const beaver of this.entityManager.getBeavers()) {
       beaver.getAim().resetPower();

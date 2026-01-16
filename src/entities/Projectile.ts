@@ -3,6 +3,7 @@ import { Terrain } from "./Terrain";
 import { CoreModules } from "../core/GameInitializer";
 import { Beaver } from "./Beaver";
 import * as vec from "../general/vector";
+import { TileSheet } from "../general/TileSheet";
 
 export interface ProjectileOptions {
   world: planck.World;
@@ -12,6 +13,7 @@ export interface ProjectileOptions {
   y: number;
   velocityX: number;
   velocityY: number;
+  tilesheet: TileSheet<"projectile">;
 }
 
 /**
@@ -270,10 +272,13 @@ export class Projectile {
 
     // Draw trail/border
     ctx.strokeStyle = "#FFD700";
-    ctx.lineWidth = 20;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, Projectile.radius + 2, 0, Math.PI * 2);
     ctx.stroke();
+
+    this.options.tilesheet.drawImage(ctx, "projectile", pos.x, pos.y);
+
 
   }
 

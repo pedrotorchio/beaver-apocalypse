@@ -17,6 +17,8 @@ export interface TileSheetOptions<StateKey extends string> {
   tileWidth: number;
   tileHeight: number;
   states: StateKey[];
+  renderHeight?: number;
+  renderWidth?: number;
 }
 
 export class TileSheet<const StateKey extends string> {
@@ -32,13 +34,14 @@ export class TileSheet<const StateKey extends string> {
     this.tileWidth = options.tileWidth;
     this.tileHeight = options.tileHeight;
     this.states = options.states;
-    this.renderWidth = options.tileWidth
-    this.renderHeight = options.tileHeight
+    this.renderWidth = options.renderWidth ?? this.tileWidth;
+    this.renderHeight = options.renderHeight ?? this.tileHeight;
   }
 
-  setRenderSize(width: number, height: number): void {
+  setRenderSize(width: number, height: number): this {
     this.renderWidth = width;
     this.renderHeight = height;
+    return this;
   }
 
   /**
@@ -54,7 +57,7 @@ export class TileSheet<const StateKey extends string> {
     state: StateKey,
     x: number,
     y: number,
-    direction: 1 | -1
+    direction: 1 | -1 = 1
   ): void { 
     const tileIndex = this.states.findIndex((s) => s === state);
     if (tileIndex === -1) throw new Error(`Unknown state: ${state}`);
@@ -71,21 +74,24 @@ export class TileSheet<const StateKey extends string> {
       ctx.scale(-1, 1);
       ctx.translate(-x, -y);
     }
+    try {
+      ctx.drawImage(
+        this.imageAsset.value,
+        sx,
+        sy,
+        this.tileWidth,
+        this.tileHeight,
+        dx,
+        dy,
+        this.renderWidth,
+        this.renderHeight
+      );
+    } catch (error) {
+      console.error(error);
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(dx, dy, this.renderWidth, this.renderHeight);
+    }
 
-    ctx.drawImage(
-      this.imageAsset.value,
-      sx,
-      sy,
-      this.tileWidth,
-      this.tileHeight,
-      dx,
-      dy,
-      this.renderWidth,
-      this.renderHeight
-    );
-
-    ctx.strokeStyle = 'red';
-    ctx.strokeRect(dx, dy, this.renderWidth, this.renderHeight);
 
     ctx.restore();
   }

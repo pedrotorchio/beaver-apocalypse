@@ -8,6 +8,7 @@ import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { useObservable } from "../general/observable";
 import { TileSheet } from "../general/TileSheet";
+import { AssetLoader } from "../general/AssetLoader";
 
 export interface BeaverOptions {
   world: planck.World;
@@ -226,7 +227,16 @@ export class Beaver {
       y: spawnPoint.y,
       velocityX: velocity.x,
       velocityY: velocity.y,
+      tilesheet: new TileSheet({
+        image: AssetLoader.getAsset("small_rock"),
+        tileWidth: 419,
+        tileHeight: 366,
+        states: ["projectile"],
+        renderWidth: 10,
+        renderHeight: 10,
+      })
     });
+    
 
     return projectile;
   }
