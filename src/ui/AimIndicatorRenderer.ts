@@ -50,12 +50,24 @@ export class AimIndicatorRenderer {
    * This method handles all the logic for displaying aim direction and power level.
    */
   renderForBeaver(beaver: Beaver): void {
-    const spawnPoint = beaver.getProjectileSpawnPoint();
-    const pos = beaver.getPosition();
     const aim = beaver.getAim();
+    const power = aim.getPower();
+    const minPower = aim.getMinPower();
+    const maxPower = aim.getMaxPower();
+    
+    // Calculate spawn point with current power
+    const spawnPoint = beaver.getProjectileSpawnPoint(power);
+    const pos = beaver.getPosition();
+
+    // Interpolate color from yellow (#FFFF00) to red (#FF0000) based on power
+    const powerRatio = (power - minPower) / (maxPower - minPower);
+    const red = 255;
+    const green = Math.round(255 * (1 - powerRatio));
+    const blue = 0;
+    const color = `rgb(${red}, ${green}, ${blue})`;
 
     // Draw circle at spawn point
-    this.ctx.fillStyle = "#FFFF00";
+    this.ctx.fillStyle = color;
     this.ctx.beginPath();
     this.ctx.arc(spawnPoint.x, spawnPoint.y, 5, 0, Math.PI * 2);
     this.ctx.fill();
@@ -63,13 +75,12 @@ export class AimIndicatorRenderer {
     // Render power indicator if charging
     const input = this.inputManager.getState();
     if (input.charging) {
-      const power = aim.getPower();
       this.powerIndicator.render({
         x: pos.x,
         y: pos.y - 30,
         currentPower: power,
-        minPower: aim.getMinPower(),
-        maxPower: aim.getMaxPower(),
+        minPower: minPower,
+        maxPower: maxPower,
       });
     }
   }

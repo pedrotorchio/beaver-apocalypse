@@ -129,7 +129,7 @@ export class Beaver {
     return this.radius;
   }
 
-  getProjectileSpawnPoint(): Vec2Like {
+  getProjectileSpawnPoint(power?: number): Vec2Like {
     const pos = this.body.getPosition();
     const aim = this.options.aim;
     const aimAngle = aim.getAngle();
@@ -143,8 +143,18 @@ export class Beaver {
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
     const projectileRadius = 4; // Projectile.radius
     const fireDir = vec.fromAngle(fireAngle);
-    const offsetDistance = this.radius + projectileRadius;
-    const offset = vec.scale(fireDir, offsetDistance * 1.2);
+    const baseOffsetDistance = this.radius + projectileRadius;
+    
+    // Scale distance based on power (normalized between min and max power)
+    const currentPower = power ?? aim.getPower();
+    const minPower = aim.getMinPower();
+    const maxPower = aim.getMaxPower();
+    const powerRatio = (currentPower - minPower) / (maxPower - minPower);
+    const minDistance = baseOffsetDistance * 1.2;
+    const maxDistance = baseOffsetDistance * 2.5;
+    const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
+    
+    const offset = vec.scale(fireDir, offsetDistance);
 
     return { x: pos.x + offset.x, y: pos.y + offset.y };
   }
