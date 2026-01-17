@@ -61,7 +61,7 @@ export class TileSheet<const StateKey extends string> {
     return states.reduce((acc, state, index, originalArray) => {
       if (typeof state === 'string') return set(acc, state, applyDefaultsFor(index, { key: state }));
       if (typeof state === 'object' && 'key' in state) return set(acc, state.key, applyDefaultsFor(index, state));
-      if (Array.isArray(state) && acc[state[1]]) return set(acc, state[0], applyDefaultsFor(index, { key: state[0] }));
+      if (Array.isArray(state) && acc[state[1]]) return set(acc, state[0], applyDefaultsFor(index, acc[state[1]]));
       // Postpone resolution of alias definitions until all states are resolved
       if(Array.isArray(state)) originalArray.push(state);
       

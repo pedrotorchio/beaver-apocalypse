@@ -53,11 +53,11 @@ export class Beaver {
     tileWidth: 223,
     tileHeight: 223,
     states: [
-      "idle",
-      "walking",
-      "jumping",
-      "attacking",
-      "dead",
+      { key: "idle", x: 0, y: 18, width: 210, height: 220},
+      { key: "walking", x: 261, y: 25, width: 235, height: 209},  
+      { key: "jumping", x: 526, y: 10, width: 241, height: 224},
+      { key: "attacking", x: 786, y: 0, width: 296, height: 229},
+      { key: "dead", x: 1078, y: 110, width: 366, height: 138},
       ["hit", "jumping"],
     ]
   })
@@ -126,6 +126,26 @@ export class Beaver {
     this.devtoolsTab = useDevtoolsStore().addTab(this.name);
   }
 
+  identifyStateConditions(): Record<BeaverState, boolean> {
+    const isGrounded = this.#isGrounded;
+    const isMovingVertically = Math.abs(this.body.getLinearVelocity().y) > 0.2;
+    const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > 0.2;
+    
+    const isJumping = isMovingVertically && !isGrounded;
+    const isWalking = isMovingSideways && isGrounded;
+    const isIdle = !isMovingSideways && !isMovingVertically && isGrounded;
+    const isAttacking = this.state === 'attacking';
+    const isDead = this.state === 'dead';
+    const isHit = this.state === 'hit';
+    return {
+      jumping: !isAttacking && !isHit && isJumping,
+      walking: !isAttacking && !isHit && isWalking,
+      dead: !isHit && !isJumping && isDead,
+      attacking: !isHit && isAttacking,
+      hit: isHit,
+      idle: isIdle,
+    }
+  }
   getBody(): planck.Body {
     return this.body;
   }
@@ -166,18 +186,26 @@ export class Beaver {
   update(): void {
 
     this.stateFrameCount++;
-    if (this.state === 'attacking' && this.stateFrameCount > 30) this.setState("idle");
-    if (this.state === 'hit' && this.stateFrameCount > 60) this.setState("idle");
+    const states = this.identifyStateConditions();
+    const currentState = this.state;
+    if (states.hit) this.setState("hit");
+    if (states.attacking) this.setState("attacking");
+    if (currentState === 'attacking' && this.stateFrameCount > 30) this.setState("idle");
+    if (currentState === 'hit' && this.stateFrameCount > 60) this.setState("idle");
+    if (states.dead) this.setState("dead");
+    if (states.walking) this.setState("walking");
+    if (states.jumping) this.setState("jumping");
+    if (states.idle) this.setState("idle");
 
 
     // Resolve terrain collision via pixel sampling
     // This also sets isGrounded based on bottom check points
     this.resolveTerrainCollision();
+    const isMovingUpward = this.body.getLinearVelocity().y < 0;
 
     // Apply friction and stop sliding when grounded
     // Don't apply friction if jumping (upward velocity)
-    const isJumping = this.body.getLinearVelocity().y < 0;
-    if (this.#isGrounded && !isJumping) {
+    if (this.#isGrounded && !isMovingUpward) {
       const MIN_VELOCITY = .2;
       const DESCELERATION_FACTOR = .2; 
       const vel = this.body.getLinearVelocity();
@@ -200,7 +228,6 @@ export class Beaver {
    */
   walk(direction: number): void {
     if (!this.isAlive()) return;
-    this.setState("walking");
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(direction * this.moveSpeed, vel.y));
     this.facing = direction;
@@ -212,7 +239,6 @@ export class Beaver {
    */
   jump(): void {
     if (!this.isAlive() || !this.#isGrounded) return;
-    this.setState("jumping");
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(vel.x, this.jumpForce));
     this.isGrounded = false;
