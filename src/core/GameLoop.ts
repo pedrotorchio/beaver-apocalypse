@@ -23,6 +23,10 @@ export class GameLoop {
     this.options = options;
   }
 
+  get isRunning(): boolean {
+    return this.running;
+  }
+
   start(): void {
     this.running = true;
     this.loop();

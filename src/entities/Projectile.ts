@@ -3,17 +3,19 @@ import { Terrain } from "./Terrain";
 import { CoreModules } from "../core/GameInitializer";
 import { Beaver } from "./Beaver";
 import * as vec from "../general/vector";
-import { TileSheet } from "../general/TileSheet";
 
-export interface ProjectileOptions {
+export interface GameModules {
   world: planck.World;
   terrain: Terrain;
   core: CoreModules;
-  x: number;
-  y: number;
-  velocityX: number;
-  velocityY: number;
-  tilesheet: TileSheet<"projectile">;
+  canvas: CanvasRenderingContext2D;
+}
+
+export interface ProjectileOptions {
+  position: planck.Vec2;
+  velocity: planck.Vec2;
+  radius: number;
+  damage: number;
 }
 
 /**
@@ -31,27 +33,23 @@ export interface ProjectileOptions {
  * after exploding. The projectile continuously checks for terrain collisions
  * and automatically triggers its explosion effect when contact is detected.
  */
-export class Projectile {
-  private options: ProjectileOptions;
+export abstract class Projectile {
   private body: planck.Body;
   private active: boolean = true;
-  public static readonly radius: number = 4;
-  private explosionRadius: number = 30;
-  private damage: number = 50;
   public static bounceOffMode = false;
 
-  constructor(options: ProjectileOptions) {
-    this.options = options;
-
+  constructor(
+    protected modules: GameModules,
+    protected options: ProjectileOptions
+  ) {
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
-      position: planck.Vec2(options.x, options.y),
+      position: options.position,
       bullet: true, // Continuous collision detection
     };
 
-    this.body = options.world.createBody(bodyDef);
-
-    const shape = planck.Circle(Projectile.radius);
+    this.body = modules.world.createBody(bodyDef);
+    const shape = planck.Circle(this.options.radius);
     const fixtureDef: planck.FixtureDef = {
       shape: shape,
       density: 0.1,
@@ -60,7 +58,7 @@ export class Projectile {
     };
 
     this.body.createFixture(fixtureDef);
-    this.body.setLinearVelocity(planck.Vec2(options.velocityX, options.velocityY));
+    this.body.setLinearVelocity(options.velocity);
     
     // Store reference to this projectile on the body for contact detection
     this.body.setUserData({ type: 'projectile', instance: this });
@@ -76,6 +74,18 @@ export class Projectile {
 
   isActive(): boolean {
     return this.active;
+  }
+
+  get explosionRadius(): number {
+    return this.options.radius * 8 + this.options.damage * 0.3;
+  }
+
+  get beaverKnockback(): number {
+    return this.options.damage * 0.25 + this.options.radius * 0.75;
+  }
+
+  get maxDamageDistance(): number {
+    return this.explosionRadius * 1.1;
   }
 
   update(beavers: Beaver[]): boolean {
@@ -108,7 +118,7 @@ export class Projectile {
   }
 
   private checkPhysicsContactCollisions(beavers: Beaver[]): Beaver | null {
-    let contact = this.options.world.getContactList();
+    let contact = this.modules.world.getContactList();
     while (contact !== null) {
       if (contact.isTouching()) {
         const beaverBody = this.findBeaverBodyInContact(contact);
@@ -161,7 +171,7 @@ export class Projectile {
 
       const beaverPos = beaver.getPosition();
       const beaverRadius = beaver.getRadius();
-      const directHitThreshold = beaverRadius + Projectile.radius;
+      const directHitThreshold = beaverRadius + this.options.radius;
       const distance = vec.distance(pos, beaverPos);
       if (distance > directHitThreshold) continue;
 
@@ -172,27 +182,27 @@ export class Projectile {
   }
 
   private handleBeaverCollision(beavers: Beaver[], hitBeaver: Beaver): void {
-    this.explode(beavers, hitBeaver);
+    if (this.active) this.explode(beavers, hitBeaver);
   }
 
   private checkTerrainCollision(): boolean {
     const pos = this.body.getPosition();
     
     // Check terrain collision via pixel sampling at center
-    if (this.options.terrain.isSolid(pos.x, pos.y)) {
+    if (this.modules.terrain.isSolid(pos.x, pos.y)) {
       return true;
     }
 
     // Also check a few points around the projectile for better detection
     const checkOffsets = [
-      { x: Projectile.radius, y: 0 },
-      { x: -Projectile.radius, y: 0 },
-      { x: 0, y: Projectile.radius },
-      { x: 0, y: -Projectile.radius },
+      { x: this.options.radius, y: 0 },
+      { x: -this.options.radius, y: 0 },
+      { x: 0, y: this.options.radius },
+      { x: 0, y: -this.options.radius },
     ];
 
     for (const offset of checkOffsets) {
-      if (this.options.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
+      if (this.modules.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
         return true;
       }
     }
@@ -201,16 +211,16 @@ export class Projectile {
   }
 
   private handleTerrainCollision(beavers: Beaver[]): void {
-    this.explode(beavers);
+    if (this.active) this.explode(beavers);
   }
 
   private checkOutOfBounds(): boolean {
     const pos = this.body.getPosition();
     return (
       pos.x < 0 ||
-      pos.x > this.options.terrain.getWidth() ||
+      pos.x > this.modules.terrain.getWidth() ||
       pos.y < 0 ||
-      pos.y > this.options.terrain.getHeight()
+      pos.y > this.modules.terrain.getHeight()
     );
   }
 
@@ -220,10 +230,8 @@ export class Projectile {
   }
 
   explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
-    if (!this.active) return;
-
     const pos = this.body.getPosition();
-    this.options.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
+    this.modules.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
     this.damageBeavers(beavers, pos, directHitBeaver);
 
     this.active = false;
@@ -231,7 +239,7 @@ export class Projectile {
   }
 
   private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): void {
-    const maxDistance = this.explosionRadius * 1.1;
+    const maxDistance = this.maxDamageDistance;
 
     for (const beaver of beavers) {
       const beaverPos = beaver.getPosition();
@@ -245,7 +253,7 @@ export class Projectile {
   }
 
   private calculateDamage(distance: number, maxDistance: number, isDirectHit: boolean): number {
-    let damage = this.damage * (1 - distance / maxDistance);
+    let damage = this.options.damage * (1 - distance / maxDistance);
     if (isDirectHit) {
       damage *= 1.2;
     }
@@ -253,38 +261,17 @@ export class Projectile {
   }
 
   private applyKnockback(beaver: Beaver, beaverPos: planck.Vec2, explosionPos: planck.Vec2): void {
-    const knockback = 10;
     const direction = vec.normalize(vec.subtract(beaverPos, explosionPos));
-    const impulse = vec.scale(direction, knockback);
+    const impulse = vec.scale(direction, this.beaverKnockback);
     beaver.applyKnockback(impulse.x, impulse.y);
   }
 
-  render(ctx: CanvasRenderingContext2D): void {
-    if (!this.active) return;
-
-    const pos = this.body.getPosition();
-
-    // Draw main projectile body
-    ctx.fillStyle = "#FFA500";
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, Projectile.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw trail/border
-    ctx.strokeStyle = "#FFD700";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, Projectile.radius + 2, 0, Math.PI * 2);
-    ctx.stroke();
-
-    this.options.tilesheet.drawImage(ctx, "projectile", pos.x, pos.y);
-
-
-  }
+  abstract render(): void;
+  
 
   destroy(): void {
     if (this.body) {
-      this.options.world.destroyBody(this.body);
+      this.modules.world.destroyBody(this.body);
     }
   }
 }

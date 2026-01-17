@@ -38,6 +38,13 @@ export class TileSheet<const StateKey extends string> {
     this.renderHeight = options.renderHeight ?? this.tileHeight;
   }
 
+  get tileSourceXDictionary(): Record<StateKey, number> {
+    return this.states.reduce((acc, state) => {
+      acc[state] = this.states.findIndex((s) => s === state) * this.tileWidth;
+      return acc;
+    }, {} as Record<StateKey, number>);
+  }
+
   setRenderSize(width: number, height: number): this {
     this.renderWidth = width;
     this.renderHeight = height;
@@ -59,10 +66,9 @@ export class TileSheet<const StateKey extends string> {
     y: number,
     direction: 1 | -1 = 1
   ): void { 
-    const tileIndex = this.states.findIndex((s) => s === state);
-    if (tileIndex === -1) throw new Error(`Unknown state: ${state}`);
+    if (this.tileSourceXDictionary[state]) throw new Error(`Unknown state: ${state}`);
 
-    const sx = tileIndex * this.tileWidth;
+    const sx = this.tileSourceXDictionary[state];
     const sy = 0;
     const dx = x - this.renderWidth / 2;
     const dy = y - this.renderHeight / 2;

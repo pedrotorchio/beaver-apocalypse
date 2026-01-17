@@ -137,6 +137,10 @@ export class Game {
       onUpdate: () => this.update(),
       onRender: () => this.render(),
     });
+    this.inputManager.addListener((state) => {
+      if (state.pause && this.gameLoop.isRunning) this.gameLoop.stop();
+      else if (state.pause && !this.gameLoop.isRunning) this.gameLoop.start();
+    });
 
     // Start first turn
     this.turnManager.beginPhysicsSettling();
@@ -322,7 +326,7 @@ export class Game {
 
     // Draw projectiles
     for (const projectile of this.entityManager.getProjectiles()) {
-      projectile.render(this.ctx);
+      projectile.render();
     }
 
     // Draw HUD

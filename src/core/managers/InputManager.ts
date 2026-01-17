@@ -8,7 +8,11 @@ export interface InputState {
   aimDown: boolean;
   fire: boolean;
   charging: boolean;
+  pause: boolean;
+  stop: boolean;
 }
+
+type EventListener = (state: InputState) => void;
 
 /**
  * Manages keyboard input state for the game.
@@ -27,7 +31,7 @@ export class InputManager {
   private keys: Set<string> = new Set();
   private justFired: boolean = false;
   private wasSpacePressed: boolean = false;
-  private listeners: EventTarget[] = [];
+  private listeners: EventListener[] = [];
   private devtools = useDevtoolsStore();
   private controlsTab = this.devtools.addTab("controls");
 
@@ -37,9 +41,8 @@ export class InputManager {
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
-    e.preventDefault();
+    if(e.repeat) return;
     this.keys.add(e.key.toLowerCase());
-    
     // Track spacebar press for charging
     if (e.key.toLowerCase() === " " && !this.wasSpacePressed) {
       this.wasSpacePressed = true;
@@ -48,7 +51,7 @@ export class InputManager {
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
-    e.preventDefault();
+    if(e.repeat) return;
     this.keys.delete(e.key.toLowerCase());
     
     // Detect fire event (spacebar just released)
@@ -63,10 +66,10 @@ export class InputManager {
 
   private alert(): void {
     this.controlsTab.update("", this.getState());
-    this.listeners.forEach(listener => listener.dispatchEvent(new CustomEvent("input-state-changed", { detail: this.getState() })));
+    this.listeners.forEach(listener => listener(this.getState()));
   }
 
-  addListener(listener: EventTarget): void {
+  addListener(listener: EventListener): void {
     this.listeners.push(listener);
   }
 
@@ -79,6 +82,8 @@ export class InputManager {
       aimDown: this.keys.has("arrowdown"),
       fire: this.keys.has(" "),
       charging: this.keys.has(" "),
+      pause: this.keys.has("p"),
+      stop: this.keys.has("enter"),
     };
   }
 
@@ -91,4 +96,5 @@ export class InputManager {
   isCharging(): boolean {
     return this.keys.has(" ");
   }
+  
 }

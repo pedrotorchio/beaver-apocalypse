@@ -1,14 +1,15 @@
 import * as planck from "planck-js";
 import { Terrain } from "./Terrain";
 import { Aim } from "./Aim";
-import { Projectile } from "./Projectile";
+import { Projectile, GameModules } from "./Projectile";
 import { CoreModules } from "../core/GameInitializer";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { useObservable } from "../general/observable";
 import { TileSheet } from "../general/TileSheet";
-import { AssetLoader } from "../general/AssetLoader";
+import { RockProjectile, RockProjectileOptions } from "./projectiles/RockProjectile";
+import { PowerRockProjectile } from "./projectiles/PowerRockProjectile";
 
 export interface BeaverOptions {
   world: planck.World;
@@ -130,7 +131,7 @@ export class Beaver {
     return this.radius;
   }
 
-  getProjectileSpawnPoint(power?: number): Vec2Like {
+  getProjectileSpawnPoint(power?: number): planck.Vec2 {
     const pos = this.body.getPosition();
     const aim = this.options.aim;
     const aimAngle = aim.getAngle();
@@ -157,7 +158,7 @@ export class Beaver {
     
     const offset = vec.scale(fireDir, offsetDistance);
 
-    return { x: pos.x + offset.x, y: pos.y + offset.y };
+    return planck.Vec2(pos.x + offset.x, pos.y + offset.y);
   }
 
   getAim(): Aim {
@@ -216,29 +217,35 @@ export class Beaver {
     const power = aim.getPower();
     const powerMultiplier = 10; // Increase projectile velocity
     const fireDir = vec.fromAngle(fireAngle);
-    const velocity = vec.scale(fireDir, power * powerMultiplier);
+    const velocityVec = vec.scale(fireDir, power * powerMultiplier);
+    const velocity = planck.Vec2(velocityVec.x, velocityVec.y);
+
 
     // Create projectile
-    const projectile = new Projectile({
-      world: this.options.world,
-      terrain: this.options.terrain,
-      core: this.options.core,
-      x: spawnPoint.x,
-      y: spawnPoint.y,
-      velocityX: velocity.x,
-      velocityY: velocity.y,
-      tilesheet: new TileSheet({
-        image: AssetLoader.getAsset("small_rock"),
-        tileWidth: 419,
-        tileHeight: 366,
-        states: ["projectile"],
-        renderWidth: 10,
-        renderHeight: 10,
-      })
-    });
+    const projectile = this.getProjectile(spawnPoint, velocity);
     
 
     return projectile;
+  }
+
+  shootCount = 0;
+  getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
+    const isPoweredShot = this.shootCount % 2 !== 0;
+    // Create GameModules for projectile
+    const modules: GameModules = {
+      world: this.options.world,
+      terrain: this.options.terrain,
+      core: this.options.core,
+      canvas: this.options.core.canvasContext,
+    };
+    const args: RockProjectileOptions = {
+      position,
+      velocity,
+      damage: isPoweredShot ? 20 : 10
+    }
+    this.shootCount++;
+    const constructor = isPoweredShot ? PowerRockProjectile : RockProjectile;
+    return new constructor(modules, args);
   }
 
   /**

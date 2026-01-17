@@ -5,3 +5,4 @@
 - Avoid nested blocks as much as possible.
 - Nested contitionals if/elses are never allowed.
 - Avoid using let variable declaration as much as possible. Use const instead.
+- Use Planck primitives whenever possible (Vector, instead of individual number fields)
