@@ -228,9 +228,7 @@ export class Beaver {
     return projectile;
   }
 
-  shootCount = 0;
   getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
-    const isPoweredShot = this.shootCount % 2 !== 0;
     // Create GameModules for projectile
     const modules: GameModules = {
       world: this.options.world,
@@ -241,11 +239,9 @@ export class Beaver {
     const args: RockProjectileOptions = {
       position,
       velocity,
-      damage: isPoweredShot ? 20 : 10
+      damage: 10
     }
-    this.shootCount++;
-    const constructor = isPoweredShot ? PowerRockProjectile : RockProjectile;
-    return new constructor(modules, args);
+    return new RockProjectile(modules, args);
   }
 
   /**
