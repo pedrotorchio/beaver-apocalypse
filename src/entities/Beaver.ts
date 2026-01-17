@@ -9,7 +9,7 @@ import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { useObservable } from "../general/observable";
 import { TileSheet } from "../general/TileSheet";
 import { RockProjectile, RockProjectileOptions } from "./projectiles/RockProjectile";
-import { PowerRockProjectile } from "./projectiles/PowerRockProjectile";
+import { AssetLoader } from "../general/AssetLoader";
 
 export interface BeaverOptions {
   world: planck.World;
@@ -18,8 +18,8 @@ export interface BeaverOptions {
   core: CoreModules;
   x: number;
   y: number;
-  tilesheet: TileSheet<"idle" | "walking" | "jumping" | "attacking" | "dead">;
 }
+type BeaverState = "idle" | "walking" | "jumping" | "attacking" | "dead" | "hit";
 
 /**
  * Represents a player-controlled beaver entity in the game.
@@ -48,6 +48,25 @@ export class Beaver {
   private jumpForce: number = -50;
   private moveSpeed: number = 20;
   private devtoolsTab: DevtoolsTab;
+  private tilesheet = new TileSheet({
+    image: AssetLoader.getAsset<HTMLImageElement>("beaver1_sprites"),
+    tileWidth: 223,
+    tileHeight: 223,
+    states: [
+      "idle",
+      "walking",
+      "jumping",
+      "attacking",
+      "dead",
+      ["hit", "jumping"],
+    ]
+  })
+  private state: BeaverState = "idle";
+  private stateFrameCount: number = 0;
+  setState(state: BeaverState): void {
+    this.state = state;
+    this.stateFrameCount = 0;
+  }
   private readonly checkPoints = {
     center: { x: 0, y: 0 },
     right: { x: 0, y: 0 },
@@ -81,7 +100,7 @@ export class Beaver {
 
   constructor(private readonly name: string, options: BeaverOptions) {
     this.options = options;
-    this.options.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
+    this.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
       position: planck.Vec2(options.x, options.y),
@@ -131,36 +150,6 @@ export class Beaver {
     return this.radius;
   }
 
-  getProjectileSpawnPoint(power?: number): planck.Vec2 {
-    const pos = this.body.getPosition();
-    const aim = this.options.aim;
-    const aimAngle = aim.getAngle();
-
-    // Adjust aim angle based on facing direction
-    let fireAngle = aimAngle;
-    if (this.facing === -1) {
-      fireAngle = Math.PI - fireAngle;
-    }
-
-    // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
-    const projectileRadius = 4; // Projectile.radius
-    const fireDir = vec.fromAngle(fireAngle);
-    const baseOffsetDistance = this.radius + projectileRadius;
-    
-    // Scale distance based on power (normalized between min and max power)
-    const currentPower = power ?? aim.getPower();
-    const minPower = aim.getMinPower();
-    const maxPower = aim.getMaxPower();
-    const powerRatio = (currentPower - minPower) / (maxPower - minPower);
-    const minDistance = baseOffsetDistance * 1.2;
-    const maxDistance = baseOffsetDistance * 2.5;
-    const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
-    
-    const offset = vec.scale(fireDir, offsetDistance);
-
-    return planck.Vec2(pos.x + offset.x, pos.y + offset.y);
-  }
-
   getAim(): Aim {
     return this.options.aim;
   }
@@ -173,37 +162,72 @@ export class Beaver {
     return this.health > 0;
   }
 
+  // ========== IDLE STATE ==========
+  update(): void {
+
+    this.stateFrameCount++;
+    if (this.state === 'attacking' && this.stateFrameCount > 30) this.setState("idle");
+    if (this.state === 'hit' && this.stateFrameCount > 60) this.setState("idle");
+
+
+    // Resolve terrain collision via pixel sampling
+    // This also sets isGrounded based on bottom check points
+    this.resolveTerrainCollision();
+
+    // Apply friction and stop sliding when grounded
+    // Don't apply friction if jumping (upward velocity)
+    const isJumping = this.body.getLinearVelocity().y < 0;
+    if (this.#isGrounded && !isJumping) {
+      const MIN_VELOCITY = .2;
+      const DESCELERATION_FACTOR = .2; 
+      const vel = this.body.getLinearVelocity();
+      const roundToZero = (v: number) => Math.sign(v) * (Math.abs(v) < MIN_VELOCITY ? 0 : v);
+      this.body.setLinearVelocity(planck.Vec2(roundToZero(vel.x * DESCELERATION_FACTOR), roundToZero(vel.y * DESCELERATION_FACTOR)));
+    }
+    this.devtoolsTab.update("", {
+      health: this.health,
+      facing: this.facing,
+      isGrounded: this.#isGrounded,
+      position: this.body.getPosition(),
+      velocity: this.body.getLinearVelocity()
+    });
+  }
+
+  // ========== WALKING ACTION ==========
   /**
    * Makes the beaver walk in the specified direction.
    * @param direction -1 for left, 1 for right
    */
   walk(direction: number): void {
     if (!this.isAlive()) return;
+    this.setState("walking");
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(direction * this.moveSpeed, vel.y));
     this.facing = direction;
   }
 
+  // ========== JUMPING ACTION ==========
   /**
    * Makes the beaver jump if it is grounded.
    */
   jump(): void {
     if (!this.isAlive() || !this.#isGrounded) return;
+    this.setState("jumping");
     const vel = this.body.getLinearVelocity();
     this.body.setLinearVelocity(planck.Vec2(vel.x, this.jumpForce));
     this.isGrounded = false;
   }
 
+  // ========== ATTACKING ACTION ==========
   /**
    * Makes the beaver attack by firing a projectile using the current aim state.
    * @param aim - The aim object containing direction and power
    * @returns The created projectile
    */
   attack(aim: Aim): Projectile {
-    if (!this.isAlive()) {
-      throw new Error("Cannot attack when beaver is dead");
-    }
+    if (!this.isAlive()) throw new Error("Cannot attack when beaver is dead");
 
+    this.setState("attacking");
     const spawnPoint = this.getProjectileSpawnPoint();
     const aimAngle = aim.getAngle();
 
@@ -244,10 +268,42 @@ export class Beaver {
     return new RockProjectile(modules, args);
   }
 
+  getProjectileSpawnPoint(power?: number): planck.Vec2 {
+    const pos = this.body.getPosition();
+    const aim = this.options.aim;
+    const aimAngle = aim.getAngle();
+
+    // Adjust aim angle based on facing direction
+    let fireAngle = aimAngle;
+    if (this.facing === -1) {
+      fireAngle = Math.PI - fireAngle;
+    }
+
+    // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
+    const projectileRadius = 4; // Projectile.radius
+    const fireDir = vec.fromAngle(fireAngle);
+    const baseOffsetDistance = this.radius + projectileRadius;
+    
+    // Scale distance based on power (normalized between min and max power)
+    const currentPower = power ?? aim.getPower();
+    const minPower = aim.getMinPower();
+    const maxPower = aim.getMaxPower();
+    const powerRatio = (currentPower - minPower) / (maxPower - minPower);
+    const minDistance = baseOffsetDistance * 1.2;
+    const maxDistance = baseOffsetDistance * 2.5;
+    const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
+    
+    const offset = vec.scale(fireDir, offsetDistance);
+
+    return planck.Vec2(pos.x + offset.x, pos.y + offset.y);
+  }
+
+  // ========== DEAD STATE ==========
   /**
    * Kills the beaver by setting health to 0.
    */
   die(): void {
+    this.setState("dead");
     this.health = 0;
   }
 
@@ -256,33 +312,11 @@ export class Beaver {
   }
 
   applyKnockback(impulseX: number, impulseY: number): void {
+    this.setState("hit");
     this.body.applyLinearImpulse(planck.Vec2(impulseX, impulseY), this.body.getWorldCenter(), true);
   }
 
-  update(): void {
-    // Resolve terrain collision via pixel sampling
-    // This also sets isGrounded based on bottom check points
-    this.resolveTerrainCollision();
-
-    // Apply friction and stop sliding when grounded
-    // Don't apply friction if jumping (upward velocity)
-    const isJumping = this.body.getLinearVelocity().y < 0;
-    if (this.#isGrounded && !isJumping) {
-      const MIN_VELOCITY = .2;
-      const DESCELERATION_FACTOR = .2; 
-      const vel = this.body.getLinearVelocity();
-      const roundToZero = (v: number) => Math.sign(v) * (Math.abs(v) < MIN_VELOCITY ? 0 : v);
-      this.body.setLinearVelocity(planck.Vec2(roundToZero(vel.x * DESCELERATION_FACTOR), roundToZero(vel.y * DESCELERATION_FACTOR)));
-    }
-    this.devtoolsTab.update("", {
-      health: this.health,
-      facing: this.facing,
-      isGrounded: this.#isGrounded,
-      position: this.body.getPosition(),
-      velocity: this.body.getLinearVelocity()
-    });
-  }
-
+  // ========== UTILITY METHODS ==========
   private createCollisionCheckPoints(
     pos: planck.Vec2,
     radius: number,
@@ -469,7 +503,7 @@ export class Beaver {
     const pixelY = pos.y;
 
     // Draw beaver sprite using tilesheet
-    this.options.tilesheet.drawImage(ctx, "idle", pixelX, pixelY, this.facing as 1 | -1);
+    this.tilesheet.drawImage(ctx, this.state, pixelX, pixelY, this.facing as 1 | -1);
 
     // Draw collision circle border for debugging
     ctx.strokeStyle = 'blue';

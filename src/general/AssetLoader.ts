@@ -38,24 +38,20 @@ export class AssetLoader {
   }
 
   static getAsset<T>(key: string) {
-    if (!this.loadingPromises.has(key)) throw new Error(`Asset ${key} not loaded`);
-    const promise = this.loadingPromises.get(key)!;
+    if (!this.loadingPromises.has(key) && !this.loadedAssets.has(key)) throw new Error(`Asset ${key} not loaded`);
+    const promise = this.loadingPromises.get(key) as Promise<T>;
     const valueWrapper = { 
       value: null as T, 
       isLoaded: false, 
       isLoading: true,
       promise: promise,
     };
-    promise.then(v => Object.assign(valueWrapper, {
+    promise.then(v=> Object.assign(valueWrapper, {
       value: v as T,
       isLoaded: true,
       isLoading: false,
     }));
-    return new Proxy(valueWrapper, {
-      get(target: Asset<T>, prop: keyof Asset<T>) {
-        return target[prop];
-      }
-    }) as  Readonly<Asset<T>>;
+    return valueWrapper;
   }
 
   /**

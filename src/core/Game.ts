@@ -16,7 +16,6 @@ import { iterate } from "../general/utils";
 import { AssetLoader } from "../general/AssetLoader";
 import beaverSpriteUrl from "../assets/beaver1_sprites.png";
 import smallRockUrl from "../assets/small_rock.png";
-import { TileSheet } from "../general/TileSheet";
 
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
@@ -103,12 +102,6 @@ export class Game {
         core,
         x,
         y,
-        tilesheet: new TileSheet({
-          image: AssetLoader.getAsset("beaver1_sprites"),
-          tileWidth: 223,
-          tileHeight: 223,
-          states: ["idle", "walking", "jumping", "attacking", "dead"],
-        })
       });
     });
 
