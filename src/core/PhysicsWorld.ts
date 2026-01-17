@@ -42,7 +42,7 @@ export class PhysicsWorld {
   }
 
   isSettled(): boolean {
-    const threshold = 0.1;
+    const threshold = 0.5;
     const bodyList = this.world.getBodyList();
     let isSettled = true;
     for (let body = bodyList; body; body = body.getNext()) {
