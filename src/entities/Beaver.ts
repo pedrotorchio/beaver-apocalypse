@@ -10,6 +10,7 @@ import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { TileSheet } from "../general/TileSheet";
 import { RockProjectile, RockProjectileArguments } from "./projectiles/RockProjectile";
 import { AssetLoader } from "../general/AssetLoader";
+import { iterate } from "../general/utils";
 
 export interface BeaverArguments {
   x: number;
@@ -63,17 +64,6 @@ export class Beaver implements Updates, Renders {
     this.state = state;
     this.stateFramesCount = 0;
   }
-  private readonly checkPoints = {
-    center: { x: 0, y: 0 },
-    right: { x: 0, y: 0 },
-    left: { x: 0, y: 0 },
-    bottom: { x: 0, y: 0 },
-    top: { x: 0, y: 0 },
-    bottomRight: { x: 0, y: 0 },
-    bottomLeft: { x: 0, y: 0 },
-    topRight: { x: 0, y: 0 },
-    topLeft: { x: 0, y: 0 },
-  };
   #isGrounded: boolean = false;
 
   set isGrounded(value: boolean) {
@@ -82,10 +72,6 @@ export class Beaver implements Updates, Renders {
 
   get isGrounded(): boolean {
     return this.#isGrounded;
-  }
-
-  get checkPointsArray(): { x: number; y: number }[] {
-    return Object.values(this.checkPoints);
   }
 
   constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
@@ -324,34 +310,25 @@ export class Beaver implements Updates, Renders {
   }
 
   // ========== UTILITY METHODS ==========
-  private createCollisionCheckPoints(
-    pos: planck.Vec2,
-    radius: number,
-    vel: planck.Vec2
-  ): { x: number; y: number }[] {
+  private createCollisionCheckPoints(): { x: number; y: number }[] {
     // Check multiple points around the circle, with extra points in movement direction
     // Focus on bottom half for ground collision
     // Calculate check points dynamically based on current position
-    const checkPoints: { x: number; y: number }[] = [
-      { x: pos.x, y: pos.y + radius }, // bottom
-      { x: pos.x, y: pos.y - radius }, // top
-      { x: pos.x + radius, y: pos.y }, // right
-      { x: pos.x - radius, y: pos.y }, // left
-      { x: pos.x + radius * 0.7, y: pos.y + radius * 0.7 }, // bottomRight
-      { x: pos.x - radius * 0.7, y: pos.y + radius * 0.7 }, // bottomLeft
-      { x: pos.x + radius * 0.7, y: pos.y - radius * 0.7 }, // topRight
-      { x: pos.x - radius * 0.7, y: pos.y - radius * 0.7 }, // topLeft
-    ];
-
-    // Add more points along the bottom arc for better ground detection
-    for (let angle = -Math.PI * 0.75; angle <= -Math.PI * 0.25; angle += Math.PI / 8) {
+    const pos = this.body.getPosition();
+    const vel = this.body.getLinearVelocity();
+    const radius = this.radius;
+    // Check bottom points only, for ground collision
+    const checkPoints: { x: number; y: number }[] = iterate(12, (i) => {
+      // Visit 12 points along the bottom arc
+      const angle = Math.PI * i/12;
       const dir = vec.fromAngle(angle);
       const scaledDir = vec.scale(dir, radius);
-      checkPoints.push({
+      return {
         x: pos.x + scaledDir.x,
         y: pos.y + scaledDir.y,
-      });
-    }
+      };
+    });
+    return checkPoints;
 
     // Add check points in the direction of movement to catch terrain ahead
     // Only check at exactly the radius to avoid false collisions outside the circle
@@ -383,30 +360,17 @@ export class Beaver implements Updates, Renders {
   }
 
   private resolveTerrainCollision(): void {
+    const checkPoints = this.createCollisionCheckPoints();
     const pos = this.body.getPosition();
     const radius = this.radius;
-    const vel = this.body.getLinearVelocity();
-
-    const checkPoints = this.createCollisionCheckPoints(pos, radius, vel);
-
     let pushX = 0;
     let pushY = 0;
     let collisionCount = 0;
     let maxPenetration = 0;
-    const drawLineTo = (point: { x: number; y: number }) => {
-      const ctx = this.game.canvas;
-      ctx.strokeStyle = 'red';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-      ctx.lineTo(point.x, point.y);
-      ctx.stroke();
-    }
     // Check if grounded by checking bottom points
     this.isGrounded = false;
     for (const point of checkPoints) {
       // Draw lines from center (pos) to each point (checkPoints) (DEBUG)
-      drawLineTo(point);
       if (!this.game.terrain.isSolid(point.x, point.y)) continue;
       // Check isGrounded
       // this is a bottom point (y >= pos.y) and if it's on solid ground
@@ -530,11 +494,23 @@ export class Beaver implements Updates, Renders {
     ctx.fillRect(barX, barY, barWidth, barHeight);
     ctx.fillStyle = "#00FF00";
     ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+
+    for(const point of this.createCollisionCheckPoints()) this.drawLineTo(point);
   }
 
   destroy(): void {
     if (this.body) {
       this.game.world.destroyBody(this.body);
     }
+  }
+  drawLineTo (point: { x: number; y: number }) {
+    const pos = this.body.getPosition();
+    const ctx = this.game.canvas;
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
   }
 }
