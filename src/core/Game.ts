@@ -2,7 +2,7 @@ import { TurnManager, TurnPhase } from "./managers/TurnManager";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { Terrain } from "../entities/Terrain";
 import { Beaver } from "../entities/Beaver";
-import type { GameModules } from "./GameModules.type";
+import type { GameModules } from "./types/GameModules.type";
 import { Aim } from "../entities/Aim";
 import { GameLoop } from "./GameLoop";
 import { GameInitializer, CoreModules } from "./GameInitializer";

@@ -1,4 +1,4 @@
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 
 export interface PowerIndicatorOptions {
   x: number;

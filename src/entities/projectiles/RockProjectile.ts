@@ -1,7 +1,7 @@
 import { AssetLoader } from "../../general/AssetLoader";
 import { TileSheet } from "../../general/TileSheet";
 import { Projectile } from "../Projectile";
-import type { GameModules } from "../../core/GameModules.type";
+import type { GameModules } from "../../core/types/GameModules.type";
 
 export type RockProjectileArguments = {
     position: planck.Vec2;

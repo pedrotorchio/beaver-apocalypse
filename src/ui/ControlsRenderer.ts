@@ -1,4 +1,4 @@
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 
 /**
  * Renders a visual representation of control inputs in real-time.

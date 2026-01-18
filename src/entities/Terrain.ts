@@ -1,4 +1,4 @@
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 
 /**
  * Manages destructible terrain using a canvas-based bitmap representation.

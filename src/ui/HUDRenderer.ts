@@ -1,6 +1,6 @@
 import { Beaver } from "../entities/Beaver";
 import { TurnPhase } from "../core/managers/TurnManager";
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 
 /**
  * Renders the Heads-Up Display (HUD) overlay showing game state information.

@@ -1,7 +1,7 @@
 import { Beaver } from "../entities/Beaver";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 import * as vec from "../general/vector";
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 
 export interface AimIndicatorOptions {
   x: number;

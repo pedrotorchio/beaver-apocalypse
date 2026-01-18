@@ -2,7 +2,7 @@ import * as planck from "planck-js";
 import { Beaver } from "./Beaver";
 import * as vec from "../general/vector";
 import { useObservable } from "../general/observable";
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 
 export interface ProjectileArguments {
   position: planck.Vec2;

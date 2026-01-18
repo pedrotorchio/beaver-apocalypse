@@ -1,7 +1,7 @@
 import * as planck from "planck-js";
 import { Aim } from "./Aim";
 import { Projectile } from "./Projectile";
-import type { GameModules } from "../core/GameModules.type";
+import type { GameModules } from "../core/types/GameModules.type";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
