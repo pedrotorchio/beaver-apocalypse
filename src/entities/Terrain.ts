@@ -17,15 +17,13 @@ import type { GameModules } from "../core/GameModules.type";
  * their position intersects with solid terrain.
  */
 export class Terrain {
-  private gameModules: GameModules;
   private terrainCanvas: HTMLCanvasElement;
   private terrainCtx: CanvasRenderingContext2D;
 
-  constructor(gameModules: GameModules) {
-    this.gameModules = gameModules;
+  constructor(private game: GameModules) {
     // Create off-screen canvas for terrain bitmap
     this.terrainCanvas = document.createElement("canvas");
-    const canvas = gameModules.canvas.canvas;
+    const canvas = game.canvas.canvas;
     this.terrainCanvas.width = canvas.width;
     this.terrainCanvas.height = canvas.height;
     this.terrainCtx = this.terrainCanvas.getContext("2d", { willReadFrequently: true })!;
@@ -37,7 +35,7 @@ export class Terrain {
   }
 
   private generateDefaultTerrain(): void {
-    const canvas = this.gameModules.canvas.canvas;
+    const canvas = this.game.canvas.canvas;
     const { width, height } = canvas;
     // Clear canvas (transparent = air, not solid)
     this.terrainCtx.clearRect(0, 0, width, height);
@@ -78,7 +76,7 @@ export class Terrain {
   }
 
   isSolid(x: number, y: number): boolean {
-    const canvas = this.gameModules.canvas.canvas;
+    const canvas = this.game.canvas.canvas;
     const { width, height } = canvas;
     if (x < 0 || x >= width || y < 0 || y >= height) {
       return true; // Out of bounds is solid
@@ -102,10 +100,10 @@ export class Terrain {
   }
 
   getWidth(): number {
-    return this.gameModules.canvas.canvas.width;
+    return this.game.canvas.canvas.width;
   }
 
   getHeight(): number {
-    return this.gameModules.canvas.canvas.height;
+    return this.game.canvas.canvas.height;
   }
 }

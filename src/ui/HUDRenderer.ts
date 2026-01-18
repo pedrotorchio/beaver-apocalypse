@@ -19,14 +19,10 @@ import type { GameModules } from "../core/GameModules.type";
  * to keep the HUD information current.
  */
 export class HUDRenderer {
-  private gameModules: GameModules;
-
-  constructor(gameModules: GameModules) {
-    this.gameModules = gameModules;
-  }
+  constructor(private game: GameModules) {}
 
   render(beavers: Beaver[]): void {
-    const ctx = this.gameModules.canvas;
+    const ctx = this.game.canvas;
     const canvas = ctx.canvas;
     const hudHeight = 70;
     const padding = 15;
@@ -42,7 +38,7 @@ export class HUDRenderer {
     ctx.strokeRect(0, 0, canvas.width, hudHeight);
 
     // Get current player and phase
-    const turnManager = this.gameModules.core.turnManager;
+    const turnManager = this.game.core.turnManager;
     const currentPlayer = turnManager.getCurrentPlayerIndex();
     const phase = turnManager.getPhase();
 

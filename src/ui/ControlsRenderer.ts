@@ -29,18 +29,18 @@ export class ControlsRenderer {
   }
 
   private get startX(): number {
-    const canvas = this.gameModules.canvas.canvas;
+    const canvas = this.game.canvas.canvas;
     return canvas.width - 2 * this.totalGridSize - this.gridPadding;
   }
   private get startY(): number {
-    const canvas = this.gameModules.canvas.canvas;
+    const canvas = this.game.canvas.canvas;
     return canvas.height - this.totalGridSize - this.gridPadding - 20;
   }
 
-  constructor(private gameModules: GameModules) {}
+  constructor(private game: GameModules) {}
 
   render(): void {
-    const input = this.gameModules.core.inputManager.getState();
+    const input = this.game.core.inputManager.getState();
 
     // Draw Up (top middle) - grid position (1, 0), 1 square wide
     this.drawRectangle(1, 0, 1, 1, input.jump);
@@ -54,7 +54,7 @@ export class ControlsRenderer {
     // Draw Fire (bottom row - all 3 positions) - grid position (0, 2), 3 squares wide
     this.drawRectangle(0, 2, 3, 1, input.fire || input.charging);
 
-    const currentBeaver = this.gameModules.core.entityManager.getBeaver(this.gameModules.core.turnManager.getCurrentPlayerIndex());
+    const currentBeaver = this.game.core.entityManager.getBeaver(this.game.core.turnManager.getCurrentPlayerIndex());
     this.writeText(currentBeaver?.isGrounded ? "Grounded" : "In the air");
     
   }
@@ -79,7 +79,7 @@ export class ControlsRenderer {
     const pixelHeight = height * this.squareSize + (height - 1) * this.squareSpacing;
 
     // Draw the rectangle
-    const ctx = this.gameModules.canvas;
+    const ctx = this.game.canvas;
     ctx.fillStyle = isActive ? this.activeColor : this.inactiveColor;
     ctx.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
 
@@ -96,7 +96,7 @@ export class ControlsRenderer {
   writeText(text: string): void {
     const textY = this.startY + this.totalGridSize + 10; // Position just below the grid
 
-    const ctx = this.gameModules.canvas;
+    const ctx = this.game.canvas;
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "14px Arial";
     ctx.textAlign = "center";

@@ -1,6 +1,6 @@
 import type { GameModules } from "../core/GameModules.type";
 
-export interface AimArgs {
+export interface AimArguments {
   minPower: number;
   maxPower: number;
   powerAccumulationRate: number;
@@ -20,14 +20,10 @@ export interface AimArgs {
  * direction, and power accumulates when the weapon is charging.
  */
 export class Aim {
-  private gameModules: GameModules;
-  private args: AimArgs;
   private angle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
   private power: number;
 
-  constructor(gameModules: GameModules, args: AimArgs) {
-    this.gameModules = gameModules;
-    this.args = args;
+  constructor(private game: GameModules, private args: AimArguments) {
     this.power = args.minPower;
   }
 

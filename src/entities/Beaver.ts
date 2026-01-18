@@ -6,10 +6,10 @@ import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { TileSheet } from "../general/TileSheet";
-import { RockProjectile, RockProjectileOptions } from "./projectiles/RockProjectile";
+import { RockProjectile, RockProjectileArguments } from "./projectiles/RockProjectile";
 import { AssetLoader } from "../general/AssetLoader";
 
-export interface BeaverOptions {
+export interface BeaverArguments {
   x: number;
   y: number;
   aim: Aim;
@@ -34,8 +34,6 @@ type BeaverState = "idle" | "walking" | "jumping" | "attacking" | "dead" | "hit"
  * health) is managed internally and queried by other systems.
  */
 export class Beaver {
-  private modules: GameModules;
-  private options: BeaverOptions;
   private body: planck.Body;
   private health: number = 100;
   private maxHealth: number = 100;
@@ -88,18 +86,16 @@ export class Beaver {
     return Object.values(this.checkPoints);
   }
 
-  constructor(private readonly name: string, modules: GameModules, options: BeaverOptions) {
-    this.modules = modules;
-    this.options = options;
+  constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
     this.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
-      position: planck.Vec2(options.x, options.y),
+      position: planck.Vec2(args.x, args.y),
       fixedRotation: false,
       linearDamping: 0.5,
     };
 
-    this.body = modules.world.createBody(bodyDef);
+    this.body = game.world.createBody(bodyDef);
 
     const shape = planck.Circle(this.radius);
     const fixtureDef: planck.FixtureDef = {
@@ -161,7 +157,7 @@ export class Beaver {
   }
 
   getAim(): Aim {
-    return this.options.aim;
+    return this.args.aim;
   }
 
   setPhysicsActive(active: boolean): void {
@@ -271,12 +267,12 @@ export class Beaver {
   getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
     // Create GameModules for projectile
     const projectileModules: GameModules = {
-      world: this.modules.world,
-      terrain: this.modules.terrain,
-      core: this.modules.core,
-      canvas: this.modules.canvas,
+      world: this.game.world,
+      terrain: this.game.terrain,
+      core: this.game.core,
+      canvas: this.game.canvas,
     };
-    const args: RockProjectileOptions = {
+    const args: RockProjectileArguments = {
       position,
       velocity,
       damage: 10
@@ -286,7 +282,7 @@ export class Beaver {
 
   getProjectileSpawnPoint(power?: number): planck.Vec2 {
     const pos = this.body.getPosition();
-    const aim = this.options.aim;
+    const aim = this.args.aim;
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
@@ -413,10 +409,10 @@ export class Beaver {
       ctx.moveTo(pos.x, pos.y);
       ctx.lineTo(point.x, point.y);
       ctx.stroke();
-      if (!this.modules.terrain.isSolid(point.x, point.y)) continue;
+      if (!this.game.terrain.isSolid(point.x, point.y)) continue;
       // Check isGrounded
       // this is a bottom point (y >= pos.y) and if it's on solid ground
-      if (point.y >= pos.y && this.modules.terrain.isSolid(point.x, point.y)) {
+      if (point.y >= pos.y && this.game.terrain.isSolid(point.x, point.y)) {
         this.isGrounded = true;
       }
 
@@ -539,7 +535,7 @@ export class Beaver {
 
   destroy(): void {
     if (this.body) {
-      this.modules.world.destroyBody(this.body);
+      this.game.world.destroyBody(this.body);
     }
   }
 }

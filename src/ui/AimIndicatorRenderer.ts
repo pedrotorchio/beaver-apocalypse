@@ -10,7 +10,7 @@ export interface AimIndicatorOptions {
   length?: number;
 }
 
-export interface AimIndicatorRendererArgs {
+export interface AimIndicatorRendererArguments {
   powerIndicator: PowerIndicatorRenderer;
 }
 
@@ -29,13 +29,7 @@ export interface AimIndicatorRendererArgs {
  * their shots accurately.
  */
 export class AimIndicatorRenderer {
-  private gameModules: GameModules;
-  private args: AimIndicatorRendererArgs;
-
-  constructor(gameModules: GameModules, args: AimIndicatorRendererArgs) {
-    this.gameModules = gameModules;
-    this.args = args;
-  }
+  constructor(private game: GameModules, private args: AimIndicatorRendererArguments) {}
 
   /**
    * Renders the aim indicator and power indicator for a beaver.
@@ -59,14 +53,14 @@ export class AimIndicatorRenderer {
     const color = `rgb(${red}, ${green}, ${blue})`;
 
     // Draw circle at spawn point
-    const ctx = this.gameModules.canvas;
+    const ctx = this.game.canvas;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(spawnPoint.x, spawnPoint.y, 5, 0, Math.PI * 2);
     ctx.fill();
 
     // Render power indicator if charging
-    const input = this.gameModules.core.inputManager.getState();
+    const input = this.game.core.inputManager.getState();
     if (input.charging) {
       this.args.powerIndicator.render({
         x: pos.x,
@@ -84,7 +78,7 @@ export class AimIndicatorRenderer {
     const offset = vec.scale(direction, length);
     const end = { x: x + offset.x, y: y + offset.y };
 
-    const ctx = this.gameModules.canvas;
+    const ctx = this.game.canvas;
     ctx.strokeStyle = "#FFFF00";
     ctx.lineWidth = 2;
     ctx.beginPath();

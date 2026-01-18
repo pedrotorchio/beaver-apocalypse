@@ -24,14 +24,10 @@ export interface PowerIndicatorOptions {
  * is being charged.
  */
 export class PowerIndicatorRenderer {
-  private gameModules: GameModules;
-
-  constructor(gameModules: GameModules) {
-    this.gameModules = gameModules;
-  }
+  constructor(private game: GameModules) {}
 
   render(options: PowerIndicatorOptions): void {
-    const ctx = this.gameModules.canvas;
+    const ctx = this.game.canvas;
     const { x, y, currentPower, minPower, maxPower } = options;
     const barWidth = 60;
     const barHeight = 8;

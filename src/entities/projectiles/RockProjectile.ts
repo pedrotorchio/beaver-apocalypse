@@ -3,7 +3,7 @@ import { TileSheet } from "../../general/TileSheet";
 import { Projectile } from "../Projectile";
 import type { GameModules } from "../../core/GameModules.type";
 
-export type RockProjectileOptions = {
+export type RockProjectileArguments = {
     position: planck.Vec2;
     velocity: planck.Vec2;
     damage: number;
@@ -11,11 +11,11 @@ export type RockProjectileOptions = {
 export class RockProjectile extends Projectile {
     public static renderRadius = true
     private tilesheet: TileSheet<"rock">;
-    constructor(modules: GameModules, options: RockProjectileOptions) {
-        super(modules, {
-            position: options.position,
-            velocity: options.velocity,
-            damage: options.damage,
+    constructor(game: GameModules, args: RockProjectileArguments) {
+        super(game, {
+            position: args.position,
+            velocity: args.velocity,
+            damage: args.damage,
             radius: 5,
         });
         this.tilesheet = new TileSheet({
@@ -23,21 +23,21 @@ export class RockProjectile extends Projectile {
             tileWidth: 419,
             tileHeight: 366,
             states: ["rock"],
-            renderWidth: this.options.radius,
-            renderHeight: this.options.radius,
+            renderWidth: this.args.radius,
+            renderHeight: this.args.radius,
         });
     }
 
     render(): void {
         const pos = this.getPosition();
-        this.tilesheet.drawImage(this.modules.canvas, "rock", pos.x, pos.y);
+        this.tilesheet.drawImage(this.game.canvas, "rock", pos.x, pos.y);
 
         if (RockProjectile.renderRadius) {
-            const ctx = this.modules.canvas;
+            const ctx = this.game.canvas;
             ctx.strokeStyle = "#FFD700";
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.arc(pos.x, pos.y, this.options.radius + 2, 0, Math.PI * 2);
+            ctx.arc(pos.x, pos.y, this.args.radius + 2, 0, Math.PI * 2);
             ctx.stroke();
         }
     }
