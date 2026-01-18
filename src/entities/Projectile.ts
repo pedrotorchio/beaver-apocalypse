@@ -3,6 +3,8 @@ import { Beaver } from "./Beaver";
 import * as vec from "../general/vector";
 import { useObservable } from "../general/observable";
 import type { GameModules } from "../core/types/GameModules.type";
+import type { Renders } from "../core/types/Renders.type";
+import type { Updates } from "../core/types/Updates.type";
 
 export interface ProjectileArguments {
   position: planck.Vec2;
@@ -26,7 +28,7 @@ export interface ProjectileArguments {
  * after exploding. The projectile continuously checks for terrain collisions
  * and automatically triggers its explosion effect when contact is detected.
  */
-export abstract class Projectile {
+export abstract class Projectile implements Renders, Updates {
   private body: planck.Body;
   private active: boolean = true;
   public static bounceOffMode = false;
@@ -88,32 +90,31 @@ export abstract class Projectile {
     this.on.notify("collision");
   }
 
-  update(beavers: Beaver[]): boolean {
-    if (!this.active) return false;
+  update(): void {
+    if (!this.active) return;
 
+    const beavers = this.game.core.entityManager.getBeavers();
     const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
     if (hitBeaver) {
       this.explode(beavers, hitBeaver);
       this.alertCollision();
       this.destroy();
-      return false;
+      return;
     }
 
     if (this.checkTerrainCollision()) {
       this.explode(beavers);
       this.alertCollision();
       this.destroy();
-      return false;
+      return;
     }
 
     if (this.checkOutOfBounds()) {
       this.active = false;
       this.alertCollision();
       this.destroy();
-      return false;
+      return;
     }
-
-    return true;
   }
 
   private checkBeaverCollisions(beavers: Beaver[]): Beaver | null {

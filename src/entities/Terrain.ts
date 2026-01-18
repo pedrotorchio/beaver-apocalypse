@@ -1,4 +1,5 @@
 import type { GameModules } from "../core/types/GameModules.type";
+import type { Renders } from "../core/types/Renders.type";
 
 /**
  * Manages destructible terrain using a canvas-based bitmap representation.
@@ -16,7 +17,7 @@ import type { GameModules } from "../core/types/GameModules.type";
  * All entities (Beavers, Projectiles) query this class to determine if
  * their position intersects with solid terrain.
  */
-export class Terrain {
+export class Terrain implements Renders {
   private terrainCanvas: HTMLCanvasElement;
   private terrainCtx: CanvasRenderingContext2D;
 
@@ -95,7 +96,8 @@ export class Terrain {
     this.terrainCtx.restore();
   }
 
-  render(ctx: CanvasRenderingContext2D): void {
+  render(): void {
+    const ctx = this.game.canvas;
     ctx.drawImage(this.terrainCanvas, 0, 0);
   }
 

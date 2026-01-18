@@ -1,14 +1,6 @@
-import { Beaver } from "../entities/Beaver";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
-import * as vec from "../general/vector";
 import type { GameModules } from "../core/types/GameModules.type";
-
-export interface AimIndicatorOptions {
-  x: number;
-  y: number;
-  angle: number;
-  length?: number;
-}
+import type { Renders } from "../core/types/Renders.type";
 
 export interface AimIndicatorRendererArguments {
   powerIndicator: PowerIndicatorRenderer;
@@ -28,22 +20,29 @@ export interface AimIndicatorRendererArguments {
  * is charging to indicate power level. This visual aid helps players aim
  * their shots accurately.
  */
-export class AimIndicatorRenderer {
+export class AimIndicatorRenderer implements Renders {
   constructor(private game: GameModules, private args: AimIndicatorRendererArguments) {}
 
   /**
    * Renders the aim indicator and power indicator for a beaver.
    * This method handles all the logic for displaying aim direction and power level.
    */
-  renderForBeaver(beaver: Beaver): void {
-    const aim = beaver.getAim();
+  render(): void {
+    const currentBeaver = this.game.core.entityManager.getBeaver(
+      this.game.core.turnManager.getCurrentPlayerIndex()
+    );
+    if (!currentBeaver?.isAlive() || !this.game.core.turnManager.canAcceptInput()) {
+      return;
+    }
+
+    const aim = currentBeaver.getAim();
     const power = aim.getPower();
     const minPower = aim.getMinPower();
     const maxPower = aim.getMaxPower();
     
     // Calculate spawn point with current power
-    const spawnPoint = beaver.getProjectileSpawnPoint(power);
-    const pos = beaver.getPosition();
+    const spawnPoint = currentBeaver.getProjectileSpawnPoint(power);
+    const pos = currentBeaver.getPosition();
 
     // Interpolate color from yellow (#FFFF00) to red (#FF0000) based on power
     const powerRatio = (power - minPower) / (maxPower - minPower);
@@ -70,20 +69,5 @@ export class AimIndicatorRenderer {
         maxPower: maxPower,
       });
     }
-  }
-
-  render(options: AimIndicatorOptions): void {
-    const { x, y, angle, length = 40 } = options;
-    const direction = vec.fromAngle(angle);
-    const offset = vec.scale(direction, length);
-    const end = { x: x + offset.x, y: y + offset.y };
-
-    const ctx = this.game.canvas;
-    ctx.strokeStyle = "#FFFF00";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(end.x, end.y);
-    ctx.stroke();
   }
 }

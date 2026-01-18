@@ -178,12 +178,10 @@ export class Game {
 
     // Update physics
     this.physicsWorld.step();
-    // Update projectiles
-    this.entityManager.updateProjectiles(this.entityManager.getBeavers());
-
+    
     // Update entities
     this.entityManager.getBeavers().forEach(beaver => beaver.update());
-    this.entityManager.getProjectiles().forEach(projectile => projectile.update(this.entityManager.getBeavers()));  
+    this.entityManager.updateProjectiles(this.entityManager.getBeavers());  
 
     if (this.checkAndRun(TurnPhase.PlayerInput)) return;
     if (this.checkAndRun(TurnPhase.ProjectileFlying)) return;
@@ -308,11 +306,11 @@ export class Game {
     this.clearRender();
 
     // Draw terrain
-    this.terrain.render(this.ctx);
+    this.terrain.render();
 
     // Draw beavers
     for (const beaver of this.entityManager.getBeavers()) {
-      beaver.render(this.ctx);
+      beaver.render();
     }
 
     // Draw projectiles
@@ -321,13 +319,10 @@ export class Game {
     }
 
     // Draw HUD
-    this.hudRenderer.render(this.entityManager.getBeavers());
+    this.hudRenderer.render();
 
     // Draw aim indicator if in input phase
-    const currentBeaver = this.entityManager.getBeaver(this.turnManager.getCurrentPlayerIndex());
-    if (currentBeaver?.isAlive() && this.turnManager.canAcceptInput()) {
-      this.aimIndicator.renderForBeaver(currentBeaver);
-    }
+    this.aimIndicator.render();
 
   }
 }

@@ -1,6 +1,7 @@
 import { Beaver } from "../entities/Beaver";
 import { TurnPhase } from "../core/managers/TurnManager";
 import type { GameModules } from "../core/types/GameModules.type";
+import type { Renders } from "../core/types/Renders.type";
 
 /**
  * Renders the Heads-Up Display (HUD) overlay showing game state information.
@@ -18,10 +19,11 @@ import type { GameModules } from "../core/types/GameModules.type";
  * in a consistent overlay format. This renderer should be called each frame
  * to keep the HUD information current.
  */
-export class HUDRenderer {
+export class HUDRenderer implements Renders {
   constructor(private game: GameModules) {}
 
-  render(beavers: Beaver[]): void {
+  render(): void {
+    const beavers = this.game.core.entityManager.getBeavers();
     const ctx = this.game.canvas;
     const canvas = ctx.canvas;
     const hudHeight = 70;

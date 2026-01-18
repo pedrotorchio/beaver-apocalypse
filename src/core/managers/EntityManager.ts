@@ -48,8 +48,8 @@ export class EntityManager {
     const activeProjectiles: Projectile[] = [];
     for (const projectile of this.projectiles) {
       if (projectile.isActive()) {
-        const stillActive = projectile.update(beavers);
-        if (stillActive) {
+        projectile.update();
+        if (projectile.isActive()) {
           activeProjectiles.push(projectile);
         }
       }

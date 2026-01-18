@@ -2,6 +2,8 @@ import * as planck from "planck-js";
 import { Aim } from "./Aim";
 import { Projectile } from "./Projectile";
 import type { GameModules } from "../core/types/GameModules.type";
+import type { Updates } from "../core/types/Updates.type";
+import type { Renders } from "../core/types/Renders.type";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
@@ -33,7 +35,7 @@ type BeaverState = "idle" | "walking" | "jumping" | "attacking" | "dead" | "hit"
  * damaged by projectile explosions. The beaver's state (alive/dead, position,
  * health) is managed internally and queried by other systems.
  */
-export class Beaver {
+export class Beaver implements Updates, Renders {
   private body: planck.Body;
   private health: number = 100;
   private maxHealth: number = 100;
@@ -120,12 +122,8 @@ export class Beaver {
     const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
 
     const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
-    const isAttacking = this.state === 'attacking';
     const isDead = this.state === 'dead';
-    const isHit = this.state === 'hit';
 
-    if (isAttacking) return 'attacking';
-    if (isHit) return 'hit';
     if (isMovingUpward && !isGrounded) return 'jumping';
     if (isMovingDownward && !isGrounded) return 'jumping';
     if (isDead) return 'dead';
@@ -175,9 +173,8 @@ export class Beaver {
     const newState = this.resolveBeaverState()
     const currentState = this.state;
     // Hit always takes over any other state
-    if (newState === 'hit') this.setState("hit");
-    else if (
-      (currentState === 'hit' && this.stateFramesCount > 10) ||
+    if (
+      (currentState === 'hit' && this.stateFramesCount > 30) ||
       (currentState === 'attacking' && this.stateFramesCount > 30)
     ) {/* Do nothing */}
     else this.setState(newState); 
@@ -398,17 +395,20 @@ export class Beaver {
     let pushY = 0;
     let collisionCount = 0;
     let maxPenetration = 0;
-    
-    // Check if grounded by checking bottom points
-    this.isGrounded = false;
-    for (const point of checkPoints) {
-      // Draw lines from center (pos) to each point (checkPoints)
+    const drawLineTo = (point: { x: number; y: number }) => {
+      const ctx = this.game.canvas;
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(pos.x, pos.y);
       ctx.lineTo(point.x, point.y);
       ctx.stroke();
+    }
+    // Check if grounded by checking bottom points
+    this.isGrounded = false;
+    for (const point of checkPoints) {
+      // Draw lines from center (pos) to each point (checkPoints) (DEBUG)
+      drawLineTo(point);
       if (!this.game.terrain.isSolid(point.x, point.y)) continue;
       // Check isGrounded
       // this is a bottom point (y >= pos.y) and if it's on solid ground
@@ -506,7 +506,8 @@ export class Beaver {
     this.body.setLinearVelocity(adjustedVel);
   }
 
-  render(ctx: CanvasRenderingContext2D): void {
+  render(): void {
+    const ctx = this.game.canvas;
     const pos = this.body.getPosition();
     const pixelX = pos.x;
     const pixelY = pos.y;

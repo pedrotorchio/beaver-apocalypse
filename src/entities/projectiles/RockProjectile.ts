@@ -2,13 +2,14 @@ import { AssetLoader } from "../../general/AssetLoader";
 import { TileSheet } from "../../general/TileSheet";
 import { Projectile } from "../Projectile";
 import type { GameModules } from "../../core/types/GameModules.type";
+import type { Renders } from "../../core/types/Renders.type";
 
 export type RockProjectileArguments = {
     position: planck.Vec2;
     velocity: planck.Vec2;
     damage: number;
 }
-export class RockProjectile extends Projectile {
+export class RockProjectile extends Projectile implements Renders {
     public static renderRadius = true
     private tilesheet: TileSheet<"rock">;
     constructor(game: GameModules, args: RockProjectileArguments) {

@@ -1,4 +1,5 @@
 import type { GameModules } from "../core/types/GameModules.type";
+import type { Renders } from "../core/types/Renders.type";
 
 /**
  * Renders a visual representation of control inputs in real-time.
@@ -12,7 +13,7 @@ import type { GameModules } from "../core/types/GameModules.type";
  * Keys are displayed as grey squares when not pressed, and desaturated
  * bloody red when pressed. This provides visual feedback for player inputs.
  */
-export class ControlsRenderer {
+export class ControlsRenderer implements Renders {
 
   // Colors
   private readonly inactiveColor = "#808080"; // Grey
