@@ -22,9 +22,6 @@ export class PhysicsWorld {
   private positionIterations: number = 3;
   private timeStep: number = 1 / 60;
   private readonly devtoolsTab: DevtoolsTab;
-  public readonly on = useObservable({
-    isSettled: () => this.isSettled(),
-  });
 
   constructor() {
     this.world = planck.World({
@@ -52,7 +49,6 @@ export class PhysicsWorld {
     }
     this.devtoolsTab.update('bodyCount', this.world.getBodyCount());
     this.devtoolsTab.update('isSettled', isSettled);
-    this.on.notify('isSettled', 'changed');
     return isSettled;
   }
 
