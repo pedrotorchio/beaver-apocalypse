@@ -1,10 +1,9 @@
-import { CoreModules } from "../core/GameInitializer";
+import type { GameModules } from "../core/GameModules.type";
 
-export interface AimOptions {
+export interface AimArgs {
   minPower: number;
   maxPower: number;
   powerAccumulationRate: number;
-  core: CoreModules;
 }
 
 /**
@@ -21,13 +20,15 @@ export interface AimOptions {
  * direction, and power accumulates when the weapon is charging.
  */
 export class Aim {
-  private options: AimOptions;
+  private gameModules: GameModules;
+  private args: AimArgs;
   private angle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
   private power: number;
 
-  constructor(options: AimOptions) {
-    this.options = options;
-    this.power = options.minPower;
+  constructor(gameModules: GameModules, args: AimArgs) {
+    this.gameModules = gameModules;
+    this.args = args;
+    this.power = args.minPower;
   }
 
   getAngle(): number {
@@ -39,11 +40,11 @@ export class Aim {
   }
 
   getMinPower(): number {
-    return this.options.minPower;
+    return this.args.minPower;
   }
 
   getMaxPower(): number {
-    return this.options.maxPower;
+    return this.args.maxPower;
   }
 
   adjustAngle(delta: number): void {
@@ -56,16 +57,16 @@ export class Aim {
 
   updatePower(charging: boolean, justFired: boolean): void {
     if (charging) {
-      this.power = Math.min(this.options.maxPower, this.power + this.options.powerAccumulationRate);
+      this.power = Math.min(this.args.maxPower, this.power + this.args.powerAccumulationRate);
     } else {
       // Reset power when not charging (but don't reset if we just fired)
       if (!justFired) {
-        this.power = this.options.minPower;
+        this.power = this.args.minPower;
       }
     }
   }
 
   resetPower(): void {
-    this.power = this.options.minPower;
+    this.power = this.args.minPower;
   }
 }

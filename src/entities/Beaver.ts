@@ -1,8 +1,7 @@
 import * as planck from "planck-js";
-import { Terrain } from "./Terrain";
 import { Aim } from "./Aim";
-import { Projectile, GameModules } from "./Projectile";
-import { CoreModules } from "../core/GameInitializer";
+import { Projectile } from "./Projectile";
+import type { GameModules } from "../core/GameModules.type";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
@@ -11,12 +10,9 @@ import { RockProjectile, RockProjectileOptions } from "./projectiles/RockProject
 import { AssetLoader } from "../general/AssetLoader";
 
 export interface BeaverOptions {
-  world: planck.World;
-  terrain: Terrain;
-  aim: Aim;
-  core: CoreModules;
   x: number;
   y: number;
+  aim: Aim;
 }
 type BeaverState = "idle" | "walking" | "jumping" | "attacking" | "dead" | "hit";
 
@@ -38,6 +34,7 @@ type BeaverState = "idle" | "walking" | "jumping" | "attacking" | "dead" | "hit"
  * health) is managed internally and queried by other systems.
  */
 export class Beaver {
+  private modules: GameModules;
   private options: BeaverOptions;
   private body: planck.Body;
   private health: number = 100;
@@ -91,7 +88,8 @@ export class Beaver {
     return Object.values(this.checkPoints);
   }
 
-  constructor(private readonly name: string, options: BeaverOptions) {
+  constructor(private readonly name: string, modules: GameModules, options: BeaverOptions) {
+    this.modules = modules;
     this.options = options;
     this.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
     const bodyDef: planck.BodyDef = {
@@ -101,7 +99,7 @@ export class Beaver {
       linearDamping: 0.5,
     };
 
-    this.body = options.world.createBody(bodyDef);
+    this.body = modules.world.createBody(bodyDef);
 
     const shape = planck.Circle(this.radius);
     const fixtureDef: planck.FixtureDef = {
@@ -272,18 +270,18 @@ export class Beaver {
 
   getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
     // Create GameModules for projectile
-    const modules: GameModules = {
-      world: this.options.world,
-      terrain: this.options.terrain,
-      core: this.options.core,
-      canvas: this.options.core.canvasContext,
+    const projectileModules: GameModules = {
+      world: this.modules.world,
+      terrain: this.modules.terrain,
+      core: this.modules.core,
+      canvas: this.modules.canvas,
     };
     const args: RockProjectileOptions = {
       position,
       velocity,
       damage: 10
     }
-    return new RockProjectile(modules, args);
+    return new RockProjectile(projectileModules, args);
   }
 
   getProjectileSpawnPoint(power?: number): planck.Vec2 {
@@ -406,24 +404,21 @@ export class Beaver {
     let maxPenetration = 0;
     
     // Check if grounded by checking bottom points
-    // Don't consider grounded if moving upward (jumping)
-    const currentVel = this.body.getLinearVelocity();
     this.isGrounded = false;
-    if (currentVel.y < -1) {
-      // Moving upward significantly, not grounded
-      this.isGrounded = false;
-    } else {
-      for (const point of checkPoints) {
-        // Check if this is a bottom point (y >= pos.y) and if it's on solid ground
-        if (point.y >= pos.y && this.options.terrain.isSolid(point.x, point.y)) {
-          this.isGrounded = true;
-          break;
-        }
-      }
-    }
-    
     for (const point of checkPoints) {
-      if (!this.options.terrain.isSolid(point.x, point.y)) continue;
+      // Draw lines from center (pos) to each point (checkPoints)
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(point.x, point.y);
+      ctx.stroke();
+      if (!this.modules.terrain.isSolid(point.x, point.y)) continue;
+      // Check isGrounded
+      // this is a bottom point (y >= pos.y) and if it's on solid ground
+      if (point.y >= pos.y && this.modules.terrain.isSolid(point.x, point.y)) {
+        this.isGrounded = true;
+      }
 
       const dist = vec.distance(pos, point);
 
@@ -544,7 +539,7 @@ export class Beaver {
 
   destroy(): void {
     if (this.body) {
-      this.options.world.destroyBody(this.body);
+      this.modules.world.destroyBody(this.body);
     }
   }
 }

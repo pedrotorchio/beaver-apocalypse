@@ -1,11 +1,6 @@
 import { Beaver } from "../entities/Beaver";
-import { TurnManager, TurnPhase } from "../core/managers/TurnManager";
-
-export interface HUDRendererOptions {
-  ctx: CanvasRenderingContext2D;
-  canvas: HTMLCanvasElement;
-  turnManager: TurnManager;
-}
+import { TurnPhase } from "../core/managers/TurnManager";
+import type { GameModules } from "../core/GameModules.type";
 
 /**
  * Renders the Heads-Up Display (HUD) overlay showing game state information.
@@ -24,33 +19,32 @@ export interface HUDRendererOptions {
  * to keep the HUD information current.
  */
 export class HUDRenderer {
-  private ctx: CanvasRenderingContext2D;
-  private canvas: HTMLCanvasElement;
-  private turnManager: TurnManager;
+  private gameModules: GameModules;
 
-  constructor(options: HUDRendererOptions) {
-    this.ctx = options.ctx;
-    this.canvas = options.canvas;
-    this.turnManager = options.turnManager;
+  constructor(gameModules: GameModules) {
+    this.gameModules = gameModules;
   }
 
   render(beavers: Beaver[]): void {
+    const ctx = this.gameModules.canvas;
+    const canvas = ctx.canvas;
     const hudHeight = 70;
     const padding = 15;
     const sectionSpacing = 20;
 
     // Draw HUD background with semi-transparent overlay
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-    this.ctx.fillRect(0, 0, this.canvas.width, hudHeight);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+    ctx.fillRect(0, 0, canvas.width, hudHeight);
 
     // Draw border
-    this.ctx.strokeStyle = "#FFFFFF";
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(0, 0, this.canvas.width, hudHeight);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, canvas.width, hudHeight);
 
     // Get current player and phase
-    const currentPlayer = this.turnManager.getCurrentPlayerIndex();
-    const phase = this.turnManager.getPhase();
+    const turnManager = this.gameModules.core.turnManager;
+    const currentPlayer = turnManager.getCurrentPlayerIndex();
+    const phase = turnManager.getPhase();
 
     // Phase names for display
     const phaseNames: Record<TurnPhase, string> = {
@@ -63,23 +57,23 @@ export class HUDRenderer {
     let xPos = padding;
 
     // Left section: Beaver turn indicator
-    this.ctx.fillStyle = "#FFFFFF";
-    this.ctx.font = "bold 22px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 22px Arial";
     const beaverText = `Beaver ${currentPlayer + 1}'s Turn`;
-    this.ctx.fillText(beaverText, xPos, 28);
-    xPos += this.ctx.measureText(beaverText).width + sectionSpacing;
+    ctx.fillText(beaverText, xPos, 28);
+    xPos += ctx.measureText(beaverText).width + sectionSpacing;
 
     // Middle section: Phase indicator
-    this.ctx.font = "18px Arial";
-    this.ctx.fillStyle = "#CCCCCC";
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#CCCCCC";
     const phaseLabel = "Phase:";
-    this.ctx.fillText(phaseLabel, xPos, 28);
-    xPos += this.ctx.measureText(phaseLabel).width + 8;
+    ctx.fillText(phaseLabel, xPos, 28);
+    xPos += ctx.measureText(phaseLabel).width + 8;
 
-    this.ctx.fillStyle = "#FFFF00";
+    ctx.fillStyle = "#FFFF00";
     const phaseText = phaseNames[phase] || "Unknown";
-    this.ctx.fillText(phaseText, xPos, 28);
-    const leftSectionEnd = xPos + this.ctx.measureText(phaseText).width + sectionSpacing;
+    ctx.fillText(phaseText, xPos, 28);
+    const leftSectionEnd = xPos + ctx.measureText(phaseText).width + sectionSpacing;
 
     // Right section: Health for all beavers (positioned from right)
     const barWidth = 100;
@@ -91,7 +85,7 @@ export class HUDRenderer {
     const minLeftEdge = leftSectionEnd + padding; // Minimum left edge to avoid overlap with left section
     
     // Start from right edge of canvas
-    let rightX = this.canvas.width - padding;
+    let rightX = canvas.width - padding;
     
     // Check if health bars would overlap with left section
     // Calculate where the leftmost bar would start if we position from the right edge
@@ -101,7 +95,7 @@ export class HUDRenderer {
     // Ensure bars stay within canvas bounds
     if (leftmostBarLeftEdge < minLeftEdge) {
       // Position bars so they start at minimum left edge, but clamp to canvas
-      const adjustedRightX = Math.min(minLeftEdge + totalHealthBarWidth, this.canvas.width - padding);
+      const adjustedRightX = Math.min(minLeftEdge + totalHealthBarWidth, canvas.width - padding);
       rightX = adjustedRightX;
     }
 
@@ -119,36 +113,36 @@ export class HUDRenderer {
       }
 
       // Draw health bar background
-      this.ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
-      this.ctx.fillRect(rightX, barY, barWidth, barHeight);
+      ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
+      ctx.fillRect(rightX, barY, barWidth, barHeight);
 
       // Draw health bar
       if (i === currentPlayer) {
-        this.ctx.fillStyle = "#FFFF00";
+        ctx.fillStyle = "#FFFF00";
       } else if (healthPercent > 0.6) {
-        this.ctx.fillStyle = "#00FF00";
+        ctx.fillStyle = "#00FF00";
       } else if (healthPercent > 0.3) {
-        this.ctx.fillStyle = "#FFAA00";
+        ctx.fillStyle = "#FFAA00";
       } else {
-        this.ctx.fillStyle = "#FF0000";
+        ctx.fillStyle = "#FF0000";
       }
-      this.ctx.fillRect(rightX, barY, barWidth * healthPercent, barHeight);
+      ctx.fillRect(rightX, barY, barWidth * healthPercent, barHeight);
 
       // Draw health bar border
-      this.ctx.strokeStyle = "#FFFFFF";
-      this.ctx.lineWidth = 1;
-      this.ctx.strokeRect(rightX, barY, barWidth, barHeight);
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(rightX, barY, barWidth, barHeight);
 
       // Draw health text above bar
-      this.ctx.font = "14px Arial";
+      ctx.font = "14px Arial";
       if (i === currentPlayer) {
-        this.ctx.fillStyle = "#FFFF00";
+        ctx.fillStyle = "#FFFF00";
       } else {
-        this.ctx.fillStyle = "#FFFFFF";
+        ctx.fillStyle = "#FFFFFF";
       }
       const healthText = `B${i + 1}: ${Math.ceil(health)}/${maxHealth}`;
-      const textWidth = this.ctx.measureText(healthText).width;
-      this.ctx.fillText(healthText, rightX + (barWidth - textWidth) / 2, barY - 2);
+      const textWidth = ctx.measureText(healthText).width;
+      ctx.fillText(healthText, rightX + (barWidth - textWidth) / 2, barY - 2);
 
       rightX -= sectionSpacing;
     }

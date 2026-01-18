@@ -1,9 +1,4 @@
-import { CoreModules } from "../core/GameInitializer";
-
-export type ControlsRendererOptions = {
-  core: CoreModules;
-  canvas: HTMLCanvasElement;
-}
+import type { GameModules } from "../core/GameModules.type";
 
 /**
  * Renders a visual representation of control inputs in real-time.
@@ -34,16 +29,18 @@ export class ControlsRenderer {
   }
 
   private get startX(): number {
-    return this.options.canvas.width - 2 * this.totalGridSize - this.gridPadding;
+    const canvas = this.gameModules.canvas.canvas;
+    return canvas.width - 2 * this.totalGridSize - this.gridPadding;
   }
   private get startY(): number {
-    return this.options.canvas.height - this.totalGridSize - this.gridPadding - 20;
+    const canvas = this.gameModules.canvas.canvas;
+    return canvas.height - this.totalGridSize - this.gridPadding - 20;
   }
 
-  constructor(private options: ControlsRendererOptions) {}
+  constructor(private gameModules: GameModules) {}
 
   render(): void {
-    const input = this.options.core.inputManager.getState();
+    const input = this.gameModules.core.inputManager.getState();
 
     // Draw Up (top middle) - grid position (1, 0), 1 square wide
     this.drawRectangle(1, 0, 1, 1, input.jump);
@@ -57,7 +54,7 @@ export class ControlsRenderer {
     // Draw Fire (bottom row - all 3 positions) - grid position (0, 2), 3 squares wide
     this.drawRectangle(0, 2, 3, 1, input.fire || input.charging);
 
-    const currentBeaver = this.options.core.entityManager.getBeaver(this.options.core.turnManager.getCurrentPlayerIndex());
+    const currentBeaver = this.gameModules.core.entityManager.getBeaver(this.gameModules.core.turnManager.getCurrentPlayerIndex());
     this.writeText(currentBeaver?.isGrounded ? "Grounded" : "In the air");
     
   }
@@ -82,13 +79,14 @@ export class ControlsRenderer {
     const pixelHeight = height * this.squareSize + (height - 1) * this.squareSpacing;
 
     // Draw the rectangle
-    this.options.core.canvasContext.fillStyle = isActive ? this.activeColor : this.inactiveColor;
-    this.options.core.canvasContext.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
+    const ctx = this.gameModules.canvas;
+    ctx.fillStyle = isActive ? this.activeColor : this.inactiveColor;
+    ctx.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
 
     // Draw border
-    this.options.core.canvasContext.strokeStyle = "#FFFFFF";
-    this.options.core.canvasContext.lineWidth = 1;
-    this.options.core.canvasContext.strokeRect(pixelX, pixelY, pixelWidth, pixelHeight);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pixelX, pixelY, pixelWidth, pixelHeight);
   }
 
   /**
@@ -98,12 +96,13 @@ export class ControlsRenderer {
   writeText(text: string): void {
     const textY = this.startY + this.totalGridSize + 10; // Position just below the grid
 
-    this.options.core.canvasContext.fillStyle = "#FFFFFF";
-    this.options.core.canvasContext.font = "14px Arial";
-    this.options.core.canvasContext.textAlign = "center";
-    this.options.core.canvasContext.textBaseline = "top";
+    const ctx = this.gameModules.canvas;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
     const textX = this.startX + this.totalGridSize / 2;
-    this.options.core.canvasContext.fillText(text, textX, textY);
+    ctx.fillText(text, textX, textY);
   }
 }
 

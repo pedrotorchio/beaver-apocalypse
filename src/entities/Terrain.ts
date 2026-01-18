@@ -1,9 +1,4 @@
-import { CoreModules } from "../core/GameInitializer";
-
-export interface TerrainOptions {
-  core: CoreModules;
-  canvas: HTMLCanvasElement;
-}
+import type { GameModules } from "../core/GameModules.type";
 
 /**
  * Manages destructible terrain using a canvas-based bitmap representation.
@@ -22,16 +17,17 @@ export interface TerrainOptions {
  * their position intersects with solid terrain.
  */
 export class Terrain {
-  private options: TerrainOptions;
+  private gameModules: GameModules;
   private terrainCanvas: HTMLCanvasElement;
   private terrainCtx: CanvasRenderingContext2D;
 
-  constructor(options: TerrainOptions) {
-    this.options = options;
+  constructor(gameModules: GameModules) {
+    this.gameModules = gameModules;
     // Create off-screen canvas for terrain bitmap
     this.terrainCanvas = document.createElement("canvas");
-    this.terrainCanvas.width = options.canvas.width;
-    this.terrainCanvas.height = options.canvas.height;
+    const canvas = gameModules.canvas.canvas;
+    this.terrainCanvas.width = canvas.width;
+    this.terrainCanvas.height = canvas.height;
     this.terrainCtx = this.terrainCanvas.getContext("2d", { willReadFrequently: true })!;
     this.generateDefaultTerrain();
   }
@@ -41,7 +37,8 @@ export class Terrain {
   }
 
   private generateDefaultTerrain(): void {
-    const { width, height } = this.options.canvas;
+    const canvas = this.gameModules.canvas.canvas;
+    const { width, height } = canvas;
     // Clear canvas (transparent = air, not solid)
     this.terrainCtx.clearRect(0, 0, width, height);
 
@@ -81,7 +78,8 @@ export class Terrain {
   }
 
   isSolid(x: number, y: number): boolean {
-    const { width, height } = this.options.canvas;
+    const canvas = this.gameModules.canvas.canvas;
+    const { width, height } = canvas;
     if (x < 0 || x >= width || y < 0 || y >= height) {
       return true; // Out of bounds is solid
     }
@@ -104,10 +102,10 @@ export class Terrain {
   }
 
   getWidth(): number {
-    return this.options.canvas.width;
+    return this.gameModules.canvas.canvas.width;
   }
 
   getHeight(): number {
-    return this.options.canvas.height;
+    return this.gameModules.canvas.canvas.height;
   }
 }

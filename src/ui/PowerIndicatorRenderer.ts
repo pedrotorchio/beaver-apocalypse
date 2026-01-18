@@ -1,13 +1,11 @@
+import type { GameModules } from "../core/GameModules.type";
+
 export interface PowerIndicatorOptions {
   x: number;
   y: number;
   currentPower: number;
   minPower: number;
   maxPower: number;
-}
-
-export interface PowerIndicatorRendererOptions {
-  ctx: CanvasRenderingContext2D;
 }
 
 /**
@@ -26,13 +24,14 @@ export interface PowerIndicatorRendererOptions {
  * is being charged.
  */
 export class PowerIndicatorRenderer {
-  private ctx: CanvasRenderingContext2D;
+  private gameModules: GameModules;
 
-  constructor(options: PowerIndicatorRendererOptions) {
-    this.ctx = options.ctx;
+  constructor(gameModules: GameModules) {
+    this.gameModules = gameModules;
   }
 
   render(options: PowerIndicatorOptions): void {
+    const ctx = this.gameModules.canvas;
     const { x, y, currentPower, minPower, maxPower } = options;
     const barWidth = 60;
     const barHeight = 8;
@@ -44,8 +43,8 @@ export class PowerIndicatorRenderer {
     const powerPercent = (currentPower - minPower) / powerRange;
 
     // Draw background
-    this.ctx.fillStyle = "#333333";
-    this.ctx.fillRect(barX, barY, barWidth, barHeight);
+    ctx.fillStyle = "#333333";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
 
     // Draw power bar with color gradient (green to yellow to red)
     let color: string;
@@ -65,12 +64,12 @@ export class PowerIndicatorRenderer {
       color = `rgb(${r}, ${g}, ${b})`;
     }
 
-    this.ctx.fillStyle = color;
-    this.ctx.fillRect(barX, barY, barWidth * powerPercent, barHeight);
+    ctx.fillStyle = color;
+    ctx.fillRect(barX, barY, barWidth * powerPercent, barHeight);
 
     // Draw border
-    this.ctx.strokeStyle = "#FFFFFF";
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
   }
 }

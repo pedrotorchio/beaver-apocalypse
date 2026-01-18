@@ -1,8 +1,7 @@
 import { Beaver } from "../entities/Beaver";
-import { InputManager } from "../core/managers/InputManager";
-import { WeaponManager } from "../core/managers/WeaponManager";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 import * as vec from "../general/vector";
+import type { GameModules } from "../core/GameModules.type";
 
 export interface AimIndicatorOptions {
   x: number;
@@ -11,10 +10,7 @@ export interface AimIndicatorOptions {
   length?: number;
 }
 
-export interface AimIndicatorRendererOptions {
-  ctx: CanvasRenderingContext2D;
-  inputManager: InputManager;
-  weaponService: WeaponManager;
+export interface AimIndicatorRendererArgs {
   powerIndicator: PowerIndicatorRenderer;
 }
 
@@ -33,16 +29,12 @@ export interface AimIndicatorRendererOptions {
  * their shots accurately.
  */
 export class AimIndicatorRenderer {
-  private ctx: CanvasRenderingContext2D;
-  private inputManager: InputManager;
-  private weaponService: WeaponManager;
-  private powerIndicator: PowerIndicatorRenderer;
+  private gameModules: GameModules;
+  private args: AimIndicatorRendererArgs;
 
-  constructor(options: AimIndicatorRendererOptions) {
-    this.ctx = options.ctx;
-    this.inputManager = options.inputManager;
-    this.weaponService = options.weaponService;
-    this.powerIndicator = options.powerIndicator;
+  constructor(gameModules: GameModules, args: AimIndicatorRendererArgs) {
+    this.gameModules = gameModules;
+    this.args = args;
   }
 
   /**
@@ -67,15 +59,16 @@ export class AimIndicatorRenderer {
     const color = `rgb(${red}, ${green}, ${blue})`;
 
     // Draw circle at spawn point
-    this.ctx.fillStyle = color;
-    this.ctx.beginPath();
-    this.ctx.arc(spawnPoint.x, spawnPoint.y, 5, 0, Math.PI * 2);
-    this.ctx.fill();
+    const ctx = this.gameModules.canvas;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(spawnPoint.x, spawnPoint.y, 5, 0, Math.PI * 2);
+    ctx.fill();
 
     // Render power indicator if charging
-    const input = this.inputManager.getState();
+    const input = this.gameModules.core.inputManager.getState();
     if (input.charging) {
-      this.powerIndicator.render({
+      this.args.powerIndicator.render({
         x: pos.x,
         y: pos.y - 30,
         currentPower: power,
@@ -91,11 +84,12 @@ export class AimIndicatorRenderer {
     const offset = vec.scale(direction, length);
     const end = { x: x + offset.x, y: y + offset.y };
 
-    this.ctx.strokeStyle = "#FFFF00";
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, y);
-    this.ctx.lineTo(end.x, end.y);
-    this.ctx.stroke();
+    const ctx = this.gameModules.canvas;
+    ctx.strokeStyle = "#FFFF00";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
   }
 }

@@ -1,9 +1,5 @@
-import { CoreModules } from "../core/GameInitializer";
+import type { GameModules } from "../core/GameModules.type";
 import { TabUpdateObject } from "../devtools/store";
-
-export interface TextHighlightControlsRendererOptions {
-    core: CoreModules;
-}
 
 /**
  * Highlights control keys in the HTML controls section based on current input state.
@@ -23,13 +19,15 @@ export interface TextHighlightControlsRendererOptions {
  * - Space: fire or charging input
  */
 export class TextHighlightControlsRenderer {
+    private gameModules: GameModules;
     private tabStorage: TabUpdateObject;
-    constructor(private options: TextHighlightControlsRendererOptions) {
-        const {devtools} = this.options.core;
+    constructor(gameModules: GameModules) {
+        this.gameModules = gameModules;
+        const {devtools} = gameModules.core;
         this.tabStorage =devtools.addTab('Controls')
     }
     render() {
-        const inputState = this.options.core.inputManager.getState();
+        const inputState = this.gameModules.core.inputManager.getState();
         this.tabStorage.update('left', inputState.moveLeft);
         this.tabStorage.update('right', inputState.moveRight);
         this.tabStorage.update('jump', inputState.jump);

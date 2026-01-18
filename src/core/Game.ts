@@ -2,6 +2,7 @@ import { TurnManager, TurnPhase } from "./managers/TurnManager";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { Terrain } from "../entities/Terrain";
 import { Beaver } from "../entities/Beaver";
+import type { GameModules } from "./GameModules.type";
 import { Aim } from "../entities/Aim";
 import { GameLoop } from "./GameLoop";
 import { GameInitializer, CoreModules } from "./GameInitializer";
@@ -78,30 +79,34 @@ export class Game {
     // Load assets
     AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
     AssetLoader.loadImage("small_rock", smallRockUrl);
-    // Initialize non-core systems: terrain
-    this.terrain = new Terrain({
-      canvas,
+    // Create base game modules for terrain and renderers (without terrain reference)
+    const baseModules: GameModules = {
+      world: this.physicsWorld.getWorld(),
+      terrain: null as any, // Will be set after terrain creation
       core,
-    });
+      canvas: this.ctx,
+    };
+
+    // Initialize non-core systems: terrain
+    this.terrain = new Terrain(baseModules);
+
+    // Update base modules with terrain reference
+    baseModules.terrain = this.terrain;
 
     // Initialize non-core systems: beavers
     const beaverCount = 2;
     const beavers = iterate(beaverCount, (i) => {
       const x = canvas.width * (0.25 + i * 0.5);
       const y = canvas.height * 0.3;
-      const aim = new Aim({
+      const aim = new Aim(baseModules, {
         minPower: this.minPower,
         maxPower: this.maxPower,
         powerAccumulationRate: this.powerAccumulationRate,
-        core,
       });
-      return new Beaver(`Beaver ${i + 1}`, 	{
-        world: this.physicsWorld.getWorld(),
-        terrain: this.terrain,
-        aim,
-        core,
+      return new Beaver(`Beaver ${i + 1}`, baseModules, {
         x,
         y,
+        aim,
       });
     });
 
@@ -109,16 +114,9 @@ export class Game {
     beavers.forEach((b) => this.entityManager.addBeaver(b));
 
     // Initialize non-core systems: renderers
-    this.powerIndicator = new PowerIndicatorRenderer({ ctx: this.ctx });
-    this.hudRenderer = new HUDRenderer({
-      ctx: this.ctx,
-      canvas,
-      turnManager: this.turnManager,
-    });
-    this.aimIndicator = new AimIndicatorRenderer({
-      ctx: this.ctx,
-      inputManager: this.inputManager,
-      weaponService: this.weaponManager,
+    this.powerIndicator = new PowerIndicatorRenderer(baseModules);
+    this.hudRenderer = new HUDRenderer(baseModules);
+    this.aimIndicator = new AimIndicatorRenderer(baseModules, {
       powerIndicator: this.powerIndicator,
     });
 

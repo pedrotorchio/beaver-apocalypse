@@ -1,16 +1,8 @@
 import * as planck from "planck-js";
-import { Terrain } from "./Terrain";
-import { CoreModules } from "../core/GameInitializer";
 import { Beaver } from "./Beaver";
 import * as vec from "../general/vector";
 import { useObservable } from "../general/observable";
-
-export interface GameModules {
-  world: planck.World;
-  terrain: Terrain;
-  core: CoreModules;
-  canvas: CanvasRenderingContext2D;
-}
+import type { GameModules } from "../core/GameModules.type";
 
 export interface ProjectileOptions {
   position: planck.Vec2;
