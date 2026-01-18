@@ -54,7 +54,7 @@ export class Beaver implements Updates, Renders {
       { key: "jumping", x: 526, y: 10, width: 241, height: 224},
       { key: "attacking", x: 786, y: 0, width: 296, height: 229},
       { key: "dead", x: 1078, y: 110, width: 366, height: 138},
-      ["hit", "jumping"],
+      ["hit", "idle"],
     ]
   })
   private state: BeaverState = "idle";
@@ -174,12 +174,10 @@ export class Beaver implements Updates, Renders {
     const currentState = this.state;
     // Hit always takes over any other state
     if (
-      (currentState === 'hit' && this.stateFramesCount > 30) ||
-      (currentState === 'attacking' && this.stateFramesCount > 30)
+      (currentState === 'hit' && this.stateFramesCount < 30) ||
+      (currentState === 'attacking' && this.stateFramesCount < 30)
     ) {/* Do nothing */}
     else this.setState(newState); 
-
-
 
     // Resolve terrain collision via pixel sampling
     // This also sets isGrounded based on bottom check points
