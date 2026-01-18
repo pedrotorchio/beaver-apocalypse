@@ -6,22 +6,24 @@ export const useObservable = <T extends Fields>(fields: T): ObservableService<T>
         const getter = fields[fieldName];
         observers.get(eventName)?.forEach(observer => observer(getter()));
     };
+    const on = <F extends FieldName<T>>(fieldName: F, observer: (v: FieldValue<T, F>) => void) => {
+        const fieldObservers = observers.get(fieldName) ?? new Set();
+        fieldObservers.add(observer as Observer);
+        observers.set(fieldName, fieldObservers);
+        return [fieldName, observer as Observer] as ObservableId;
+    };
     
     const service = {
-        on: <F extends FieldName<T>>(fieldName: F, observer: (v: FieldValue<T, F>) => void) => {
-            const fieldObservers = observers.get(fieldName) ?? new Set();
-            fieldObservers.add(observer as Observer);
-            observers.set(fieldName, fieldObservers);
-            return [fieldName, observer as Observer] as ObservableId;
-        },
+        on,
         off: (id: ObservableId) => {
             const [fieldName, observer] = id;
             observers.get(fieldName)?.delete(observer);
         },
+        destroy: () => observers.clear(),
         notify,
     };
     
-    return Object.assign(notify, service);
+    return Object.assign(on, service);
 };
 
 type Getter<T = unknown> = () => T;
@@ -30,12 +32,13 @@ type Fields = Record<string, Getter>;
 type ObservableId = [fieldName: string, observer: Observer];
 type FieldName<T extends Fields> = keyof T & string;
 type FieldValue<T extends Fields, F extends FieldName<T>> = ReturnType<T[F]>;
-type Notify<T extends Fields> = (fieldName: FieldName<T>, tag?: string) => void;
+type Notify<T extends Fields> = (fieldName: FieldName<T>) => void;
 type On<T extends Fields> = <F extends FieldName<T>>(fieldName: F, observer: (v: FieldValue<T, F>) => void) => ObservableId;
 type Off = (id: ObservableId) => void;
 
-type ObservableService<T extends Fields> = Notify<T> & {
+type ObservableService<T extends Fields> = On<T> & {
     notify: Notify<T>;
     on: On<T>;
     off: Off;
+    destroy: () => void;
 }

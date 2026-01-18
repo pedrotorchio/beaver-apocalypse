@@ -3,6 +3,7 @@ import { Terrain } from "./Terrain";
 import { CoreModules } from "../core/GameInitializer";
 import { Beaver } from "./Beaver";
 import * as vec from "../general/vector";
+import { useObservable } from "../general/observable";
 
 export interface GameModules {
   world: planck.World;
@@ -37,6 +38,9 @@ export abstract class Projectile {
   private body: planck.Body;
   private active: boolean = true;
   public static bounceOffMode = false;
+  public readonly on = useObservable({
+    collision: () => null,
+  });
 
   constructor(
     protected modules: GameModules,
@@ -88,22 +92,32 @@ export abstract class Projectile {
     return this.explosionRadius * 1.1;
   }
 
+  alertCollision() {
+    this.on.notify("collision");
+  }
+
   update(beavers: Beaver[]): boolean {
     if (!this.active) return false;
 
-    const hitBeaver = Projectile.bounceOffMode ? false : this.checkBeaverCollisions(beavers);
+    const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
     if (hitBeaver) {
-      this.handleBeaverCollision(beavers, hitBeaver);
+      this.explode(beavers, hitBeaver);
+      this.alertCollision();
+      this.destroy();
       return false;
     }
 
     if (this.checkTerrainCollision()) {
-      this.handleTerrainCollision(beavers);
+      this.explode(beavers);
+      this.alertCollision();
+      this.destroy();
       return false;
     }
 
     if (this.checkOutOfBounds()) {
-      this.handleOutOfBounds();
+      this.active = false;
+      this.alertCollision();
+      this.destroy();
       return false;
     }
 
@@ -181,10 +195,6 @@ export abstract class Projectile {
     return null;
   }
 
-  private handleBeaverCollision(beavers: Beaver[], hitBeaver: Beaver): void {
-    if (this.active) this.explode(beavers, hitBeaver);
-  }
-
   private checkTerrainCollision(): boolean {
     const pos = this.body.getPosition();
     
@@ -210,10 +220,6 @@ export abstract class Projectile {
     return false;
   }
 
-  private handleTerrainCollision(beavers: Beaver[]): void {
-    if (this.active) this.explode(beavers);
-  }
-
   private checkOutOfBounds(): boolean {
     const pos = this.body.getPosition();
     return (
@@ -224,18 +230,12 @@ export abstract class Projectile {
     );
   }
 
-  private handleOutOfBounds(): void {
-    this.active = false;
-    this.destroy();
-  }
-
   explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
     const pos = this.body.getPosition();
     this.modules.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
     this.damageBeavers(beavers, pos, directHitBeaver);
 
     this.active = false;
-    this.destroy();
   }
 
   private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): void {
@@ -273,5 +273,6 @@ export abstract class Projectile {
     if (this.body) {
       this.modules.world.destroyBody(this.body);
     }
+    this.on.destroy();
   }
 }

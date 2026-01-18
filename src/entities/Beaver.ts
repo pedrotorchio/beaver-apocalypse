@@ -6,7 +6,6 @@ import { CoreModules } from "../core/GameInitializer";
 import * as vec from "../general/vector";
 import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
-import { useObservable } from "../general/observable";
 import { TileSheet } from "../general/TileSheet";
 import { RockProjectile, RockProjectileOptions } from "./projectiles/RockProjectile";
 import { AssetLoader } from "../general/AssetLoader";
@@ -62,10 +61,10 @@ export class Beaver {
     ]
   })
   private state: BeaverState = "idle";
-  private stateFrameCount: number = 0;
+  private stateFramesCount: number = 0;
   setState(state: BeaverState): void {
     this.state = state;
-    this.stateFrameCount = 0;
+    this.stateFramesCount = 0;
   }
   private readonly checkPoints = {
     center: { x: 0, y: 0 },
@@ -80,14 +79,8 @@ export class Beaver {
   };
   #isGrounded: boolean = false;
 
-  public readonly on = useObservable({
-    isGrounded: () => this.#isGrounded,
-  });
-
   set isGrounded(value: boolean) {
-    const oldValue = this.#isGrounded;
     this.#isGrounded = value;
-    if (oldValue !== value) this.on.notify("isGrounded", 'changed');
   }
 
   get isGrounded(): boolean {
@@ -126,25 +119,24 @@ export class Beaver {
     this.devtoolsTab = useDevtoolsStore().addTab(this.name);
   }
 
-  identifyStateConditions(): Record<BeaverState, boolean> {
+  resolveBeaverState(): BeaverState {
+    const SPEED_THRESHOLD = 0.2;
     const isGrounded = this.#isGrounded;
-    const isMovingVertically = Math.abs(this.body.getLinearVelocity().y) > 0.2;
-    const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > 0.2;
-    
-    const isJumping = isMovingVertically && !isGrounded;
-    const isWalking = isMovingSideways && isGrounded;
-    const isIdle = !isMovingSideways && !isMovingVertically && isGrounded;
+    const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD
+    const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
+
+    const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
     const isAttacking = this.state === 'attacking';
     const isDead = this.state === 'dead';
     const isHit = this.state === 'hit';
-    return {
-      jumping: !isAttacking && !isHit && isJumping,
-      walking: !isAttacking && !isHit && isWalking,
-      dead: !isHit && !isJumping && isDead,
-      attacking: !isHit && isAttacking,
-      hit: isHit,
-      idle: isIdle,
-    }
+
+    if (isAttacking) return 'attacking';
+    if (isHit) return 'hit';
+    if (isMovingUpward && !isGrounded) return 'jumping';
+    if (isMovingDownward && !isGrounded) return 'jumping';
+    if (isDead) return 'dead';
+    if (isMovingSideways && isGrounded) return 'walking';
+    return 'idle';
   }
   getBody(): planck.Body {
     return this.body;
@@ -185,17 +177,17 @@ export class Beaver {
   // ========== IDLE STATE ==========
   update(): void {
 
-    this.stateFrameCount++;
-    const states = this.identifyStateConditions();
+    this.stateFramesCount++;
+    const newState = this.resolveBeaverState()
     const currentState = this.state;
-    if (states.hit) this.setState("hit");
-    if (states.attacking) this.setState("attacking");
-    if (currentState === 'attacking' && this.stateFrameCount > 30) this.setState("idle");
-    if (currentState === 'hit' && this.stateFrameCount > 60) this.setState("idle");
-    if (states.dead) this.setState("dead");
-    if (states.walking) this.setState("walking");
-    if (states.jumping) this.setState("jumping");
-    if (states.idle) this.setState("idle");
+    // Hit always takes over any other state
+    if (newState === 'hit') this.setState("hit");
+    else if (
+      (currentState === 'hit' && this.stateFramesCount > 10) ||
+      (currentState === 'attacking' && this.stateFramesCount > 30)
+    ) {/* Do nothing */}
+    else this.setState(newState); 
+
 
 
     // Resolve terrain collision via pixel sampling
@@ -273,7 +265,7 @@ export class Beaver {
 
     // Create projectile
     const projectile = this.getProjectile(spawnPoint, velocity);
-    
+    projectile.on('collision', () => this.setState('idle'));
 
     return projectile;
   }
@@ -533,7 +525,7 @@ export class Beaver {
 
     // Draw collision circle border for debugging
     ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(pixelX, pixelY, this.radius, 0, Math.PI * 2);
     ctx.stroke();
