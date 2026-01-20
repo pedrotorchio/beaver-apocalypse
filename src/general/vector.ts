@@ -70,3 +70,10 @@ export const add = (a: Vec2Like, b: Vec2Like): Vec2Like => {
 export const subtract = (a: Vec2Like, b: Vec2Like): Vec2Like => {
   return { x: a.x - b.x, y: a.y - b.y };
 };
+
+/**
+ * Checks if two vectors are equal.
+ */
+export const equals = (a: Vec2Like, b: Vec2Like): boolean => {
+  return a.x === b.x && a.y === b.y;
+};

@@ -5,12 +5,12 @@ import type { GameModules } from "../core/types/GameModules.type";
 import type { Updates } from "../core/types/Updates.type";
 import type { Renders } from "../core/types/Renders.type";
 import * as vec from "../general/vector";
-import type { Vec2Like } from "../general/vector";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { TileSheet } from "../general/TileSheet";
 import { RockProjectile, RockProjectileArguments } from "./projectiles/RockProjectile";
 import { AssetLoader } from "../general/AssetLoader";
-import { iterate } from "../general/utils";
+import { makeEnumArray, iterate } from "../general/utils";
+import { PhysicsWorld } from "../core/PhysicsWorld";
 
 export interface BeaverArguments {
   x: number;
@@ -41,8 +41,9 @@ export class Beaver implements Updates, Renders {
   private health: number = 100;
   private maxHealth: number = 100;
   private radius: number = 20;
+  private mass: number = 125;
   private facing: number = 1; // 1 for right, -1 for left
-  private jumpForce: number = -50;
+  private jumpForce: number = -PhysicsWorld.GRAVITY;
   private moveSpeed: number = 20;
   private devtoolsTab: DevtoolsTab;
   private tilesheet = new TileSheet({
@@ -76,25 +77,20 @@ export class Beaver implements Updates, Renders {
 
   constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
     this.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
-    const bodyDef: planck.BodyDef = {
+    this.body = game.world.createBody({
       type: "dynamic",
       position: planck.Vec2(args.x, args.y),
       fixedRotation: false,
       linearDamping: 0.5,
-    };
-
-    this.body = game.world.createBody(bodyDef);
+    });
 
     const shape = planck.Circle(this.radius);
-    const fixtureDef: planck.FixtureDef = {
+    this.body.createFixture({
       shape: shape,
-      density: 1.0,
+      density: this.mass/(Math.PI*this.radius**2),
       friction: 0.5,
       restitution: 0.3,
-    };
-
-    this.body.createFixture(fixtureDef);
-    
+    });
     // Store reference to this beaver on the body for contact detection
     this.body.setUserData({ type: 'beaver', instance: this });
     
@@ -168,17 +164,13 @@ export class Beaver implements Updates, Renders {
     // Resolve terrain collision via pixel sampling
     // This also sets isGrounded based on bottom check points
     this.resolveTerrainCollision();
-    const isMovingUpward = this.body.getLinearVelocity().y < 0;
 
-    // Apply friction and stop sliding when grounded
-    // Don't apply friction if jumping (upward velocity)
-    if (this.#isGrounded && !isMovingUpward) {
-      const MIN_VELOCITY = .2;
-      const DESCELERATION_FACTOR = .2; 
-      const vel = this.body.getLinearVelocity();
-      const roundToZero = (v: number) => Math.sign(v) * (Math.abs(v) < MIN_VELOCITY ? 0 : v);
-      this.body.setLinearVelocity(planck.Vec2(roundToZero(vel.x * DESCELERATION_FACTOR), roundToZero(vel.y * DESCELERATION_FACTOR)));
+    // Whenever overall x axis velocity is less than 10, set it to 0
+    const vel = this.body.getLinearVelocity();
+    if (Math.abs(vel.x) < 10) {
+      this.body.setLinearVelocity(planck.Vec2(0, vel.y));
     }
+    
     this.devtoolsTab.update("", {
       health: this.health,
       facing: this.facing,
@@ -310,63 +302,33 @@ export class Beaver implements Updates, Renders {
   }
 
   // ========== UTILITY METHODS ==========
-  private createCollisionCheckPoints(): { x: number; y: number }[] {
+  private groundTouchPoints: { x: number; y: number }[] = [];
+  private createCollisionCheckPoints() {
     // Check multiple points around the circle, with extra points in movement direction
     // Focus on bottom half for ground collision
     // Calculate check points dynamically based on current position
     const pos = this.body.getPosition();
-    const vel = this.body.getLinearVelocity();
     const radius = this.radius;
     // Check bottom points only, for ground collision
-    const checkPoints: { x: number; y: number }[] = iterate(12, (i) => {
+    const checkPoints = makeEnumArray(iterate(13, (i) => {
       // Visit 12 points along the bottom arc
-      const angle = Math.PI * i/12;
+      const fractionOf180 = i/12;
+      const angle = Math.PI * fractionOf180;
       const dir = vec.fromAngle(angle);
       const scaledDir = vec.scale(dir, radius);
-      return {
+      const enumValue = `${fractionOf180*180}deg`;
+      return [enumValue, {
         x: pos.x + scaledDir.x,
         y: pos.y + scaledDir.y,
-      };
-    });
-    return checkPoints;
-
-    // Add check points in the direction of movement to catch terrain ahead
-    // Only check at exactly the radius to avoid false collisions outside the circle
-    if (Math.abs(vel.x) > 0.1 || Math.abs(vel.y) > 0.1) {
-      const moveDirX = vel.x !== 0 ? vel.x / Math.abs(vel.x) : 0;
-      const moveDirY = vel.y !== 0 ? vel.y / Math.abs(vel.y) : 0;
-
-      // Check ahead in movement direction at exactly the radius
-      checkPoints.push(
-        { x: pos.x + moveDirX * radius, y: pos.y + moveDirY * radius }
-      );
-      
-      // Add perpendicular checks for better side collision detection
-      if (Math.abs(vel.x) > 0.1) {
-        checkPoints.push(
-          { x: pos.x + moveDirX * radius, y: pos.y + radius * 0.7 },
-          { x: pos.x + moveDirX * radius, y: pos.y - radius * 0.7 }
-        );
-      }
-      if (Math.abs(vel.y) > 0.1) {
-        checkPoints.push(
-          { x: pos.x + radius * 0.7, y: pos.y + moveDirY * radius },
-          { x: pos.x - radius * 0.7, y: pos.y + moveDirY * radius }
-        );
-      }
-    }
-
+      }];
+    }));
     return checkPoints;
   }
 
   private resolveTerrainCollision(): void {
+    this.groundTouchPoints = [];
     const checkPoints = this.createCollisionCheckPoints();
     const pos = this.body.getPosition();
-    const radius = this.radius;
-    let pushX = 0;
-    let pushY = 0;
-    let collisionCount = 0;
-    let maxPenetration = 0;
     // Check if grounded by checking bottom points
     this.isGrounded = false;
     for (const point of checkPoints) {
@@ -374,98 +336,18 @@ export class Beaver implements Updates, Renders {
       if (!this.game.terrain.isSolid(point.x, point.y)) continue;
       // Check isGrounded
       // this is a bottom point (y >= pos.y) and if it's on solid ground
-      if (point.y >= pos.y && this.game.terrain.isSolid(point.x, point.y)) {
+      const isGround = point.y >= pos.y && this.game.terrain.isSolid(point.x, point.y);
+      if (isGround) {
         this.isGrounded = true;
+        this.groundTouchPoints.push(point);
+        // Cancel out velocity in the direction of the normal vector
+        const normalVector = vec.normalize(vec.subtract(pos, point));
+        const scalarVelocity = vec.dot(this.body.getLinearVelocity(), normalVector);
+        const normalVelocity = vec.scale(normalVector, scalarVelocity);
+        const resultingVelocity = vec.subtract(this.body.getLinearVelocity(), normalVelocity);
+        this.body.setLinearVelocity(planck.Vec2(resultingVelocity.x, resultingVelocity.y));
       }
-
-      const dist = vec.distance(pos, point);
-
-      if (dist <= 0) continue;
-
-      // Only process if the point is actually inside or on the circle (penetration >= 0)
-      // If dist > radius, the terrain is outside the circle and we shouldn't push
-      const penetration = radius - dist;
-      if (penetration <= 0) continue; // Skip points outside the circle
-
-      if (penetration > maxPenetration) maxPenetration = penetration;
-
-      // Push away from terrain (stronger push for deeper penetration)
-      const pushStrength = Math.max(penetration, radius * 0.1);
-      const direction = vec.normalize(vec.subtract(pos, point));
-      const pushVector = vec.scale(direction, pushStrength);
-      pushX += pushVector.x;
-      pushY += pushVector.y;
-      collisionCount++;
     }
-
-    if (collisionCount > 0) {
-      // Average push vector
-      pushX /= collisionCount;
-      pushY /= collisionCount;
-      this.applyCollisionPush(
-        { x: pushX, y: pushY },
-        maxPenetration,
-        pos
-      );
-    }
-  }
-
-  private applyCollisionPush(
-    averagedPush: Vec2Like,
-    maxPenetration: number,
-    currentPos: planck.Vec2
-  ): void {
-    // Normalize and scale push vector
-    const normalizePushVector = (avgPush: Vec2Like, maxPen: number, rad: number) => {
-      const pushMagnitude = Math.min(maxPen + rad * 0.1, rad * 0.5);
-      const normalized = vec.normalize(avgPush);
-      return vec.scale(normalized, pushMagnitude);
-    };
-
-    // Calculate push direction from averaged push (before normalization)
-    const pushDir = vec.normalize(averagedPush);
-    const normalizedPush = normalizePushVector(averagedPush, maxPenetration, this.radius);
-
-    // Calculate correction factor for position
-    const calculateCorrectionFactor = (maxPen: number, rad: number) => {
-      return Math.min(maxPen / rad + 0.1, 0.8);
-    };
-
-    const correctionFactor = calculateCorrectionFactor(maxPenetration, this.radius);
-
-    // Calculate corrected position
-    const scaledPush = vec.scale(normalizedPush, correctionFactor);
-    const correctedPos = vec.add(currentPos, scaledPush);
-    this.body.setPosition(planck.Vec2(correctedPos.x, correctedPos.y));
-
-    // Calculate adjusted velocity based on collision
-    const calculateAdjustedVelocity = (
-      currentVel: planck.Vec2,
-      pushDirection: { x: number; y: number },
-      isGrounded: boolean
-    ) => {
-      const velInPushDir = vec.dot(currentVel, pushDirection);
-
-      if (velInPushDir < 0) {
-        // Velocity is going into terrain, cancel it smoothly
-        const cancelVector = vec.scale(pushDirection, -velInPushDir);
-        const adjustedVel = vec.add(currentVel, cancelVector);
-        return planck.Vec2(adjustedVel.x, adjustedVel.y);
-      }
-      
-      if (isGrounded) {
-        // When grounded, prevent downward velocity to stop sliding
-        // Apply slight horizontal friction to prevent excessive sliding
-        return planck.Vec2(currentVel.x * 0.9, Math.max(0, currentVel.y));
-      }
-      
-      // Just reduce velocity when colliding (but not too much to allow sliding)
-      return planck.Vec2(currentVel.x * 0.8, currentVel.y * 0.8);
-    };
-
-    const currentVel = this.body.getLinearVelocity();
-    const adjustedVel = calculateAdjustedVelocity(currentVel, pushDir, this.#isGrounded);
-    this.body.setLinearVelocity(adjustedVel);
   }
 
   render(): void {
@@ -495,18 +377,20 @@ export class Beaver implements Updates, Renders {
     ctx.fillStyle = "#00FF00";
     ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
 
-    for(const point of this.createCollisionCheckPoints()) this.drawLineTo(point);
+    const isTouchingGround = (point: { x: number; y: number }) => this.groundTouchPoints.findIndex(tp => vec.equals(tp, point)) !== -1;
+    for (const point of this.createCollisionCheckPoints()) 
+      this.drawLineTo(point, isTouchingGround(point) ? 'red' : 'grey');
   }
 
-  destroy(): void {
+  destroy(): void {     
     if (this.body) {
       this.game.world.destroyBody(this.body);
     }
   }
-  drawLineTo (point: { x: number; y: number }) {
+  drawLineTo (point: { x: number; y: number }, color: string) {
     const pos = this.body.getPosition();
     const ctx = this.game.canvas;
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = color;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);

@@ -1,6 +1,5 @@
 import * as planck from "planck-js";
 import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
-import { useObservable } from "../general/observable";
 
 /**
  * Wrapper class for the Planck.js physics simulation world.
@@ -17,6 +16,7 @@ import { useObservable } from "../general/observable";
  * regularly (typically each frame) to advance the simulation.
  */
 export class PhysicsWorld {
+  public static readonly GRAVITY = 50;
   private world: planck.World;
   private velocityIterations: number = 8;
   private positionIterations: number = 3;
@@ -25,7 +25,7 @@ export class PhysicsWorld {
 
   constructor() {
     this.world = planck.World({
-      gravity: planck.Vec2(0, 50),
+      gravity: planck.Vec2(0, PhysicsWorld.GRAVITY),
     });
     this.devtoolsTab = useDevtoolsStore().addTab("Physics");
   }
