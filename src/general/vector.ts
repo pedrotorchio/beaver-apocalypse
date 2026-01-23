@@ -1,3 +1,9 @@
+export const UP = { x: 0, y: 1 };
+export const DOWN = { x: 0, y: -1 };
+export const LEFT = { x: -1, y: 0 };
+export const RIGHT = { x: 1, y: 0 };
+export const ZERO = { x: 0, y: 0 };
+
 /**
  * Generic 2D vector utility functions.
  * These are pure mathematical operations that work with any 2D vector-like objects.
