@@ -4,6 +4,11 @@ export const LEFT = { x: -1, y: 0 };
 export const RIGHT = { x: 1, y: 0 };
 export const ZERO = { x: 0, y: 0 };
 
+export const up = (magnitude: number): Vec2Like => scale(UP, magnitude);
+export const down = (magnitude: number): Vec2Like => scale(DOWN, magnitude);
+export const left = (magnitude: number): Vec2Like => scale(LEFT, magnitude);
+export const right = (magnitude: number): Vec2Like => scale(RIGHT, magnitude);
+export const zero = (): Vec2Like => ZERO;
 /**
  * Generic 2D vector utility functions.
  * These are pure mathematical operations that work with any 2D vector-like objects.
