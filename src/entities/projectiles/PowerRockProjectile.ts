@@ -1,24 +1,19 @@
-import { RockProjectile } from "./RockProjectile";
+import { RockProjectile, RockProjectileArguments } from "./RockProjectile";
+import type { GameModules } from "../../core/types/GameModules.type";
 
 export class PowerRockProjectile extends RockProjectile {
+    constructor(game: GameModules, args: RockProjectileArguments) {
+        super(game, args);
+    }
 
     render(): void {
         super.render();
         const pos = this.getPosition();
-        const ctx = this.game.canvas;
         
         // Draw main projectile body
-        ctx.fillStyle = "#FFA500";
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, this.args.radius, 0, Math.PI * 2);
-        ctx.fill();
+        this.game.core.shapes.with({ strokeWidth: 2, strokeColor: "#FFD700", bgColor: "#FFA500" }).circle(pos, this.args.radius);
 
         // Draw border
-        ctx.strokeStyle = "#FFD700";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, this.args.radius + 2, 0, Math.PI * 2);
-        ctx.stroke();
-
+        this.game.core.shapes.with({ strokeWidth: 2, strokeColor: "#FFD700" }).circle(pos, this.args.radius + 2);
     }
 }

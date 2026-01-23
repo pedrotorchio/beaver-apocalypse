@@ -34,12 +34,7 @@ export class RockProjectile extends Projectile implements Renders {
         this.tilesheet.drawImage(this.game.canvas, "rock", pos.x, pos.y);
 
         if (RockProjectile.renderRadius) {
-            const ctx = this.game.canvas;
-            ctx.strokeStyle = "#FFD700";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, this.args.radius + 2, 0, Math.PI * 2);
-            ctx.stroke();
+            this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "#FFD700" }).circle(pos, this.args.radius + 2);
         }
     }
 }

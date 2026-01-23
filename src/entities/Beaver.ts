@@ -340,12 +340,12 @@ export class Beaver implements Updates, Renders {
       if (isGround) {
         this.isGrounded = true;
         this.groundTouchPoints.push(point);
-        // Cancel out velocity in the direction of the normal vector
+        // Cancel out velocity in the direction of the normal vector to prevent sinking into the ground
         const normalVector = vec.normalize(vec.subtract(pos, point));
-        const scalarVelocity = vec.dot(this.body.getLinearVelocity(), normalVector);
-        const normalVelocity = vec.scale(normalVector, scalarVelocity);
-        const resultingVelocity = vec.subtract(this.body.getLinearVelocity(), normalVelocity);
-        this.body.setLinearVelocity(planck.Vec2(resultingVelocity.x, resultingVelocity.y));
+        const scalarNormalVelocity = vec.dot(this.body.getLinearVelocity(), normalVector);
+        const cancelingNormalVelocity = vec.scale(normalVector, scalarNormalVelocity);
+        const resultingVelocity = vec.subtract(this.body.getLinearVelocity(), cancelingNormalVelocity);
+        this.body.setLinearVelocity(planck.Vec2(resultingVelocity));
       }
     }
   }
@@ -360,11 +360,7 @@ export class Beaver implements Updates, Renders {
     this.tilesheet.drawImage(ctx, this.state, pixelX, pixelY, this.facing as 1 | -1);
 
     // Draw collision circle border for debugging
-    ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(pixelX, pixelY, this.radius, 0, Math.PI * 2);
-    ctx.stroke();
+    this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "blue" }).circle({ x: pixelX, y: pixelY }, this.radius);
 
     // Draw health bar
     const barWidth = this.radius * 2;
@@ -372,29 +368,19 @@ export class Beaver implements Updates, Renders {
     const barX = pixelX - barWidth / 2;
     const barY = pixelY - this.radius - 8;
 
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(barX, barY, barWidth, barHeight);
-    ctx.fillStyle = "#00FF00";
-    ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+    this.game.core.shapes.with({ bgColor: "#FF0000" }).fillRect(barX, barY, barWidth, barHeight);
+    this.game.core.shapes.with({ bgColor: "#00FF00" }).fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
 
     const isTouchingGround = (point: { x: number; y: number }) => this.groundTouchPoints.findIndex(tp => vec.equals(tp, point)) !== -1;
-    for (const point of this.createCollisionCheckPoints()) 
-      this.drawLineTo(point, isTouchingGround(point) ? 'red' : 'grey');
+    for (const point of this.createCollisionCheckPoints()) {
+      const color = isTouchingGround(point) ? 'red' : 'grey';
+      this.game.core.shapes.with({ strokeColor: color }).line(pos, point);
+    }
   }
 
   destroy(): void {     
     if (this.body) {
       this.game.world.destroyBody(this.body);
     }
-  }
-  drawLineTo (point: { x: number; y: number }, color: string) {
-    const pos = this.body.getPosition();
-    const ctx = this.game.canvas;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-    ctx.lineTo(point.x, point.y);
-    ctx.stroke();
   }
 }

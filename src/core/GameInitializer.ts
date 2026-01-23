@@ -4,6 +4,7 @@ import { WeaponManager } from "./managers/WeaponManager";
 import { EntityManager } from "./managers/EntityManager";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { throwError } from "../general/errors";
+import { Shapes } from "../general/Shapes";
 
 export interface GameInitializerOptions {
   canvas: HTMLCanvasElement;
@@ -29,6 +30,7 @@ export interface CoreModules {
   inputManager: InputManager;
   physicsWorld: PhysicsWorld;
   canvasContext: CanvasRenderingContext2D;
+  shapes: Shapes;
 }
 
 /**
@@ -67,6 +69,9 @@ export class GameInitializer {
       powerAccumulationRate,
     });
 
+    // Create shapes renderer
+    const shapes = new Shapes(canvasContext);
+
     return {
       turnManager,
       weaponManager,
@@ -74,6 +79,7 @@ export class GameInitializer {
       inputManager,
       physicsWorld,
       canvasContext,
+      shapes,
     };
   }
 }

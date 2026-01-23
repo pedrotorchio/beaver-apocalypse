@@ -52,11 +52,7 @@ export class AimIndicatorRenderer implements Renders {
     const color = `rgb(${red}, ${green}, ${blue})`;
 
     // Draw circle at spawn point
-    const ctx = this.game.canvas;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(spawnPoint.x, spawnPoint.y, 5, 0, Math.PI * 2);
-    ctx.fill();
+    this.game.core.shapes.with({ bgColor: color }).circle(spawnPoint, 5);
 
     // Render power indicator if charging
     const input = this.game.core.inputManager.getState();

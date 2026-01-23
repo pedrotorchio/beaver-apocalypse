@@ -30,14 +30,9 @@ export class HUDRenderer implements Renders {
     const padding = 15;
     const sectionSpacing = 20;
 
-    // Draw HUD background with semi-transparent overlay
-    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-    ctx.fillRect(0, 0, canvas.width, hudHeight);
-
-    // Draw border
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, canvas.width, hudHeight);
+    // Draw HUD background with semi-transparent overlay and border
+    this.game.core.shapes.with({ bgColor: "rgba(0, 0, 0, 0.75)" }).fillRect(0, 0, canvas.width, hudHeight);
+    this.game.core.shapes.with({ strokeWidth: 2, strokeColor: "#FFFFFF" }).rect({ x: canvas.width / 2, y: hudHeight / 2 }, canvas.width, hudHeight);
 
     // Get current player and phase
     const turnManager = this.game.core.turnManager;
@@ -111,25 +106,23 @@ export class HUDRenderer implements Renders {
       }
 
       // Draw health bar background
-      ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
-      ctx.fillRect(rightX, barY, barWidth, barHeight);
+      this.game.core.shapes.with({ bgColor: "rgba(100, 100, 100, 0.5)" }).fillRect(rightX, barY, barWidth, barHeight);
 
       // Draw health bar
+      let healthColor: string;
       if (i === currentPlayer) {
-        ctx.fillStyle = "#FFFF00";
+        healthColor = "#FFFF00";
       } else if (healthPercent > 0.6) {
-        ctx.fillStyle = "#00FF00";
+        healthColor = "#00FF00";
       } else if (healthPercent > 0.3) {
-        ctx.fillStyle = "#FFAA00";
+        healthColor = "#FFAA00";
       } else {
-        ctx.fillStyle = "#FF0000";
+        healthColor = "#FF0000";
       }
-      ctx.fillRect(rightX, barY, barWidth * healthPercent, barHeight);
+      this.game.core.shapes.with({ bgColor: healthColor }).fillRect(rightX, barY, barWidth * healthPercent, barHeight);
 
       // Draw health bar border
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(rightX, barY, barWidth, barHeight);
+      this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "#FFFFFF" }).rect({ x: rightX + barWidth / 2, y: barY + barHeight / 2 }, barWidth, barHeight);
 
       // Draw health text above bar
       ctx.font = "14px Arial";
