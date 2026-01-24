@@ -34,6 +34,7 @@ export class TileSheet<const StateKey extends string> {
   private tileHeight: number;
   private renderWidth: number;
   private renderHeight: number;
+  private errorState: Error | null = null;
   private readonly tileDefinitions: Record<StateKey, SpriteDefinition<StateKey>>;
 
   constructor(options: TileSheetOptions<StateKey>) {
@@ -106,6 +107,8 @@ export class TileSheet<const StateKey extends string> {
       ctx.scale(-1, 1);
       ctx.translate(-x, -y);
     }
+    if (this.errorState) return this.drawRectangle(ctx, dx, dy);
+
     try {
       ctx.drawImage(
         this.imageAsset.value,
@@ -119,12 +122,18 @@ export class TileSheet<const StateKey extends string> {
         this.renderHeight
       );
     } catch (error) {
+      this.errorState = error as Error;
       console.error(error);
-      ctx.strokeStyle = 'red';
-      ctx.strokeRect(dx, dy, this.renderWidth, this.renderHeight);
+      this.drawRectangle(ctx, dx, dy);
     }
 
+    ctx.restore();
+  }
 
+  drawRectangle(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.strokeRect(x, y, this.renderWidth, this.renderHeight);
     ctx.restore();
   }
 }

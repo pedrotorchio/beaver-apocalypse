@@ -10,9 +10,7 @@
  * Use areAllAssetsLoaded() to check if all registered assets have finished loading.
  */
 export class AssetLoader {
-  private static loadingPromises: Map<string, Promise<unknown>> = new Map();
-  private static registeredAssets: Set<string> = new Set();
-  private static loadedAssets: Map<string, unknown> = new Map();
+  private static assets: Map<string, Asset<unknown>> = new Map();
 
   /**
    * Loads an image asset asynchronously.
@@ -21,11 +19,12 @@ export class AssetLoader {
    * @returns Promise that resolves to the loaded unknown
    */
   static async loadImage(key: string, path: string) {
-    this.registeredAssets.add(key);
+    if (this.assets.has(key)) return;
+    const assetObject = createAssetShell<HTMLImageElement>();
     const promise = new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        this.loadedAssets.set(key, img);
+        assetObject.value = img;
         resolve(img);
       };
       img.onerror = () => {
@@ -33,25 +32,20 @@ export class AssetLoader {
       };
       img.src = path;
     });
-
-    this.loadingPromises.set(key, promise);
+    assetObject.promise = promise;
+    assetObject.promise.then(v => {
+      assetObject.value = v;
+      assetObject.isLoaded = true;
+      assetObject.isLoading = false;
+    });
+    this.assets.set(key, assetObject);
   }
 
-  static getAsset<T>(key: string) {
-    if (!this.loadingPromises.has(key) && !this.loadedAssets.has(key)) throw new Error(`Asset ${key} not loaded`);
-    const promise = this.loadingPromises.get(key) as Promise<T>;
-    const valueWrapper = { 
-      value: null as T, 
-      isLoaded: false, 
-      isLoading: true,
-      promise: promise,
-    };
-    promise.then(v=> Object.assign(valueWrapper, {
-      value: v as T,
-      isLoaded: true,
-      isLoading: false,
-    }));
-    return valueWrapper;
+  static getAsset<T>(key: string): Readonly<Asset<T>> {
+    if (!this.assets.has(key)) {
+      this.assets.set(key, createAssetShell<T>());
+    }
+    return this.assets.get(key) as Asset<T>;
   }
 
   /**
@@ -59,26 +53,19 @@ export class AssetLoader {
    * @returns Promise that resolves when all assets are loaded
    */
   static async areAllAssetsLoaded(): Promise<void> {
-    if (this.registeredAssets.size === 0) {
-      return;
-    }
-
-    const allPromises = Array.from(this.registeredAssets).map(async (key) => {
-      if (this.loadedAssets.has(key)) {
-        return;
-      }
-      if (this.loadingPromises.has(key)) {
-        await this.loadingPromises.get(key)!;
-        return;
-      }
-    });
-
+    const allPromises = Array.from(this.assets).map(async ([, asset]) => asset.promise);
     await Promise.all(allPromises);
   }
 }
+const createAssetShell = <T>(): Asset<T> => ({
+  value: null as T,
+  isLoaded: false,
+  isLoading: true,
+  promise: null as unknown as Promise<T>,
+})
 export type Asset<T> = {
-  readonly value: T;
-  readonly isLoaded: boolean;
-  readonly isLoading: boolean;
-  readonly promise: Promise<T>;
+  value: T;
+  isLoaded: boolean;
+  isLoading: boolean;
+  promise: Promise<T>;
 }
