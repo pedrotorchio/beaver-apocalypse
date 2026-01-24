@@ -10,6 +10,8 @@ import { PhysicsWorld } from "../../core/PhysicsWorld";
 
 export class GroundDetection implements Updates, Renders {
     
+    private readonly velocityStopThreshold = 10;
+    
     #isGrounded = signal(false);
     getIsGrounded(): boolean {
         return this.#isGrounded.value;
@@ -44,7 +46,7 @@ export class GroundDetection implements Updates, Renders {
             this.#groundNormalDirection.add(normalVector);
         }
         this.#groundNormalDirection.normalize();
-        if (!this.#isGrounded) return;
+        if (!this.#isGrounded.value) return;
         const velocity = this.body.getLinearVelocity();
         const velocityInGroundNormalDirection = vec.project(velocity, this.#groundNormalDirection);
         const mass = this.body.getMass()
@@ -53,6 +55,11 @@ export class GroundDetection implements Updates, Renders {
         const normalForce = this.#groundNormalDirection.clone().mul(weight);
         this.body.setLinearVelocity(velocity.sub(velocityInGroundNormalDirection));
         this.body.applyForce(normalForce, pos);
+        
+        // Apply velocity stop threshold when grounded
+        if (Math.abs(velocity.x) < this.velocityStopThreshold) {
+            this.body.setLinearVelocity(planck.Vec2(0, velocity.y));
+        }
     }
     render(): void {
         const position = this.body.getPosition();

@@ -156,12 +156,6 @@ export class Beaver implements Updates, Renders {
     else this.setState(newState); 
 
     this.groundDetection.update();
-
-    // Whenever overall x axis velocity is less than 10, set it to 0
-    const vel = this.body.getLinearVelocity();
-    if (Math.abs(vel.x) < 10) {
-      this.body.setLinearVelocity(planck.Vec2(0, vel.y));
-    }
     
     this.devtoolsTab.update("", {
       health: this.health,
