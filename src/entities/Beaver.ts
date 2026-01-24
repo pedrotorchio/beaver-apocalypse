@@ -9,8 +9,8 @@ import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
 import { TileSheet } from "../general/TileSheet";
 import { RockProjectile, RockProjectileArguments } from "./projectiles/RockProjectile";
 import { AssetLoader } from "../general/AssetLoader";
-import { makeEnumArray, iterate } from "../general/utils";
 import { PhysicsWorld } from "../core/PhysicsWorld";
+import { GroundDetection } from "./properties/GroundDetection";
 
 export interface BeaverArguments {
   x: number;
@@ -65,15 +65,8 @@ export class Beaver implements Updates, Renders {
     this.state = state;
     this.stateFramesCount = 0;
   }
-  #isGrounded: boolean = false;
 
-  set isGrounded(value: boolean) {
-    this.#isGrounded = value;
-  }
-
-  get isGrounded(): boolean {
-    return this.#isGrounded;
-  }
+  private readonly groundDetection: GroundDetection;
 
   constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
     this.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
@@ -95,11 +88,12 @@ export class Beaver implements Updates, Renders {
     this.body.setUserData({ type: 'beaver', instance: this });
     
     this.devtoolsTab = useDevtoolsStore().addTab(this.name);
+    this.groundDetection = new GroundDetection(this.game, this.body, this.radius);
   }
 
   resolveBeaverState(): BeaverState {
     const SPEED_THRESHOLD = 0.2;
-    const isGrounded = this.#isGrounded;
+    const isGrounded = this.groundDetection.getIsGrounded();
     const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD
     const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
 
@@ -161,9 +155,7 @@ export class Beaver implements Updates, Renders {
     ) {/* Do nothing */}
     else this.setState(newState); 
 
-    // Resolve terrain collision via pixel sampling
-    // This also sets isGrounded based on bottom check points
-    this.resolveTerrainCollision();
+    this.groundDetection.update();
 
     // Whenever overall x axis velocity is less than 10, set it to 0
     const vel = this.body.getLinearVelocity();
@@ -174,7 +166,7 @@ export class Beaver implements Updates, Renders {
     this.devtoolsTab.update("", {
       health: this.health,
       facing: this.facing,
-      isGrounded: this.#isGrounded,
+      isGrounded: this.groundDetection.getIsGrounded(),
       position: this.body.getPosition(),
       velocity: this.body.getLinearVelocity()
     });
@@ -197,10 +189,10 @@ export class Beaver implements Updates, Renders {
    * Makes the beaver jump if it is grounded.
    */
   jump(): void {
-    if (!this.isAlive() || !this.#isGrounded) return;
+    if (!this.isAlive() || !this.groundDetection.getIsGrounded()) return;
     const point = this.body.getPosition();
     this.body.applyLinearImpulse(planck.Vec2(0, this.jumpStrength), point);
-    this.isGrounded = false;
+    // this.isGrounded = false;
   }
 
   // ========== ATTACKING ACTION ==========
@@ -303,57 +295,6 @@ export class Beaver implements Updates, Renders {
     this.body.applyLinearImpulse(planck.Vec2(impulseX, impulseY), this.body.getWorldCenter(), true);
   }
 
-  // ========== UTILITY METHODS ==========
-  private groundTouchPoints: { x: number; y: number }[] = [];
-  private createCollisionCheckPoints() {
-    // Check multiple points around the circle, with extra points in movement direction
-    // Focus on bottom half for ground collision
-    // Calculate check points dynamically based on current position
-    const pos = this.body.getPosition();
-    const radius = this.radius;
-    // Check bottom points only, for ground collision
-    const checkPoints = makeEnumArray(iterate(13, (i) => {
-      // Visit 12 points along the bottom arc
-      const fractionOf180 = i/12;
-      const angle = Math.PI * fractionOf180;
-      const dir = vec.fromAngle(angle);
-      const scaledDir = planck.Vec2(dir.x, dir.y);
-      scaledDir.mul(radius);
-      const enumValue = `${fractionOf180*180}deg`;
-      return [enumValue, {
-        x: pos.x + scaledDir.x,
-        y: pos.y + scaledDir.y,
-      }];
-    }));
-    return checkPoints;
-  }
-
-  private resolveTerrainCollision(): void {
-    this.groundTouchPoints = [];
-    const checkPoints = this.createCollisionCheckPoints();
-    const pos = this.body.getPosition();
-    // Check if grounded by checking bottom points
-    this.isGrounded = false;
-    const groundPushDisplacement = planck.Vec2(0, 0);
-    for (const point of checkPoints) {
-      // Draw lines from center (pos) to each point (checkPoints) (DEBUG)
-      const isGround = point.y >= pos.y && this.game.terrain.isSolid(point.x, point.y);
-      if (!isGround) continue;
-
-      this.isGrounded = true;
-      this.groundTouchPoints.push(point);
-      const pointVec = planck.Vec2(point.x, point.y);
-      const normalVector = pos.clone();
-      normalVector.sub(pointVec);
-      groundPushDisplacement.add(normalVector);
-    }
-  
-    if (this.#isGrounded) {
-      const currentVelocity   = this.body.getLinearVelocity();
-      this.body.setLinearVelocity(planck.Vec2(currentVelocity.x, 0));
-    }
-  }
-
   render(): void {
     const ctx = this.game.canvas;
     const pos = this.body.getPosition();
@@ -362,10 +303,6 @@ export class Beaver implements Updates, Renders {
 
     // Draw beaver sprite using tilesheet
     this.tilesheet.drawImage(ctx, this.state, pixelX, pixelY, this.facing as 1 | -1);
-
-    // Draw collision circle border for debugging
-    this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "blue" }).circle({ x: pixelX, y: pixelY }, this.radius);
-
     // Draw health bar
     const barWidth = this.radius * 2;
     const barHeight = 4;
@@ -374,27 +311,6 @@ export class Beaver implements Updates, Renders {
 
     this.game.core.shapes.with({ bgColor: "#FF0000" }).rect(barX, barY, barWidth, barHeight);
     this.game.core.shapes.with({ bgColor: "#00FF00" }).rect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
-
-    const isTouchingGround = (point: { x: number; y: number }) => {
-      return this.groundTouchPoints.findIndex(tp => tp.x === point.x && tp.y === point.y) !== -1;
-    };
-    const groundPushDisplacement = planck.Vec2(0, 0);
-    for (const point of this.createCollisionCheckPoints()) {
-      const isGrounded = isTouchingGround(point);
-      const color = isGrounded ? 'red' : 'grey';
-      if (isGrounded) {
-        const pointVec = planck.Vec2(point.x, point.y);
-        const normalVector = pos.clone();
-        normalVector.sub(pointVec);
-        groundPushDisplacement.add(normalVector);
-      }
-      this.game.core.shapes.with({ strokeColor: color }).line(pos, point);
-    } 
-    
-    const finalPos = pos.clone();
-    finalPos.add(groundPushDisplacement);
-    this.game.core.shapes.with({ strokeColor: "blue" }).arrow(pos, finalPos);
-
     const velocity = this.body.getLinearVelocity();
     if (velocity.length() > 0) {
       const velocityEnd = pos.clone();
@@ -404,6 +320,7 @@ export class Beaver implements Updates, Renders {
         .arrow(pos, velocityEnd);
     }
 
+    this.groundDetection.render();
   }
 
   destroy(): void {     
