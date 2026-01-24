@@ -80,9 +80,8 @@ export class Game {
     AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
     AssetLoader.loadImage("small_rock", smallRockUrl);
     // Create base game modules for terrain and renderers (without terrain reference)
-    const baseModules: GameModules = {
-      world: this.physicsWorld.getWorld(),
-      terrain: null as any, // Will be set after terrain creation
+    const baseModules: Omit<GameModules, 'terrain'> = {
+      world: this.physicsWorld.getWorld(), // Will be set after terrain creation
       core,
       canvas: this.ctx,
     };
@@ -91,19 +90,22 @@ export class Game {
     this.terrain = new Terrain(baseModules);
 
     // Update base modules with terrain reference
-    baseModules.terrain = this.terrain;
+    const gameModules: GameModules = {
+      ...baseModules,
+      terrain: this.terrain,
+    };
 
     // Initialize non-core systems: beavers
     const beaverCount = 2;
     const beavers = iterate(beaverCount, (i) => {
       const x = canvas.width * (0.25 + i * 0.5);
       const y = canvas.height * 0.3;
-      const aim = new Aim(baseModules, {
+      const aim = new Aim(gameModules, {
         minPower: this.minPower,
         maxPower: this.maxPower,
         powerAccumulationRate: this.powerAccumulationRate,
       });
-      return new Beaver(`Beaver ${i + 1}`, baseModules, {
+      return new Beaver(`Beaver ${i + 1}`, gameModules, {
         x,
         y,
         aim,
@@ -114,9 +116,9 @@ export class Game {
     beavers.forEach((b) => this.entityManager.addBeaver(b));
 
     // Initialize non-core systems: renderers
-    this.powerIndicator = new PowerIndicatorRenderer(baseModules);
-    this.hudRenderer = new HUDRenderer(baseModules);
-    this.aimIndicator = new AimIndicatorRenderer(baseModules, {
+    this.powerIndicator = new PowerIndicatorRenderer(gameModules);
+    this.hudRenderer = new HUDRenderer(gameModules);
+    this.aimIndicator = new AimIndicatorRenderer(gameModules, {
       powerIndicator: this.powerIndicator,
     });
 

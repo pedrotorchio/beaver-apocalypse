@@ -1,4 +1,5 @@
 import * as vec from "../../general/vector";
+import * as planck from "planck-js";
 
 export interface WeaponManagerOptions {
   minPower: number;
@@ -64,12 +65,16 @@ export class WeaponManager {
 
   calculateVelocity(fireAngle: number): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
-    return vec.scale(direction, this.currentPower);
+    const velocity = planck.Vec2(direction.x, direction.y);
+    velocity.mul(this.currentPower);
+    return { x: velocity.x, y: velocity.y };
   }
 
   calculateSpawnOffset(fireAngle: number, offsetDistance: number = 15): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
-    return vec.scale(direction, offsetDistance);
+    const offset = planck.Vec2(direction.x, direction.y);
+    offset.mul(offsetDistance);
+    return { x: offset.x, y: offset.y };
   }
 
   getPowerConfig(): { minPower: number; maxPower: number; currentPower: number } {

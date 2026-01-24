@@ -43,7 +43,7 @@ export class Beaver implements Updates, Renders {
   private radius: number = 20;
   private mass: number = 125;
   private facing: number = 1; // 1 for right, -1 for left
-  private jumpForce: number = -PhysicsWorld.GRAVITY;
+  private jumpStrength: number = -PhysicsWorld.GRAVITY*this.mass;
   private moveSpeed: number = 20;
   private devtoolsTab: DevtoolsTab;
   private tilesheet = new TileSheet({
@@ -198,8 +198,8 @@ export class Beaver implements Updates, Renders {
    */
   jump(): void {
     if (!this.isAlive() || !this.#isGrounded) return;
-    const vel = this.body.getLinearVelocity();
-    this.body.setLinearVelocity(planck.Vec2(vel.x, this.jumpForce));
+    const point = this.body.getPosition();
+    this.body.applyLinearImpulse(planck.Vec2(0, this.jumpStrength), point);
     this.isGrounded = false;
   }
 
@@ -225,9 +225,9 @@ export class Beaver implements Updates, Renders {
     // Calculate velocity from fire angle and power
     const power = aim.getPower();
     const powerMultiplier = 10; // Increase projectile velocity
-    const fireDir = vec.fromAngle(fireAngle);
-    const velocityVec = vec.scale(fireDir, power * powerMultiplier);
-    const velocity = planck.Vec2(velocityVec.x, velocityVec.y);
+    const direction = vec.fromAngle(fireAngle);
+    const velocity = planck.Vec2(direction.x, direction.y);
+    velocity.mul(power * powerMultiplier);
 
 
     // Create projectile
@@ -266,7 +266,6 @@ export class Beaver implements Updates, Renders {
 
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
     const projectileRadius = 4; // Projectile.radius
-    const fireDir = vec.fromAngle(fireAngle);
     const baseOffsetDistance = this.radius + projectileRadius;
     
     // Scale distance based on power (normalized between min and max power)
@@ -278,9 +277,12 @@ export class Beaver implements Updates, Renders {
     const maxDistance = baseOffsetDistance * 2.5;
     const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
     
-    const offset = vec.scale(fireDir, offsetDistance);
-
-    return planck.Vec2(pos.x + offset.x, pos.y + offset.y);
+    const direction = vec.fromAngle(fireAngle);
+    const offset = planck.Vec2(direction.x, direction.y);
+    offset.mul(offsetDistance);
+    const result = pos.clone();
+    result.add(offset);
+    return result;
   }
 
   // ========== DEAD STATE ==========
@@ -315,7 +317,8 @@ export class Beaver implements Updates, Renders {
       const fractionOf180 = i/12;
       const angle = Math.PI * fractionOf180;
       const dir = vec.fromAngle(angle);
-      const scaledDir = vec.scale(dir, radius);
+      const scaledDir = planck.Vec2(dir.x, dir.y);
+      scaledDir.mul(radius);
       const enumValue = `${fractionOf180*180}deg`;
       return [enumValue, {
         x: pos.x + scaledDir.x,
@@ -331,22 +334,23 @@ export class Beaver implements Updates, Renders {
     const pos = this.body.getPosition();
     // Check if grounded by checking bottom points
     this.isGrounded = false;
+    const groundPushDisplacement = planck.Vec2(0, 0);
     for (const point of checkPoints) {
       // Draw lines from center (pos) to each point (checkPoints) (DEBUG)
-      if (!this.game.terrain.isSolid(point.x, point.y)) continue;
-      // Check isGrounded
-      // this is a bottom point (y >= pos.y) and if it's on solid ground
       const isGround = point.y >= pos.y && this.game.terrain.isSolid(point.x, point.y);
-      if (isGround) {
-        this.isGrounded = true;
-        this.groundTouchPoints.push(point);
-        // Cancel out velocity in the direction of the normal vector to prevent sinking into the ground
-        const normalVector = vec.normalize(vec.subtract(pos, point));
-        const scalarNormalVelocity = vec.dot(this.body.getLinearVelocity(), normalVector);
-        const cancelingNormalVelocity = vec.scale(normalVector, scalarNormalVelocity);
-        const resultingVelocity = vec.subtract(this.body.getLinearVelocity(), cancelingNormalVelocity);
-        this.body.setLinearVelocity(planck.Vec2(resultingVelocity));
-      }
+      if (!isGround) continue;
+
+      this.isGrounded = true;
+      this.groundTouchPoints.push(point);
+      const pointVec = planck.Vec2(point.x, point.y);
+      const normalVector = pos.clone();
+      normalVector.sub(pointVec);
+      groundPushDisplacement.add(normalVector);
+    }
+  
+    if (this.#isGrounded) {
+      const currentVelocity   = this.body.getLinearVelocity();
+      this.body.setLinearVelocity(planck.Vec2(currentVelocity.x, 0));
     }
   }
 
@@ -368,14 +372,38 @@ export class Beaver implements Updates, Renders {
     const barX = pixelX - barWidth / 2;
     const barY = pixelY - this.radius - 8;
 
-    this.game.core.shapes.with({ bgColor: "#FF0000" }).fillRect(barX, barY, barWidth, barHeight);
-    this.game.core.shapes.with({ bgColor: "#00FF00" }).fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+    this.game.core.shapes.with({ bgColor: "#FF0000" }).rect(barX, barY, barWidth, barHeight);
+    this.game.core.shapes.with({ bgColor: "#00FF00" }).rect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
 
-    const isTouchingGround = (point: { x: number; y: number }) => this.groundTouchPoints.findIndex(tp => vec.equals(tp, point)) !== -1;
+    const isTouchingGround = (point: { x: number; y: number }) => {
+      return this.groundTouchPoints.findIndex(tp => tp.x === point.x && tp.y === point.y) !== -1;
+    };
+    const groundPushDisplacement = planck.Vec2(0, 0);
     for (const point of this.createCollisionCheckPoints()) {
-      const color = isTouchingGround(point) ? 'red' : 'grey';
+      const isGrounded = isTouchingGround(point);
+      const color = isGrounded ? 'red' : 'grey';
+      if (isGrounded) {
+        const pointVec = planck.Vec2(point.x, point.y);
+        const normalVector = pos.clone();
+        normalVector.sub(pointVec);
+        groundPushDisplacement.add(normalVector);
+      }
       this.game.core.shapes.with({ strokeColor: color }).line(pos, point);
+    } 
+    
+    const finalPos = pos.clone();
+    finalPos.add(groundPushDisplacement);
+    this.game.core.shapes.with({ strokeColor: "blue" }).arrow(pos, finalPos);
+
+    const velocity = this.body.getLinearVelocity();
+    if (velocity.length() > 0) {
+      const velocityEnd = pos.clone();
+      velocityEnd.add(velocity);
+      this.game.core.shapes
+        .with({ strokeColor: "green" })
+        .arrow(pos, velocityEnd);
     }
+
   }
 
   destroy(): void {     

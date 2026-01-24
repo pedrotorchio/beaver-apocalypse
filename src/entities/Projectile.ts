@@ -1,6 +1,5 @@
 import * as planck from "planck-js";
 import { Beaver } from "./Beaver";
-import * as vec from "../general/vector";
 import { useObservable } from "../general/observable";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
@@ -179,7 +178,7 @@ export abstract class Projectile implements Renders, Updates {
       const beaverPos = beaver.getPosition();
       const beaverRadius = beaver.getRadius();
       const directHitThreshold = beaverRadius + this.args.radius;
-      const distance = vec.distance(pos, beaverPos);
+      const distance = planck.Vec2.distance(pos, beaverPos);
       if (distance > directHitThreshold) continue;
 
       return beaver;
@@ -236,7 +235,7 @@ export abstract class Projectile implements Renders, Updates {
 
     for (const beaver of beavers) {
       const beaverPos = beaver.getPosition();
-      const distance = vec.distance(explosionPos, beaverPos);
+      const distance = planck.Vec2.distance(explosionPos, beaverPos);
       if (distance >= maxDistance) continue;
 
       const damage = this.calculateDamage(distance, maxDistance, directHitBeaver === beaver);
@@ -254,9 +253,11 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   private applyKnockback(beaver: Beaver, beaverPos: planck.Vec2, explosionPos: planck.Vec2): void {
-    const direction = vec.normalize(vec.subtract(beaverPos, explosionPos));
-    const impulse = vec.scale(direction, this.beaverKnockback);
-    beaver.applyKnockback(impulse.x, impulse.y);
+    const direction = beaverPos.clone();
+    direction.sub(explosionPos);
+    direction.normalize();
+    direction.mul(this.beaverKnockback);
+    beaver.applyKnockback(direction.x, direction.y);
   }
 
   abstract render(): void;

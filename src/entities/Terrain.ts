@@ -21,7 +21,7 @@ export class Terrain implements Renders {
   private terrainCanvas: HTMLCanvasElement;
   private terrainCtx: CanvasRenderingContext2D;
 
-  constructor(private game: GameModules) {
+  constructor(private game: Omit<GameModules, 'terrain'>) {
     // Create off-screen canvas for terrain bitmap
     this.terrainCanvas = document.createElement("canvas");
     const canvas = game.canvas.canvas;
