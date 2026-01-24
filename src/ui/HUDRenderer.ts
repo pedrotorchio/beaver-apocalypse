@@ -31,7 +31,7 @@ export class HUDRenderer implements Renders {
     const sectionSpacing = 20;
 
     // Draw HUD background with semi-transparent overlay and border
-    this.game.core.shapes.with({ bgColor: "rgba(0, 0, 0, 0.75)" }).fillRect(0, 0, canvas.width, hudHeight);
+    this.game.core.shapes.with({ bgColor: "rgba(0, 0, 0, 0.75)" }).rect(0, 0, canvas.width, hudHeight);
     this.game.core.shapes.with({ strokeWidth: 2, strokeColor: "#FFFFFF" }).rect({ x: canvas.width / 2, y: hudHeight / 2 }, canvas.width, hudHeight);
 
     // Get current player and phase
@@ -106,7 +106,7 @@ export class HUDRenderer implements Renders {
       }
 
       // Draw health bar background
-      this.game.core.shapes.with({ bgColor: "rgba(100, 100, 100, 0.5)" }).fillRect(rightX, barY, barWidth, barHeight);
+      this.game.core.shapes.with({ bgColor: "rgba(100, 100, 100, 0.5)" }).rect(rightX, barY, barWidth, barHeight);
 
       // Draw health bar
       let healthColor: string;
@@ -119,7 +119,7 @@ export class HUDRenderer implements Renders {
       } else {
         healthColor = "#FF0000";
       }
-      this.game.core.shapes.with({ bgColor: healthColor }).fillRect(rightX, barY, barWidth * healthPercent, barHeight);
+      this.game.core.shapes.with({ bgColor: healthColor }).rect(rightX, barY, barWidth * healthPercent, barHeight);
 
       // Draw health bar border
       this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "#FFFFFF" }).rect({ x: rightX + barWidth / 2, y: barY + barHeight / 2 }, barWidth, barHeight);

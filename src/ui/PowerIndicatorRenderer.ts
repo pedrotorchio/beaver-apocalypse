@@ -39,7 +39,7 @@ export class PowerIndicatorRenderer {
     const powerPercent = (currentPower - minPower) / powerRange;
 
     // Draw background
-    this.game.core.shapes.with({ bgColor: "#333333" }).fillRect(barX, barY, barWidth, barHeight);
+    this.game.core.shapes.with({ bgColor: "#333333" }).rect(barX, barY, barWidth, barHeight);
 
     // Draw power bar with color gradient (green to yellow to red)
     let color: string;
@@ -59,7 +59,7 @@ export class PowerIndicatorRenderer {
       color = `rgb(${r}, ${g}, ${b})`;
     }
 
-    this.game.core.shapes.with({ bgColor: color }).fillRect(barX, barY, barWidth * powerPercent, barHeight);
+    this.game.core.shapes.with({ bgColor: color }).rect(barX, barY, barWidth * powerPercent, barHeight);
 
     // Draw border
     this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "#FFFFFF" }).rect({ x: barX + barWidth / 2, y: barY + barHeight / 2 }, barWidth, barHeight);

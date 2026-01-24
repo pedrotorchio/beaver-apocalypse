@@ -56,13 +56,34 @@ export class Shapes {
     this.ctx.stroke();
   }
 
-  rect(center: Vec2Like, width: number, height?: number): void {
-    const h = height ?? width;
-    const x = center.x - width / 2;
-    const y = center.y - h / 2;
+  // Overload for absolute coordinates: rect(x, y, width, height)
+  rect(x: number, y: number, width: number, height: number): void;
+  // Overload for center-based coordinates: rect(center, width, height?)
+  rect(center: Vec2Like, width: number, height?: number): void;
+  rect(centerOrX: Vec2Like | number, widthOrY: number, width?: number, height?: number): void {
+    let x: number;
+    let y: number;
+    let w: number;
+    let h: number;
+
+    // Check if first argument is a number (absolute coordinates) or object (center point)
+    if (typeof centerOrX === 'number') {
+      // Absolute coordinates: rect(x, y, width, height)
+      x = centerOrX;
+      y = widthOrY;
+      w = width!; // width is required for absolute coordinates
+      h = height!; // height is required for absolute coordinates
+    } else {
+      // Center-based coordinates: rect(center, width, height?)
+      const center = centerOrX;
+      w = widthOrY;
+      h = width ?? widthOrY; // If height not provided, use width as height (square)
+      x = center.x - w / 2;
+      y = center.y - h / 2;
+    }
 
     this.ctx.beginPath();
-    this.ctx.rect(x, y, width, h);
+    this.ctx.rect(x, y, w, h);
     if (this.bgColor) {
       this.ctx.fillStyle = this.bgColor;
       this.ctx.fill();
@@ -70,13 +91,6 @@ export class Shapes {
     this.ctx.strokeStyle = this.strokeColor;
     this.ctx.lineWidth = this.strokeWidth;
     this.ctx.stroke();
-  }
-
-  fillRect(x: number, y: number, width: number, height: number): void {
-    if (this.bgColor) {
-      this.ctx.fillStyle = this.bgColor;
-      this.ctx.fillRect(x, y, width, height);
-    }
   }
 
   line(start: Vec2Like, end: Vec2Like): void {
