@@ -1,8 +1,8 @@
-import { AssetLoader } from "../../general/AssetLoader";
 import { TileSheet } from "../../general/TileSheet";
 import { Projectile } from "../Projectile";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
+import { tilesheet } from "../../assets";
 
 export type RockProjectileArguments = {
     position: planck.Vec2;
@@ -19,14 +19,7 @@ export class RockProjectile extends Projectile implements Renders {
             damage: args.damage,
             radius: 5,
         });
-        this.tilesheet = new TileSheet({
-            image: AssetLoader.getAsset("small_rock"),
-            tileWidth: 419,
-            tileHeight: 366,
-            states: ["rock"],
-            renderWidth: this.args.radius,
-            renderHeight: this.args.radius,
-        });
+        this.tilesheet = tilesheet.smallRock({ radius: this.args.radius });
     }
 
     render(): void {

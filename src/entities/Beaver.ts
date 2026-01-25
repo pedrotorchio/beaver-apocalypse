@@ -1,15 +1,14 @@
 import * as planck from "planck-js";
+import { tilesheet } from "../assets";
+import { PhysicsWorld } from "../core/PhysicsWorld";
+import type { GameModules } from "../core/types/GameModules.type";
+import type { Renders } from "../core/types/Renders.type";
+import type { Updates } from "../core/types/Updates.type";
+import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
+import * as vec from "../general/vector";
 import { Aim } from "./Aim";
 import { Projectile } from "./Projectile";
-import type { GameModules } from "../core/types/GameModules.type";
-import type { Updates } from "../core/types/Updates.type";
-import type { Renders } from "../core/types/Renders.type";
-import * as vec from "../general/vector";
-import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
-import { TileSheet } from "../general/TileSheet";
 import { RockProjectile, RockProjectileArguments } from "./projectiles/RockProjectile";
-import { AssetLoader } from "../general/AssetLoader";
-import { PhysicsWorld } from "../core/PhysicsWorld";
 import { GroundDetection } from "./properties/GroundDetection";
 
 export interface BeaverArguments {
@@ -46,19 +45,7 @@ export class Beaver implements Updates, Renders {
   private jumpStrength: number = -PhysicsWorld.GRAVITY*this.mass;
   private moveSpeed: number = 20;
   private devtoolsTab: DevtoolsTab;
-  private tilesheet = new TileSheet({
-    image: AssetLoader.getAsset<HTMLImageElement>("beaver1_sprites"),
-    tileWidth: 223,
-    tileHeight: 223,
-    states: [
-      { key: "idle", x: 0, y: 18, width: 210, height: 220},
-      { key: "walking", x: 261, y: 25, width: 235, height: 209},  
-      { key: "jumping", x: 526, y: 10, width: 241, height: 224},
-      { key: "attacking", x: 786, y: 0, width: 296, height: 229},
-      { key: "dead", x: 1078, y: 110, width: 366, height: 138},
-      ["hit", "idle"],
-    ]
-  })
+  private tilesheet = tilesheet.breaver1();
   private state: BeaverState = "idle";
   private stateFramesCount: number = 0;
   setState(state: BeaverState): void {
