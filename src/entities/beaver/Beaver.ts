@@ -112,20 +112,12 @@ export class Beaver implements Updates, Renders {
     return this.maxHealth;
   }
 
-  getFacing(): number {
-    return this.facing;
-  }
-
   getRadius(): number {
     return this.radius;
   }
 
   getAim(): Aim {
     return this.args.aim;
-  }
-
-  setPhysicsActive(active: boolean): void {
-    this.body.setActive(active);
   }
 
   isAlive(): boolean {

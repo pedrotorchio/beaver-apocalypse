@@ -42,10 +42,6 @@ export class EntityState<Default extends string, C extends Record<string, StateC
     this.#stateFramesCount = 0;
   }
 
-  getStateFramesCount(): number {
-    return this.#stateFramesCount;
-  }
-
   private detectState(): StateKey<Default, C> {
     const entries = Object.entries(this.states) as [StateKey<Default, C>, StateConfig][];
     const [key] = entries.find(([, config]) => config.autoDetect?.()) ?? [];

@@ -17,13 +17,7 @@ export class GroundDetection implements Updates, Renders {
         return this.#isGrounded.value;
     }
     #groundTouchPoints: Vec2Like[] = []
-    getGroundTouchPoints(): Vec2Like[] {
-        return this.#groundTouchPoints;
-    }
     #groundNormalDirection: planck.Vec2 = vec.ZERO();
-    getGroundNormalDirection(): Vec2Like {
-        return this.#groundNormalDirection;
-    }
     constructor(private readonly game: GameModules, private readonly body: planck.Body, private readonly radius: number) {}
 
     private checkPointTouchesGround(point: Vec2Like) {

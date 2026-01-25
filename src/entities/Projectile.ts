@@ -88,10 +88,6 @@ export abstract class Projectile implements Renders, Updates {
     return this.explosionRadius * 1.1;
   }
 
-  alertCollision() {
-    this.on.notify("collision");
-  }
-
   update(): void {
     if (!this.active) return;
 
@@ -101,21 +97,21 @@ export abstract class Projectile implements Renders, Updates {
     const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
     if (hitBeaver) {
       this.explode(beavers, hitBeaver);
-      this.alertCollision();
+      this.on.notify("collision");
       this.destroy();
       return;
     }
 
     if (this.groundDetection.getIsGrounded()) {
       this.explode(beavers);
-      this.alertCollision();
+      this.on.notify("collision");
       this.destroy();
       return;
     }
 
     if (this.checkOutOfBounds()) {
       this.active = false;
-      this.alertCollision();
+      this.on.notify("collision");
       this.destroy();
       return;
     }
