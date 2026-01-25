@@ -81,7 +81,7 @@ export class Beaver implements Updates, Renders {
       type: "dynamic",
       position: planck.Vec2(args.x, args.y),
       fixedRotation: false,
-      linearDamping: 0.5,
+      linearDamping: 1,
     });
 
     this.body.createFixture({
