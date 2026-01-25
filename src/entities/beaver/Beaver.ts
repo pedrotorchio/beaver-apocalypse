@@ -232,18 +232,19 @@ export class Beaver implements Updates, Renders {
     return result;
   }
 
-  kill(): void {
-    this.#entityState.setState("dead");
-    this.#health.kill();
-  }
-
   hit(amount: number, direction: planck.Vec2): void {
     this.#health.damage(amount);
     this.#entityState.setState("hit");
     this.#body.applyLinearImpulse(direction, this.#body.getWorldCenter(), true);
   }
 
-  destroy(): void {
+  // Private methods
+  private kill(): void {
+    this.#entityState.setState("dead");
+    this.#health.kill();
+  }
+
+  private destroy(): void {
     if (this.#body) {
       this.#game.world.destroyBody(this.#body);
     }
