@@ -164,7 +164,7 @@ export class Game {
    * @param phase - The phase to check and run
    * @returns True if the update cycle should be skipped, false otherwise
    */
-  checkAndRun(phase: TurnPhase): boolean {
+  private checkAndRun(phase: TurnPhase): boolean {
     return this.turnManager.checkPhase(phase) && this.phaseUpdateMap[phase]();
   }
 

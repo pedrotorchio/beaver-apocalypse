@@ -155,7 +155,7 @@ export abstract class Projectile implements Renders, Updates {
     );
   }
 
-  explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
+  private explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
     const pos = this.body.getPosition();
     this.game.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
     this.damageBeavers(beavers, pos, directHitBeaver);

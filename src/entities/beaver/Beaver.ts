@@ -182,7 +182,7 @@ export class Beaver implements Updates, Renders {
     return projectile;
   }
 
-  getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
+  private getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
     // Create GameModules for projectile
     const projectileModules: GameModules = {
       world: this.game.world,

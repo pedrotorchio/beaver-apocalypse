@@ -20,7 +20,7 @@ export class GroundDetection implements Updates, Renders {
     #groundNormalDirection: planck.Vec2 = vec.ZERO();
     constructor(private readonly game: GameModules, private readonly body: planck.Body, private readonly radius: number) {}
 
-    private checkPointTouchesGround(point: Vec2Like) {
+    private checkPointTouchesGround(point: Vec2Like): boolean {
         return this.game.terrain.isSolid(point.x, point.y);
     };
     update(): void {

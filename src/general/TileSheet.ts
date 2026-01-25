@@ -130,7 +130,7 @@ export class TileSheet<const StateKey extends string> {
     ctx.restore();
   }
 
-  drawRectangle(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  private drawRectangle(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     ctx.save();
     ctx.strokeStyle = 'red';
     ctx.strokeRect(x, y, this.renderWidth, this.renderHeight);

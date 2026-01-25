@@ -94,7 +94,7 @@ export class ControlsRenderer implements Renders {
    * Writes text just below the grid.
    * @param text - The text to display
    */
-  writeText(text: string): void {
+  private writeText(text: string): void {
     const textY = this.startY + this.totalGridSize + 10; // Position just below the grid
 
     const ctx = this.game.canvas;
