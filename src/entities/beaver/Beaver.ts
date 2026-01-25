@@ -36,15 +36,32 @@ export interface BeaverArguments {
  * health) is managed internally and queried by other systems.
  */
 export class Beaver implements Updates, Renders {
-  private body: planck.Body;
-  private radius: number = 20;
-  private mass: number = 125;
-  private facing: number = 1; // 1 for right, -1 for left
-  private jumpStrength: number = -PhysicsWorld.GRAVITY * this.mass;
-  private moveSpeed: number = 20;
-  private readonly groundDetection: GroundDetection;
-  private readonly health: Health;
-  private readonly entityState = new EntityState({
+  // Private properties
+  #body: planck.Body;
+  get body(): planck.Body {
+    return this.#body;
+  }
+
+  #radius: number = 20;
+  get radius(): number {
+    return this.#radius;
+  }
+
+  #health: Health;
+  get health(): Health {
+    return this.#health;
+  }
+
+  get aim(): Aim {
+    return this.#args.aim;
+  }
+
+  #mass: number = 125;
+  #facing: number = 1; // 1 for right, -1 for left
+  #jumpStrength: number = -PhysicsWorld.GRAVITY * this.#mass;
+  #moveSpeed: number = 20;
+  #groundDetection: GroundDetection;
+  #entityState = new EntityState({
     defaultState: 'idle',
     tilesheet: tilesheet.breaver1(),
     states: {
@@ -53,8 +70,8 @@ export class Beaver implements Updates, Renders {
       },
       walking: {
         autoDetect: () => {
-          const isGrounded = this.groundDetection.getIsGrounded();
-          const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
+          const isGrounded = this.#groundDetection.isGrounded;
+          const isMovingSideways = Math.abs(this.#body.getLinearVelocity().x) > SPEED_THRESHOLD;
           return isMovingSideways && isGrounded;
         },
       },
@@ -66,100 +83,106 @@ export class Beaver implements Updates, Renders {
       },
     }
   });
+  readonly #name: string;
+  readonly #game: GameModules;
+  readonly #args: BeaverArguments;
 
-  constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
-    this.body = game.world.createBody({
+  constructor(name: string, game: GameModules, args: BeaverArguments) {
+    this.#name = name;
+    this.#game = game;
+    this.#args = args;
+    this.#body = game.world.createBody({
       type: "dynamic",
       position: planck.Vec2(args.x, args.y),
       fixedRotation: false,
       linearDamping: 1,
     });
 
-    this.body.createFixture({
-      shape: planck.Circle(this.radius),
-      density: this.mass / (Math.PI * this.radius ** 2),
+    this.#body.createFixture({
+      shape: planck.Circle(this.#radius),
+      density: this.#mass / (Math.PI * this.#radius ** 2),
       friction: 1,
       restitution: 0,
     });
     // Store reference to this beaver on the body for contact detection
-    this.body.setUserData({ type: 'beaver', instance: this });
-    this.groundDetection = new GroundDetection(this.game, this.body, this.radius);
-    this.health = new Health({
+    this.#body.setUserData({ type: 'beaver', instance: this });
+    this.#groundDetection = new GroundDetection(this.#game, this.#body, this.#radius);
+    this.#health = new Health({
       maxHealth: 100,
-      radius: this.radius,
-      body: this.body,
-      game: this.game,
+      radius: this.#radius,
+      body: this.#body,
+      game: this.#game,
     });
   }
 
-  getBody(): planck.Body {
-    return this.body;
+  // Updates implementation
+  update(): void {
+    this.#groundDetection.update();
+    this.#entityState.update();
+    this.#health.update();
   }
 
-  getPosition(): planck.Vec2 {
-    return this.body.getPosition();
+  // Renders implementation
+  render(): void {
+    const ctx = this.#game.canvas;
+    const pos = this.#body.getPosition();
+
+    // Draw beaver sprite using tilesheet
+    this.#entityState.draw(ctx, pos, this.#facing as 1 | -1);
+
+    // Draw health bar
+    this.#health.render();
+
+    // Draw velocity arrow
+    const velocity = this.#body.getLinearVelocity();
+    if (velocity.length() > 0) {
+      const velocityEnd = pos.clone();
+      velocityEnd.add(velocity);
+      this.#game.core.shapes
+        .with({ strokeColor: "green" })
+        .arrow(pos, velocityEnd);
+    }
+
+    // Other
+    this.#groundDetection.render();
   }
 
-  getHealth(): number {
-    return this.health.getHealth();
-  }
-
-  getMaxHealth(): number {
-    return this.health.getMaxHealth();
-  }
-
-  getRadius(): number {
-    return this.radius;
-  }
-
-  getAim(): Aim {
-    return this.args.aim;
-  }
-
-  isAlive(): boolean {
-    return this.health.isAlive();
-  }
-
-
-  // ========== WALKING ACTION ==========
+  // Public methods
   /**
    * Makes the beaver walk in the specified direction.
    * @param direction -1 for left, 1 for right
    */
   walk(direction: number): void {
-    if (!this.isAlive()) return;
-    const vel = this.body.getLinearVelocity();
-    this.body.setLinearVelocity(planck.Vec2(direction * this.moveSpeed, vel.y));
-    this.facing = direction;
+    if (!this.health.isAlive()) return;
+    const vel = this.#body.getLinearVelocity();
+    this.#body.setLinearVelocity(planck.Vec2(direction * this.#moveSpeed, vel.y));
+    this.#facing = direction;
   }
 
-  // ========== JUMPING ACTION ==========
   /**
    * Makes the beaver jump if it is grounded.
    */
   jump(): void {
-    if (!this.isAlive() || !this.groundDetection.getIsGrounded()) return;
-    const point = this.body.getPosition();
-    this.body.applyLinearImpulse(planck.Vec2(0, this.jumpStrength), point);
-    // this.isGrounded = false;
+    if (!this.health.isAlive() || !this.#groundDetection.isGrounded) return;
+    const point = this.#body.getPosition();
+    this.#body.applyLinearImpulse(planck.Vec2(0, this.#jumpStrength), point);
   }
 
-  // ========== ATTACKING ACTION ==========
   /**
    * Makes the beaver attack by firing a projectile using the current aim state.
    * @param aim - The aim object containing direction and power
    * @returns The created projectile
    */
   attack(aim: Aim): Projectile {
-    if (!this.isAlive()) throw new Error("Cannot attack when beaver is dead");
+    if (!this.health.isAlive()) throw new Error("Cannot attack when beaver is dead");
 
-    this.entityState.setState("attacking");
+    this.#entityState.setState("attacking");
     const spawnPoint = this.getProjectileSpawnPoint();
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
     let fireAngle = aimAngle;
-    if (this.facing === -1) {
+    if (this.#facing === -1) {
       fireAngle = Math.PI - fireAngle;
     }
 
@@ -170,44 +193,27 @@ export class Beaver implements Updates, Renders {
     const velocity = planck.Vec2(direction.x, direction.y);
     velocity.mul(power * powerMultiplier);
 
-
     // Create projectile
     const projectile = this.createProjectile(spawnPoint, velocity);
-    projectile.on('collision', () => this.entityState.setState('idle'));
+    projectile.on('collision', () => this.#entityState.setState('idle'));
 
     return projectile;
   }
 
-  private createProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
-    // Create GameModules for projectile
-    const projectileModules: GameModules = {
-      world: this.game.world,
-      terrain: this.game.terrain,
-      core: this.game.core,
-      canvas: this.game.canvas,
-    };
-    const args: RockProjectileArguments = {
-      position,
-      velocity,
-      damage: 10
-    }
-    return new RockProjectile(projectileModules, args);
-  }
-
   getProjectileSpawnPoint(power?: number): planck.Vec2 {
-    const pos = this.body.getPosition();
-    const aim = this.args.aim;
+    const pos = this.#body.getPosition();
+    const aim = this.#args.aim;
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
     let fireAngle = aimAngle;
-    if (this.facing === -1) {
+    if (this.#facing === -1) {
       fireAngle = Math.PI - fireAngle;
     }
 
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
     const projectileRadius = 4; // Projectile.radius
-    const baseOffsetDistance = this.radius + projectileRadius;
+    const baseOffsetDistance = this.#radius + projectileRadius;
 
     // Scale distance based on power (normalized between min and max power)
     const currentPower = power ?? aim.getPower();
@@ -227,52 +233,37 @@ export class Beaver implements Updates, Renders {
   }
 
   kill(): void {
-    this.entityState.setState("dead");
-    this.health.kill();
+    this.#entityState.setState("dead");
+    this.#health.kill();
   }
 
   hit(amount: number, direction: planck.Vec2): void {
-    this.health.damage(amount);
-    this.entityState.setState("hit");
-    this.body.applyLinearImpulse(direction, this.body.getWorldCenter(), true);
-  }
-
-  update(): void {
-    this.groundDetection.update();
-    this.entityState.update();
-    this.health.update();
-  }
-
-  render(): void {
-    const ctx = this.game.canvas;
-    const pos = this.body.getPosition();
-    const pixelX = pos.x;
-    const pixelY = pos.y;
-
-    // Draw beaver sprite using tilesheet
-    this.entityState.draw(ctx, pos, this.facing);
-
-    // Draw health bar
-    this.health.render();
-
-    // Draw velocity arrow
-    const velocity = this.body.getLinearVelocity();
-    if (velocity.length() > 0) {
-      const velocityEnd = pos.clone();
-      velocityEnd.add(velocity);
-      this.game.core.shapes
-        .with({ strokeColor: "green" })
-        .arrow(pos, velocityEnd);
-    }
-
-    // Other
-    this.groundDetection.render();
+    this.#health.damage(amount);
+    this.#entityState.setState("hit");
+    this.#body.applyLinearImpulse(direction, this.#body.getWorldCenter(), true);
   }
 
   destroy(): void {
-    if (this.body) {
-      this.game.world.destroyBody(this.body);
+    if (this.#body) {
+      this.#game.world.destroyBody(this.#body);
     }
+  }
+
+  // Private methods
+  private createProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
+    // Create GameModules for projectile
+    const projectileModules: GameModules = {
+      world: this.#game.world,
+      terrain: this.#game.terrain,
+      core: this.#game.core,
+      canvas: this.#game.canvas,
+    };
+    const args: RockProjectileArguments = {
+      position,
+      velocity,
+      damage: 10
+    }
+    return new RockProjectile(projectileModules, args);
   }
 }
 

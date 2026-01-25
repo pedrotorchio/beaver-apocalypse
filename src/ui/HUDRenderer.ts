@@ -94,8 +94,8 @@ export class HUDRenderer implements Renders {
 
     for (let i = beavers.length - 1; i >= 0; i--) {
       const beaver = beavers[i];
-      const health = beaver.getHealth();
-      const maxHealth = beaver.getMaxHealth();
+      const health = beaver.health.health;
+      const maxHealth = beaver.health.maxHealth;
       const healthPercent = health / maxHealth;
 
       rightX -= barWidth;

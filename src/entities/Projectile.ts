@@ -29,13 +29,13 @@ export interface ProjectileArguments {
  * and automatically triggers its explosion effect when contact is detected.
  */
 export abstract class Projectile implements Renders, Updates {
-  private body: planck.Body;
-  private active: boolean = true;
+  #body: planck.Body;
+  #active: boolean = true;
   public static bounceOffMode = false;
   public readonly on = useObservable({
     collision: () => null,
   });
-  private readonly groundDetection: GroundDetection;
+  readonly #groundDetection: GroundDetection;
 
   constructor(
     protected game: GameModules,
@@ -47,7 +47,7 @@ export abstract class Projectile implements Renders, Updates {
       bullet: true, // Continuous collision detection
     };
 
-    this.body = game.world.createBody(bodyDef);
+    this.#body = game.world.createBody(bodyDef);
     const shape = planck.Circle(this.args.radius);
     const fixtureDef: planck.FixtureDef = {
       shape: shape,
@@ -56,24 +56,24 @@ export abstract class Projectile implements Renders, Updates {
       restitution: 0.5,
     };
 
-    this.body.createFixture(fixtureDef);
-    this.body.setLinearVelocity(args.velocity);
+    this.#body.createFixture(fixtureDef);
+    this.#body.setLinearVelocity(args.velocity);
 
     // Store reference to this projectile on the body for contact detection
-    this.body.setUserData({ type: 'projectile', instance: this });
-    this.groundDetection = new GroundDetection(this.game, this.body, this.args.radius);
+    this.#body.setUserData({ type: 'projectile', instance: this });
+    this.#groundDetection = new GroundDetection(this.game, this.#body, this.args.radius);
   }
 
   getBody(): planck.Body {
-    return this.body;
+    return this.#body;
   }
 
   getPosition(): planck.Vec2 {
-    return this.body.getPosition();
+    return this.#body.getPosition();
   }
 
   isActive(): boolean {
-    return this.active;
+    return this.#active;
   }
 
   get explosionRadius(): number {
@@ -93,7 +93,7 @@ export abstract class Projectile implements Renders, Updates {
     while (contact !== null) {
       if (contact.isTouching()) {
         const hitBeaver = this.findBeaverInContact(contact);
-        if (hitBeaver && hitBeaver.isAlive()) {
+        if (hitBeaver && hitBeaver.health.isAlive()) {
           return hitBeaver;
         }
       }
@@ -128,13 +128,13 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   private checkDistanceCollisions(beavers: Beaver[]): Beaver | null {
-    const pos = this.body.getPosition();
+    const pos = this.#body.getPosition();
 
     for (const beaver of beavers) {
-      if (!beaver.isAlive()) continue;
+      if (!beaver.health.isAlive()) continue;
 
-      const beaverPos = beaver.getPosition();
-      const beaverRadius = beaver.getRadius();
+      const beaverPos = beaver.body.getPosition();
+      const beaverRadius = beaver.radius;
       const directHitThreshold = beaverRadius + this.args.radius;
       const distance = planck.Vec2.distance(pos, beaverPos);
       if (distance > directHitThreshold) continue;
@@ -146,7 +146,7 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   private checkOutOfBounds(): boolean {
-    const pos = this.body.getPosition();
+    const pos = this.#body.getPosition();
     return (
       pos.x < 0 ||
       pos.x > this.game.terrain.getWidth() ||
@@ -156,18 +156,18 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   private explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
-    const pos = this.body.getPosition();
+    const pos = this.#body.getPosition();
     this.game.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
     this.damageBeavers(beavers, pos, directHitBeaver);
 
-    this.active = false;
+    this.#active = false;
   }
 
   private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): void {
     const maxDistance = this.maxDamageDistance;
 
     for (const beaver of beavers) {
-      const beaverPos = beaver.getPosition();
+      const beaverPos = beaver.body.getPosition();
       const distance = planck.Vec2.distance(explosionPos, beaverPos);
       if (distance >= maxDistance) continue;
 
@@ -189,9 +189,9 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   update(): void {
-    if (!this.active) return;
+    if (!this.#active) return;
 
-    this.groundDetection.update();
+    this.#groundDetection.update();
 
     const beavers = this.game.core.entityManager.getBeavers();
     const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
@@ -202,7 +202,7 @@ export abstract class Projectile implements Renders, Updates {
       return;
     }
 
-    if (this.groundDetection.getIsGrounded()) {
+    if (this.#groundDetection.isGrounded) {
       this.explode(beavers);
       this.on.notify("collision");
       this.destroy();
@@ -210,7 +210,7 @@ export abstract class Projectile implements Renders, Updates {
     }
 
     if (this.checkOutOfBounds()) {
-      this.active = false;
+      this.#active = false;
       this.on.notify("collision");
       this.destroy();
       return;
@@ -219,8 +219,8 @@ export abstract class Projectile implements Renders, Updates {
   abstract render(): void;
 
   destroy(): void {
-    if (this.body) {
-      this.game.world.destroyBody(this.body);
+    if (this.#body) {
+      this.game.world.destroyBody(this.#body);
     }
     this.on.destroy();
   }

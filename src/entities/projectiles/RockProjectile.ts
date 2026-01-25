@@ -11,7 +11,7 @@ export type RockProjectileArguments = {
 }
 export class RockProjectile extends Projectile implements Renders {
     public static renderRadius = true
-    private tilesheet: TileSheet<"rock">;
+    #tilesheet: TileSheet<"rock">;
     constructor(game: GameModules, args: RockProjectileArguments) {
         super(game, {
             position: args.position,
@@ -19,12 +19,12 @@ export class RockProjectile extends Projectile implements Renders {
             damage: args.damage,
             radius: 5,
         });
-        this.tilesheet = tilesheet.smallRock({ radius: this.args.radius });
+        this.#tilesheet = tilesheet.smallRock({ radius: this.args.radius });
     }
 
     render(): void {
         const pos = this.getPosition();
-        this.tilesheet.drawImage(this.game.canvas, "rock", pos.x, pos.y);
+        this.#tilesheet.drawImage(this.game.canvas, "rock", pos.x, pos.y);
 
         if (RockProjectile.renderRadius) {
             this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "#FFD700" }).circle(pos, this.args.radius + 2);

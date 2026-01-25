@@ -1,3 +1,4 @@
+import * as planck from "planck-js";
 import { Updates } from "../../core/types/Updates.type";
 import { TileSheet } from "../../general/TileSheet";
 
@@ -19,18 +20,9 @@ type Configuration<StateKey extends string> = {
   'states': Partial<Record<StateKey, StateConfig>>
 };
 export class EntityState<StateKey extends string> implements Updates {
-
+  // Private properties
   #currentState: StateKey;
-  #stateFramesCount: number = 0;
-  constructor(private readonly config: Configuration<StateKey>) {
-    this.#currentState = this.config['defaultState'];
-  }
-
-  draw(ctx: CanvasRenderingContext2D, position: planck.Vec2, facing: 1 | -1) {
-    this.config.tilesheet.drawImage(ctx, this.getState(), position.x, position.y, facing);
-  }
-
-  getState(): StateKey {
+  get state(): StateKey {
     return this.#currentState;
   }
   setState(state: StateKey): void {
@@ -38,24 +30,15 @@ export class EntityState<StateKey extends string> implements Updates {
     this.#stateFramesCount = 0;
   }
 
-  private detectState(): StateKey {
-    const entries = Object.entries(this.config.states) as [StateKey, StateConfig][];
-    const [key] = entries.find(([, config]) => config.autoDetect?.()) ?? [];
-    return key ?? this.config.defaultState;
+  #stateFramesCount: number = 0;
+  readonly #config: Configuration<StateKey>;
+
+  constructor(config: Configuration<StateKey>) {
+    this.#config = config;
+    this.#currentState = this.#config['defaultState'];
   }
 
-  private isStateLocked(): boolean {
-    const currentStateKey = this.getState();
-    const config = this.config.states[currentStateKey];
-
-    if (!config) return false;
-    if (config.persist) return true;
-    if (!config.frameCountCooldown) return false
-    if (this.#stateFramesCount < config.frameCountCooldown) return true;
-
-    return false;
-  }
-
+  // Updates implementation
   update(): void {
     this.#stateFramesCount++;
 
@@ -63,5 +46,29 @@ export class EntityState<StateKey extends string> implements Updates {
 
     const newState = this.detectState();
     this.setState(newState);
+  }
+
+  // Public methods
+  draw(ctx: CanvasRenderingContext2D, position: planck.Vec2, facing: 1 | -1) {
+    this.#config.tilesheet.drawImage(ctx, this.state, position.x, position.y, facing);
+  }
+
+  // Private methods
+  private detectState(): StateKey {
+    const entries = Object.entries(this.#config.states) as [StateKey, StateConfig][];
+    const [key] = entries.find(([, config]) => config.autoDetect?.()) ?? [];
+    return key ?? this.#config.defaultState;
+  }
+
+  private isStateLocked(): boolean {
+    const currentStateKey = this.state;
+    const config = this.#config.states[currentStateKey];
+
+    if (!config) return false;
+    if (config.persist) return true;
+    if (!config.frameCountCooldown) return false
+    if (this.#stateFramesCount < config.frameCountCooldown) return true;
+
+    return false;
   }
 }

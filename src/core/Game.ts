@@ -144,7 +144,7 @@ export class Game {
     await AssetLoader.areAllAssetsLoaded();
     // Reset power for all beavers' aims
     for (const beaver of this.entityManager.getBeavers()) {
-      beaver.getAim().resetPower();
+      beaver.aim.resetPower();
     }
     this.gameLoop.start();
   }
@@ -197,7 +197,7 @@ export class Game {
   private updatePlayerInputPhase(): boolean {
     const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
     const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
-    const isCurrentBeaverDead = !currentBeaver || !currentBeaver.isAlive();
+    const isCurrentBeaverDead = !currentBeaver || !currentBeaver.health.isAlive();
 
     // Handle dead beaver: end turn and start next turn
     if (isCurrentBeaverDead) {
@@ -241,19 +241,19 @@ export class Game {
   private updateEndTurnPhase(): boolean {
     // Reset power for all beavers when turn ends
     for (const beaver of this.entityManager.getBeavers()) {
-      beaver.getAim().resetPower();
+      beaver.aim.resetPower();
     }
 
     return false;
   }
 
   private handlePlayerInput(beaver: Beaver): void {
-    if (!beaver.isAlive()) {
+    if (!beaver.health.isAlive()) {
       return;
     }
 
     const input = this.inputManager.getState();
-    const aim = beaver.getAim();
+    const aim = beaver.aim;
 
     // Movement
     if (input.moveLeft) {

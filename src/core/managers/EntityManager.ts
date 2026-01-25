@@ -37,14 +37,14 @@ export class EntityManager {
   }
 
   getAliveBeavers(): Beaver[] {
-    return this.beavers.filter((b) => b.isAlive());
+    return this.beavers.filter((b) => b.health.isAlive());
   }
 
   addProjectile(projectile: Projectile): void {
     this.projectiles.push(projectile);
   }
 
-  updateProjectiles(beavers: Beaver[]): void {
+  updateProjectiles(): void {
     const activeProjectiles: Projectile[] = [];
     for (const projectile of this.projectiles) {
       if (projectile.isActive()) {

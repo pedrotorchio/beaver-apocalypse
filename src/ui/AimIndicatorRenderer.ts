@@ -31,18 +31,18 @@ export class AimIndicatorRenderer implements Renders {
     const currentBeaver = this.game.core.entityManager.getBeaver(
       this.game.core.turnManager.getCurrentPlayerIndex()
     );
-    if (!currentBeaver?.isAlive() || !this.game.core.turnManager.canAcceptInput()) {
+    if (!currentBeaver?.health.isAlive() || !this.game.core.turnManager.canAcceptInput()) {
       return;
     }
 
-    const aim = currentBeaver.getAim();
+    const aim = currentBeaver.aim;
     const power = aim.getPower();
     const minPower = aim.getMinPower();
     const maxPower = aim.getMaxPower();
     
     // Calculate spawn point with current power
     const spawnPoint = currentBeaver.getProjectileSpawnPoint(power);
-    const pos = currentBeaver.getPosition();
+    const pos = currentBeaver.body.getPosition();
 
     // Interpolate color from yellow (#FFFF00) to red (#FF0000) based on power
     const powerRatio = (power - minPower) / (maxPower - minPower);
