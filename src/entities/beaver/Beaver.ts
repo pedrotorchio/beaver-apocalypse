@@ -10,6 +10,7 @@ import { Projectile } from "../Projectile";
 import { RockProjectile, RockProjectileArguments } from "../projectiles/RockProjectile";
 import { EntityState } from "../properties/EntityState";
 import { GroundDetection } from "../properties/GroundDetection";
+import { Health } from "../properties/Health";
 
 export interface BeaverArguments {
   x: number;
@@ -36,26 +37,17 @@ export interface BeaverArguments {
  */
 export class Beaver implements Updates, Renders {
   private body: planck.Body;
-  private health: number = 100;
-  private maxHealth: number = 100;
   private radius: number = 20;
   private mass: number = 125;
   private facing: number = 1; // 1 for right, -1 for left
   private jumpStrength: number = -PhysicsWorld.GRAVITY * this.mass;
   private moveSpeed: number = 20;
-  private tilesheet = tilesheet.breaver1();
   private readonly groundDetection: GroundDetection;
+  private readonly health: Health;
   private readonly entityState = new EntityState({
     defaultState: 'idle',
+    tilesheet: tilesheet.breaver1(),
     states: {
-      jumping: {
-        autoDetect: () => {
-          const isGrounded = this.groundDetection.getIsGrounded();
-          const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD;
-          const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
-          return (isMovingUpward || isMovingDownward) && !isGrounded;
-        },
-      },
       dead: {
         persist: true,
       },
@@ -76,7 +68,6 @@ export class Beaver implements Updates, Renders {
   });
 
   constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
-    this.tilesheet.setRenderSize(2 * this.radius, 2 * this.radius);
     this.body = game.world.createBody({
       type: "dynamic",
       position: planck.Vec2(args.x, args.y),
@@ -93,7 +84,12 @@ export class Beaver implements Updates, Renders {
     // Store reference to this beaver on the body for contact detection
     this.body.setUserData({ type: 'beaver', instance: this });
     this.groundDetection = new GroundDetection(this.game, this.body, this.radius);
-
+    this.health = new Health({
+      maxHealth: 100,
+      radius: this.radius,
+      body: this.body,
+      game: this.game,
+    });
   }
 
   getBody(): planck.Body {
@@ -105,11 +101,11 @@ export class Beaver implements Updates, Renders {
   }
 
   getHealth(): number {
-    return this.health;
+    return this.health.getHealth();
   }
 
   getMaxHealth(): number {
-    return this.maxHealth;
+    return this.health.getMaxHealth();
   }
 
   getRadius(): number {
@@ -121,7 +117,7 @@ export class Beaver implements Updates, Renders {
   }
 
   isAlive(): boolean {
-    return this.health > 0;
+    return this.health.isAlive();
   }
 
 
@@ -232,11 +228,11 @@ export class Beaver implements Updates, Renders {
 
   kill(): void {
     this.entityState.setState("dead");
-    this.health = 0;
+    this.health.kill();
   }
 
   hit(amount: number, direction: planck.Vec2): void {
-    this.health = Math.max(0, this.health - amount);
+    this.health.damage(amount);
     this.entityState.setState("hit");
     this.body.applyLinearImpulse(direction, this.body.getWorldCenter(), true);
   }
@@ -244,6 +240,7 @@ export class Beaver implements Updates, Renders {
   update(): void {
     this.groundDetection.update();
     this.entityState.update();
+    this.health.update();
   }
 
   render(): void {
@@ -253,15 +250,10 @@ export class Beaver implements Updates, Renders {
     const pixelY = pos.y;
 
     // Draw beaver sprite using tilesheet
-    this.tilesheet.drawImage(ctx, this.entityState.getState(), pixelX, pixelY, this.facing as 1 | -1);
-    // Draw health bar
-    const barWidth = this.radius * 2;
-    const barHeight = 4;
-    const barX = pixelX - barWidth / 2;
-    const barY = pixelY - this.radius - 8;
+    this.entityState.draw(ctx, pos, this.facing);
 
-    this.game.core.shapes.with({ bgColor: "#FF0000" }).rect(barX, barY, barWidth, barHeight);
-    this.game.core.shapes.with({ bgColor: "#00FF00" }).rect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+    // Draw health bar
+    this.health.render();
 
     // Draw velocity arrow
     const velocity = this.body.getLinearVelocity();
@@ -273,7 +265,7 @@ export class Beaver implements Updates, Renders {
         .arrow(pos, velocityEnd);
     }
 
-    // Other renderers
+    // Other
     this.groundDetection.render();
   }
 

@@ -15,7 +15,7 @@ export const tilesheet = Object.freeze({
             ["hit", "idle"],
         ]
     }),
-    smallRock: (args: {radius: number}) => new TileSheet({
+    smallRock: (args: { radius: number }) => new TileSheet({
         image: AssetLoader.getAsset("small_rock"),
         tileWidth: 419,
         tileHeight: 366,

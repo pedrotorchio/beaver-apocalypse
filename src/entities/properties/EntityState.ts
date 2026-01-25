@@ -1,4 +1,5 @@
 import { Updates } from "../../core/types/Updates.type";
+import { TileSheet } from "../../general/TileSheet";
 
 export type StateConfig = {
   /** 
@@ -12,45 +13,40 @@ export type StateConfig = {
   /** If the state is permanent. Once set, state changes will no longer be auto detected. */
   persist?: boolean;
 }
-type Configuration<Default extends string, C extends Record<string, StateConfig>> = {
-  'defaultState': Default
-  'states': Partial<C>
+type Configuration<StateKey extends string> = {
+  'defaultState': StateKey
+  'tilesheet': TileSheet<StateKey>
+  'states': Partial<Record<StateKey, StateConfig>>
 };
-type StateKey<Default extends string, C extends Record<string, StateConfig>> = Default | keyof C;
+export class EntityState<StateKey extends string> implements Updates {
 
-export class EntityState<Default extends string, C extends Record<string, StateConfig>> implements Updates {
-
-  #currentState: StateKey<Default, C>;
+  #currentState: StateKey;
   #stateFramesCount: number = 0;
-  constructor(private readonly config: Configuration<Default, C>) {
-    this.#currentState = this.defaultState;
+  constructor(private readonly config: Configuration<StateKey>) {
+    this.#currentState = this.config['defaultState'];
   }
 
-  get defaultState(): Default {
-    return this.config['defaultState'];
+  draw(ctx: CanvasRenderingContext2D, position: planck.Vec2, facing: 1 | -1) {
+    this.config.tilesheet.drawImage(ctx, this.getState(), position.x, position.y, facing);
   }
 
-  get states(): Partial<C> {
-    return this.config['states'];
-  }
-
-  getState(): StateKey<Default, C> {
+  getState(): StateKey {
     return this.#currentState;
   }
-  setState(state: StateKey<Default, C>): void {
+  setState(state: StateKey): void {
     this.#currentState = state;
     this.#stateFramesCount = 0;
   }
 
-  private detectState(): StateKey<Default, C> {
-    const entries = Object.entries(this.states) as [StateKey<Default, C>, StateConfig][];
+  private detectState(): StateKey {
+    const entries = Object.entries(this.config.states) as [StateKey, StateConfig][];
     const [key] = entries.find(([, config]) => config.autoDetect?.()) ?? [];
-    return key ?? this.defaultState;
+    return key ?? this.config.defaultState;
   }
 
   private isStateLocked(): boolean {
     const currentStateKey = this.getState();
-    const config = this.states[currentStateKey];
+    const config = this.config.states[currentStateKey];
 
     if (!config) return false;
     if (config.persist) return true;
