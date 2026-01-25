@@ -88,61 +88,22 @@ export abstract class Projectile implements Renders, Updates {
     return this.explosionRadius * 1.1;
   }
 
-  update(): void {
-    if (!this.active) return;
-
-    this.groundDetection.update();
-
-    const beavers = this.game.core.entityManager.getBeavers();
-    const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
-    if (hitBeaver) {
-      this.explode(beavers, hitBeaver);
-      this.on.notify("collision");
-      this.destroy();
-      return;
-    }
-
-    if (this.groundDetection.getIsGrounded()) {
-      this.explode(beavers);
-      this.on.notify("collision");
-      this.destroy();
-      return;
-    }
-
-    if (this.checkOutOfBounds()) {
-      this.active = false;
-      this.on.notify("collision");
-      this.destroy();
-      return;
-    }
-  }
-
   private checkBeaverCollisions(beavers: Beaver[]): Beaver | null {
-    const hitBeaver = this.checkPhysicsContactCollisions(beavers);
-    if (hitBeaver) return hitBeaver;
-
-    return this.checkDistanceCollisions(beavers);
-  }
-
-  private checkPhysicsContactCollisions(beavers: Beaver[]): Beaver | null {
     let contact = this.game.world.getContactList();
     while (contact !== null) {
       if (contact.isTouching()) {
-        const beaverBody = this.findBeaverBodyInContact(contact);
-        if (beaverBody) {
-          const hitBeaver = beavers.find(b => b.getBody() === beaverBody);
-          if (hitBeaver && hitBeaver.isAlive()) {
-            return hitBeaver;
-          }
+        const hitBeaver = this.findBeaverInContact(contact);
+        if (hitBeaver && hitBeaver.isAlive()) {
+          return hitBeaver;
         }
       }
       contact = contact.getNext();
     }
 
-    return null;
+    return this.checkDistanceCollisions(beavers);
   }
 
-  private findBeaverBodyInContact(contact: planck.Contact): planck.Body | null {
+  private findBeaverInContact(contact: planck.Contact): Beaver | null {
     const fixtureA = contact.getFixtureA();
     const fixtureB = contact.getFixtureB();
     const bodyA = fixtureA.getBody();
@@ -155,16 +116,12 @@ export abstract class Projectile implements Renders, Updates {
       return userData?.type === 'projectile' && userData?.instance === this;
     };
 
-    const isBeaver = (userData: { type?: string; instance?: unknown } | null): boolean => {
-      return userData?.type === 'beaver';
-    };
-
-    if (isThisProjectile(userDataA) && isBeaver(userDataB)) {
-      return bodyB;
+    if (isThisProjectile(userDataA) && userDataB?.type === 'beaver') {
+      return userDataB.instance as Beaver;
     }
 
-    if (isThisProjectile(userDataB) && isBeaver(userDataA)) {
-      return bodyA;
+    if (isThisProjectile(userDataB) && userDataA?.type === 'beaver') {
+      return userDataA.instance as Beaver;
     }
 
     return null;
@@ -231,6 +188,34 @@ export abstract class Projectile implements Renders, Updates {
     return damage;
   }
 
+  update(): void {
+    if (!this.active) return;
+
+    this.groundDetection.update();
+
+    const beavers = this.game.core.entityManager.getBeavers();
+    const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
+    if (hitBeaver) {
+      this.explode(beavers, hitBeaver);
+      this.on.notify("collision");
+      this.destroy();
+      return;
+    }
+
+    if (this.groundDetection.getIsGrounded()) {
+      this.explode(beavers);
+      this.on.notify("collision");
+      this.destroy();
+      return;
+    }
+
+    if (this.checkOutOfBounds()) {
+      this.active = false;
+      this.on.notify("collision");
+      this.destroy();
+      return;
+    }
+  }
   abstract render(): void;
 
   destroy(): void {
