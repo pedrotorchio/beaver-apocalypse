@@ -1,5 +1,5 @@
 import * as planck from "planck-js";
-import { Beaver } from "./Beaver";
+import { Beaver } from "./beaver/Beaver";
 import { useObservable } from "../general/observable";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
@@ -239,8 +239,11 @@ export abstract class Projectile implements Renders, Updates {
       if (distance >= maxDistance) continue;
 
       const damage = this.calculateDamage(distance, maxDistance, directHitBeaver === beaver);
-      beaver.applyDamage(damage);
-      this.applyKnockback(beaver, beaverPos, explosionPos);
+      const direction = beaverPos.clone();
+      direction.sub(explosionPos);
+      direction.normalize();
+      direction.mul(this.beaverKnockback);
+      beaver.hit(damage, direction);
     }
   }
 
@@ -250,14 +253,6 @@ export abstract class Projectile implements Renders, Updates {
       damage *= 1.2;
     }
     return damage;
-  }
-
-  private applyKnockback(beaver: Beaver, beaverPos: planck.Vec2, explosionPos: planck.Vec2): void {
-    const direction = beaverPos.clone();
-    direction.sub(explosionPos);
-    direction.normalize();
-    direction.mul(this.beaverKnockback);
-    beaver.applyKnockback(direction.x, direction.y);
   }
 
   abstract render(): void;

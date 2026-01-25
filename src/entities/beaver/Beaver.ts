@@ -1,22 +1,21 @@
 import * as planck from "planck-js";
-import { tilesheet } from "../assets";
-import { PhysicsWorld } from "../core/PhysicsWorld";
-import type { GameModules } from "../core/types/GameModules.type";
-import type { Renders } from "../core/types/Renders.type";
-import type { Updates } from "../core/types/Updates.type";
-import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
-import * as vec from "../general/vector";
-import { Aim } from "./Aim";
-import { Projectile } from "./Projectile";
-import { RockProjectile, RockProjectileArguments } from "./projectiles/RockProjectile";
-import { GroundDetection } from "./properties/GroundDetection";
+import { tilesheet } from "../../assets";
+import { PhysicsWorld } from "../../core/PhysicsWorld";
+import type { GameModules } from "../../core/types/GameModules.type";
+import type { Renders } from "../../core/types/Renders.type";
+import type { Updates } from "../../core/types/Updates.type";
+import * as vec from "../../general/vector";
+import { Aim } from "../Aim";
+import { Projectile } from "../Projectile";
+import { RockProjectile, RockProjectileArguments } from "../projectiles/RockProjectile";
+import { GroundDetection } from "../properties/GroundDetection";
+import { DEFAULT_STATE, EntityState } from "../properties/EntityState";
 
 export interface BeaverArguments {
   x: number;
   y: number;
   aim: Aim;
 }
-type BeaverState = "idle" | "walking" | "jumping" | "attacking" | "dead" | "hit";
 
 /**
  * Represents a player-controlled beaver entity in the game.
@@ -42,21 +41,40 @@ export class Beaver implements Updates, Renders {
   private radius: number = 20;
   private mass: number = 125;
   private facing: number = 1; // 1 for right, -1 for left
-  private jumpStrength: number = -PhysicsWorld.GRAVITY*this.mass;
+  private jumpStrength: number = -PhysicsWorld.GRAVITY * this.mass;
   private moveSpeed: number = 20;
-  private devtoolsTab: DevtoolsTab;
   private tilesheet = tilesheet.breaver1();
-  private state: BeaverState = "idle";
-  private stateFramesCount: number = 0;
-  setState(state: BeaverState): void {
-    this.state = state;
-    this.stateFramesCount = 0;
-  }
-
   private readonly groundDetection: GroundDetection;
+  private readonly entityState = new EntityState({
+    jumping: {
+      autoDetect: () => {
+        const isGrounded = this.groundDetection.getIsGrounded();
+        const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD;
+        const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
+        return (isMovingUpward || isMovingDownward) && !isGrounded;
+      },
+    },
+    dead: {
+      persist: true,
+    },
+    walking: {
+      autoDetect: () => {
+        const isGrounded = this.groundDetection.getIsGrounded();
+        const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
+        return isMovingSideways && isGrounded;
+      },
+    },
+    attacking: {
+      frameCountCooldown: 30,
+    },
+    hit: {
+      frameCountCooldown: 30,
+    },
+    [DEFAULT_STATE]: 'idle',
+  });
 
   constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {
-    this.tilesheet.setRenderSize(2*this.radius, 2*this.radius);
+    this.tilesheet.setRenderSize(2 * this.radius, 2 * this.radius);
     this.body = game.world.createBody({
       type: "dynamic",
       position: planck.Vec2(args.x, args.y),
@@ -64,35 +82,18 @@ export class Beaver implements Updates, Renders {
       linearDamping: 0.5,
     });
 
-    const shape = planck.Circle(this.radius);
     this.body.createFixture({
-      shape: shape,
-      density: this.mass/(Math.PI*this.radius**2),
-      friction: 0.5,
-      restitution: 0.3,
+      shape: planck.Circle(this.radius),
+      density: this.mass / (Math.PI * this.radius ** 2),
+      friction: 1,
+      restitution: 0,
     });
     // Store reference to this beaver on the body for contact detection
     this.body.setUserData({ type: 'beaver', instance: this });
-    
-    this.devtoolsTab = useDevtoolsStore().addTab(this.name);
     this.groundDetection = new GroundDetection(this.game, this.body, this.radius);
+
   }
 
-  resolveBeaverState(): BeaverState {
-    const SPEED_THRESHOLD = 0.2;
-    const isGrounded = this.groundDetection.getIsGrounded();
-    const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD
-    const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
-
-    const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
-    const isDead = this.state === 'dead';
-
-    if (isMovingUpward && !isGrounded) return 'jumping';
-    if (isMovingDownward && !isGrounded) return 'jumping';
-    if (isDead) return 'dead';
-    if (isMovingSideways && isGrounded) return 'walking';
-    return 'idle';
-  }
   getBody(): planck.Body {
     return this.body;
   }
@@ -129,29 +130,6 @@ export class Beaver implements Updates, Renders {
     return this.health > 0;
   }
 
-  // ========== IDLE STATE ==========
-  update(): void {
-
-    this.stateFramesCount++;
-    const newState = this.resolveBeaverState()
-    const currentState = this.state;
-    // Hit always takes over any other state
-    if (
-      (currentState === 'hit' && this.stateFramesCount < 30) ||
-      (currentState === 'attacking' && this.stateFramesCount < 30)
-    ) {/* Do nothing */}
-    else this.setState(newState); 
-
-    this.groundDetection.update();
-    
-    this.devtoolsTab.update("", {
-      health: this.health,
-      facing: this.facing,
-      isGrounded: this.groundDetection.getIsGrounded(),
-      position: this.body.getPosition(),
-      velocity: this.body.getLinearVelocity()
-    });
-  }
 
   // ========== WALKING ACTION ==========
   /**
@@ -185,7 +163,7 @@ export class Beaver implements Updates, Renders {
   attack(aim: Aim): Projectile {
     if (!this.isAlive()) throw new Error("Cannot attack when beaver is dead");
 
-    this.setState("attacking");
+    this.entityState.setState("attacking");
     const spawnPoint = this.getProjectileSpawnPoint();
     const aimAngle = aim.getAngle();
 
@@ -205,7 +183,7 @@ export class Beaver implements Updates, Renders {
 
     // Create projectile
     const projectile = this.getProjectile(spawnPoint, velocity);
-    projectile.on('collision', () => this.setState('idle'));
+    projectile.on('collision', () => this.entityState.setState('idle'));
 
     return projectile;
   }
@@ -240,7 +218,7 @@ export class Beaver implements Updates, Renders {
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
     const projectileRadius = 4; // Projectile.radius
     const baseOffsetDistance = this.radius + projectileRadius;
-    
+
     // Scale distance based on power (normalized between min and max power)
     const currentPower = power ?? aim.getPower();
     const minPower = aim.getMinPower();
@@ -249,7 +227,7 @@ export class Beaver implements Updates, Renders {
     const minDistance = baseOffsetDistance * 1.2;
     const maxDistance = baseOffsetDistance * 2.5;
     const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
-    
+
     const direction = vec.fromAngle(fireAngle);
     const offset = planck.Vec2(direction.x, direction.y);
     offset.mul(offsetDistance);
@@ -258,22 +236,20 @@ export class Beaver implements Updates, Renders {
     return result;
   }
 
-  // ========== DEAD STATE ==========
-  /**
-   * Kills the beaver by setting health to 0.
-   */
-  die(): void {
-    this.setState("dead");
+  kill(): void {
+    this.entityState.setState("dead");
     this.health = 0;
   }
 
-  applyDamage(amount: number): void {
+  hit(amount: number, direction: planck.Vec2): void {
     this.health = Math.max(0, this.health - amount);
+    this.entityState.setState("hit");
+    this.body.applyLinearImpulse(direction, this.body.getWorldCenter(), true);
   }
 
-  applyKnockback(impulseX: number, impulseY: number): void {
-    this.setState("hit");
-    this.body.applyLinearImpulse(planck.Vec2(impulseX, impulseY), this.body.getWorldCenter(), true);
+  update(): void {
+    this.groundDetection.update();
+    this.entityState.update();
   }
 
   render(): void {
@@ -283,7 +259,7 @@ export class Beaver implements Updates, Renders {
     const pixelY = pos.y;
 
     // Draw beaver sprite using tilesheet
-    this.tilesheet.drawImage(ctx, this.state, pixelX, pixelY, this.facing as 1 | -1);
+    this.tilesheet.drawImage(ctx, this.entityState.getState(), pixelX, pixelY, this.facing as 1 | -1);
     // Draw health bar
     const barWidth = this.radius * 2;
     const barHeight = 4;
@@ -304,9 +280,11 @@ export class Beaver implements Updates, Renders {
     this.groundDetection.render();
   }
 
-  destroy(): void {     
+  destroy(): void {
     if (this.body) {
       this.game.world.destroyBody(this.body);
     }
   }
 }
+
+const SPEED_THRESHOLD = 0.2;

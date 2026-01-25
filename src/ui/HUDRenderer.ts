@@ -1,4 +1,4 @@
-import { Beaver } from "../entities/Beaver";
+import { Beaver } from "../entities/beaver/Beaver";
 import { TurnPhase } from "../core/managers/TurnManager";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";

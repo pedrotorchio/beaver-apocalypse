@@ -1,4 +1,4 @@
-import { Beaver } from "../../entities/Beaver";
+import { Beaver } from "../../entities/beaver/Beaver";
 import { Projectile } from "../../entities/Projectile";
 
 /**
