@@ -23,7 +23,7 @@ export enum TurnPhase {
  * and whether certain actions (like input processing) are permitted.
  */
 export class TurnManager {
-  private currentPlayerIndex: number = 0;
+  private currentPlayerIndex: number = -1;
   private phase: TurnPhase = TurnPhase.PlayerInput;
   private playerCount: number;
 

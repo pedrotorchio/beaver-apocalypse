@@ -10,6 +10,7 @@ export interface InputState {
   charging: boolean;
   pause: boolean;
   stop: boolean;
+  yield: boolean;
 }
 
 type EventListener = (state: InputState) => void;
@@ -41,7 +42,7 @@ export class InputManager {
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
-    if(e.repeat) return;
+    if (e.repeat) return;
     this.keys.add(e.key.toLowerCase());
     // Track spacebar press for charging
     if (e.key.toLowerCase() === " " && !this.wasSpacePressed) {
@@ -51,9 +52,9 @@ export class InputManager {
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
-    if(e.repeat) return;
+    if (e.repeat) return;
     this.keys.delete(e.key.toLowerCase());
-    
+
     // Detect fire event (spacebar just released)
     if (e.key.toLowerCase() === " ") {
       if (this.wasSpacePressed) {
@@ -84,6 +85,7 @@ export class InputManager {
       charging: this.keys.has(" "),
       pause: this.keys.has("p"),
       stop: this.keys.has("enter"),
+      yield: false
     };
   }
 
@@ -96,5 +98,5 @@ export class InputManager {
   isCharging(): boolean {
     return this.keys.has(" ");
   }
-  
+
 }

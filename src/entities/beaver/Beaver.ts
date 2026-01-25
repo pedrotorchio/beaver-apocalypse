@@ -11,6 +11,7 @@ import { RockProjectile, RockProjectileArguments } from "../projectiles/RockProj
 import { EntityState } from "../properties/EntityState";
 import { GroundDetection } from "../properties/GroundDetection";
 import { Health } from "../properties/Health";
+import { LLMBasedBrain } from "./brain/LLMBasedBrain";
 
 export interface BeaverArguments {
   x: number;
@@ -37,6 +38,11 @@ export interface BeaverArguments {
  */
 export class Beaver implements Updates, Renders {
   // Private properties
+  #name: string;
+  get name(): string {
+    return this.#name;
+  }
+
   #body: planck.Body;
   get body(): planck.Body {
     return this.#body;
@@ -54,6 +60,11 @@ export class Beaver implements Updates, Renders {
 
   get aim(): Aim {
     return this.#args.aim;
+  }
+
+  #brain: LLMBasedBrain;
+  get brain(): LLMBasedBrain {
+    return this.#brain;
   }
 
   #mass: number = 125;
@@ -83,7 +94,6 @@ export class Beaver implements Updates, Renders {
       },
     }
   });
-  readonly #name: string;
   readonly #game: GameModules;
   readonly #args: BeaverArguments;
 
@@ -112,6 +122,10 @@ export class Beaver implements Updates, Renders {
       radius: this.#radius,
       body: this.#body,
       game: this.#game,
+    });
+    this.#brain = new LLMBasedBrain(this.#game, {
+      character: this,
+      getEnemies: () => this.#game.core.entityManager.getBeavers().filter(b => b !== this),
     });
   }
 

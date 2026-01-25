@@ -43,6 +43,14 @@
             width: 100%;
             max-height: calc(100vh - var(--title-height) - var(--title-margin) * 2 - var(--padding) * 2);
         }
+        #thinking {
+            position: fixed;
+            top: 175px;
+            left: 35px;
+            height: 150px;
+            width: calc(100vw - 60px);
+            overflow-y: scroll;
+        }
     </style>
 </head>
 <body>
@@ -51,6 +59,9 @@
         <canvas id="game-canvas"></canvas>
     </div>
     <script type="module" src="/src/index.ts"></script>
+    <div id="thinking">
+
+    </div>
 </body>
 </html>
 

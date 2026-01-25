@@ -1,22 +1,22 @@
-import { TurnManager, TurnPhase } from "./managers/TurnManager";
-import { PhysicsWorld } from "./PhysicsWorld";
-import { Terrain } from "../entities/Terrain";
-import { Beaver } from "../entities/beaver/Beaver";
-import type { GameModules } from "./types/GameModules.type";
-import { Aim } from "../entities/Aim";
-import { GameLoop } from "./GameLoop";
-import { GameInitializer, CoreModules } from "./GameInitializer";
-import { WeaponManager } from "./managers/WeaponManager";
-import { EntityManager } from "./managers/EntityManager";
-import { InputManager } from "./managers/InputManager";
-import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
-import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
-import { HUDRenderer } from "../ui/HUDRenderer";
-import { initDevtools } from "../devtools/index";
-import { iterate } from "../general/utils";
-import { AssetLoader } from "../general/AssetLoader";
 import beaverSpriteUrl from "../assets/beaver1_sprites.png";
 import smallRockUrl from "../assets/small_rock.png";
+import { initDevtools } from "../devtools/index";
+import { Aim } from "../entities/Aim";
+import { Terrain } from "../entities/Terrain";
+import { Beaver } from "../entities/beaver/Beaver";
+import { AssetLoader } from "../general/AssetLoader";
+import { iterate } from "../general/utils";
+import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
+import { HUDRenderer } from "../ui/HUDRenderer";
+import { PowerIndicatorRenderer } from "../ui/PowerIndicatorRenderer";
+import { CoreModules, GameInitializer } from "./GameInitializer";
+import { GameLoop } from "./GameLoop";
+import { PhysicsWorld } from "./PhysicsWorld";
+import { EntityManager } from "./managers/EntityManager";
+import { InputManager } from "./managers/InputManager";
+import { TurnManager, TurnPhase } from "./managers/TurnManager";
+import { WeaponManager } from "./managers/WeaponManager";
+import type { GameModules } from "./types/GameModules.type";
 
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
@@ -180,18 +180,16 @@ export class Game {
 
     // Update physics
     this.physicsWorld.step();
-    
+
     // Update entities
     this.entityManager.getBeavers().forEach(beaver => beaver.update());
-    this.entityManager.updateProjectiles(this.entityManager.getBeavers());  
+    this.entityManager.updateProjectiles();
 
     if (this.checkAndRun(TurnPhase.PlayerInput)) return;
     if (this.checkAndRun(TurnPhase.ProjectileFlying)) return;
     if (this.checkAndRun(TurnPhase.PhysicsSettling)) return;
     if (this.checkAndRun(TurnPhase.EndTurn)) return;
 
-
-    
   }
 
   private updatePlayerInputPhase(): boolean {
@@ -199,18 +197,18 @@ export class Game {
     const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
     const isCurrentBeaverDead = !currentBeaver || !currentBeaver.health.isAlive();
 
+    if (!currentBeaver || !currentBeaver.health.isAlive()) return false;
     // Handle dead beaver: end turn and start next turn
     if (isCurrentBeaverDead) {
       this.turnManager.endTurn();
       this.turnManager.startTurn();
       return true;
     }
+    if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
     // Handle player input
-    if (currentBeaver && this.turnManager.checkPhase(TurnPhase.PlayerInput)) {
-      this.handlePlayerInput(currentBeaver);
-    }
-
+    if (currentPlayerIndex === 1) this.handlePlayerInput(currentBeaver);
+    else this.handleBrainInput(currentBeaver);
     return false;
   }
 
@@ -247,11 +245,16 @@ export class Game {
     return false;
   }
 
-  private handlePlayerInput(beaver: Beaver): void {
-    if (!beaver.health.isAlive()) {
-      return;
-    }
+  private handleBrainInput(beaver: Beaver): void {
+    const brain = beaver.brain;
+    if (brain.isThinking) return;
+    else if (brain.hasCommands && brain.commands.yield) {
+      this.turnManager.endTurn();
+      this.turnManager.startTurn();
+    } else brain.think();
+  }
 
+  private handlePlayerInput(beaver: Beaver): void {
     const input = this.inputManager.getState();
     const aim = beaver.aim;
 

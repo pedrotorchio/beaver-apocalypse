@@ -24,6 +24,7 @@
   "dependencies": {
     "@preact/signals": "^2.6.1",
     "consola": "^3.4.2",
+    "ollama": "^0.6.3",
     "pinia": "^3.0.4",
     "planck-js": "^0.3.31",
     "vue": "^3.5.26"
