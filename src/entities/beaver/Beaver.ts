@@ -8,8 +8,8 @@ import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
 import { Projectile } from "../Projectile";
 import { RockProjectile, RockProjectileArguments } from "../projectiles/RockProjectile";
+import { EntityState } from "../properties/EntityState";
 import { GroundDetection } from "../properties/GroundDetection";
-import { DEFAULT_STATE, EntityState } from "../properties/EntityState";
 
 export interface BeaverArguments {
   x: number;
@@ -46,31 +46,33 @@ export class Beaver implements Updates, Renders {
   private tilesheet = tilesheet.breaver1();
   private readonly groundDetection: GroundDetection;
   private readonly entityState = new EntityState({
-    jumping: {
-      autoDetect: () => {
-        const isGrounded = this.groundDetection.getIsGrounded();
-        const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD;
-        const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
-        return (isMovingUpward || isMovingDownward) && !isGrounded;
+    defaultState: 'idle',
+    states: {
+      jumping: {
+        autoDetect: () => {
+          const isGrounded = this.groundDetection.getIsGrounded();
+          const isMovingDownward = this.body.getLinearVelocity().y > SPEED_THRESHOLD;
+          const isMovingUpward = this.body.getLinearVelocity().y < -SPEED_THRESHOLD;
+          return (isMovingUpward || isMovingDownward) && !isGrounded;
+        },
       },
-    },
-    dead: {
-      persist: true,
-    },
-    walking: {
-      autoDetect: () => {
-        const isGrounded = this.groundDetection.getIsGrounded();
-        const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
-        return isMovingSideways && isGrounded;
+      dead: {
+        persist: true,
       },
-    },
-    attacking: {
-      frameCountCooldown: 30,
-    },
-    hit: {
-      frameCountCooldown: 30,
-    },
-    [DEFAULT_STATE]: 'idle',
+      walking: {
+        autoDetect: () => {
+          const isGrounded = this.groundDetection.getIsGrounded();
+          const isMovingSideways = Math.abs(this.body.getLinearVelocity().x) > SPEED_THRESHOLD;
+          return isMovingSideways && isGrounded;
+        },
+      },
+      attacking: {
+        frameCountCooldown: 30,
+      },
+      hit: {
+        frameCountCooldown: 30,
+      },
+    }
   });
 
   constructor(private readonly name: string, private game: GameModules, private args: BeaverArguments) {

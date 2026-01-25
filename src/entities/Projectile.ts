@@ -1,9 +1,10 @@
 import * as planck from "planck-js";
-import { Beaver } from "./beaver/Beaver";
-import { useObservable } from "../general/observable";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
 import type { Updates } from "../core/types/Updates.type";
+import { useObservable } from "../general/observable";
+import { Beaver } from "./beaver/Beaver";
+import { GroundDetection } from "./properties/GroundDetection";
 
 export interface ProjectileArguments {
   position: planck.Vec2;
@@ -34,6 +35,7 @@ export abstract class Projectile implements Renders, Updates {
   public readonly on = useObservable({
     collision: () => null,
   });
+  private readonly groundDetection: GroundDetection;
 
   constructor(
     protected game: GameModules,
@@ -56,9 +58,10 @@ export abstract class Projectile implements Renders, Updates {
 
     this.body.createFixture(fixtureDef);
     this.body.setLinearVelocity(args.velocity);
-    
+
     // Store reference to this projectile on the body for contact detection
     this.body.setUserData({ type: 'projectile', instance: this });
+    this.groundDetection = new GroundDetection(this.game, this.body, this.args.radius);
   }
 
   getBody(): planck.Body {
@@ -92,6 +95,8 @@ export abstract class Projectile implements Renders, Updates {
   update(): void {
     if (!this.active) return;
 
+    this.groundDetection.update();
+
     const beavers = this.game.core.entityManager.getBeavers();
     const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
     if (hitBeaver) {
@@ -101,7 +106,7 @@ export abstract class Projectile implements Renders, Updates {
       return;
     }
 
-    if (this.checkTerrainCollision()) {
+    if (this.groundDetection.getIsGrounded()) {
       this.explode(beavers);
       this.alertCollision();
       this.destroy();
@@ -146,7 +151,7 @@ export abstract class Projectile implements Renders, Updates {
     const fixtureB = contact.getFixtureB();
     const bodyA = fixtureA.getBody();
     const bodyB = fixtureB.getBody();
-    
+
     const userDataA = bodyA.getUserData() as { type?: string; instance?: unknown } | null;
     const userDataB = bodyB.getUserData() as { type?: string; instance?: unknown } | null;
 
@@ -185,31 +190,6 @@ export abstract class Projectile implements Renders, Updates {
     }
 
     return null;
-  }
-
-  private checkTerrainCollision(): boolean {
-    const pos = this.body.getPosition();
-    
-    // Check terrain collision via pixel sampling at center
-    if (this.game.terrain.isSolid(pos.x, pos.y)) {
-      return true;
-    }
-
-    // Also check a few points around the projectile for better detection
-    const checkOffsets = [
-      { x: this.args.radius, y: 0 },
-      { x: -this.args.radius, y: 0 },
-      { x: 0, y: this.args.radius },
-      { x: 0, y: -this.args.radius },
-    ];
-
-    for (const offset of checkOffsets) {
-      if (this.game.terrain.isSolid(pos.x + offset.x, pos.y + offset.y)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private checkOutOfBounds(): boolean {
@@ -256,7 +236,6 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   abstract render(): void;
-  
 
   destroy(): void {
     if (this.body) {
