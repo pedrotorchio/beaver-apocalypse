@@ -262,6 +262,8 @@ export class Beaver implements Updates, Renders {
 
     this.game.core.shapes.with({ bgColor: "#FF0000" }).rect(barX, barY, barWidth, barHeight);
     this.game.core.shapes.with({ bgColor: "#00FF00" }).rect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+
+    // Draw velocity arrow
     const velocity = this.body.getLinearVelocity();
     if (velocity.length() > 0) {
       const velocityEnd = pos.clone();
@@ -271,6 +273,7 @@ export class Beaver implements Updates, Renders {
         .arrow(pos, velocityEnd);
     }
 
+    // Other renderers
     this.groundDetection.render();
   }
 
