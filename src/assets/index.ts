@@ -2,7 +2,9 @@ import { AssetLoader } from "../general/AssetLoader";
 import { TileSheet } from "../general/TileSheet";
 
 export const tilesheet = Object.freeze({
-    breaver1: () => new TileSheet({
+    breaver1: (args: { size: number }) => new TileSheet({
+        renderHeight: args.size,
+        renderWidth: args.size,
         image: AssetLoader.getAsset<HTMLImageElement>("beaver1_sprites"),
         tileWidth: 223,
         tileHeight: 223,
@@ -15,12 +17,12 @@ export const tilesheet = Object.freeze({
             ["hit", "idle"],
         ]
     }),
-    smallRock: (args: { radius: number }) => new TileSheet({
+    smallRock: (args: { size: number }) => new TileSheet({
         image: AssetLoader.getAsset("small_rock"),
         tileWidth: 419,
         tileHeight: 366,
         states: ["rock"],
-        renderWidth: args.radius,
-        renderHeight: args.radius,
+        renderWidth: args.size,
+        renderHeight: args.size,
     })
 })

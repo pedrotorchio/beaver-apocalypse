@@ -1,8 +1,8 @@
-import { TileSheet } from "../../general/TileSheet";
-import { Projectile } from "../Projectile";
+import { tilesheet } from "../../assets";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
-import { tilesheet } from "../../assets";
+import { TileSheet } from "../../general/TileSheet";
+import { Projectile } from "../Projectile";
 
 export type RockProjectileArguments = {
     position: planck.Vec2;
@@ -19,7 +19,7 @@ export class RockProjectile extends Projectile implements Renders {
             damage: args.damage,
             radius: 5,
         });
-        this.#tilesheet = tilesheet.smallRock({ radius: this.args.radius });
+        this.#tilesheet = tilesheet.smallRock({ size: this.args.radius * 2 });
     }
 
     render(): void {

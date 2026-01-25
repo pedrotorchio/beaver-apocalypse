@@ -63,7 +63,7 @@ export class Beaver implements Updates, Renders {
   #groundDetection: GroundDetection;
   #entityState = new EntityState({
     defaultState: 'idle',
-    tilesheet: tilesheet.breaver1(),
+    tilesheet: tilesheet.breaver1({ size: this.#radius * 2 }),
     states: {
       dead: {
         persist: true,
