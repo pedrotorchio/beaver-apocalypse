@@ -176,13 +176,13 @@ export class Beaver implements Updates, Renders {
 
 
     // Create projectile
-    const projectile = this.getProjectile(spawnPoint, velocity);
+    const projectile = this.createProjectile(spawnPoint, velocity);
     projectile.on('collision', () => this.entityState.setState('idle'));
 
     return projectile;
   }
 
-  private getProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
+  private createProjectile(position: planck.Vec2, velocity: planck.Vec2): Projectile {
     // Create GameModules for projectile
     const projectileModules: GameModules = {
       world: this.game.world,
