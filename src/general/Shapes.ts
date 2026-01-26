@@ -6,7 +6,7 @@ export class Shapes {
     private strokeWidth: number = 1,
     private strokeColor: string = "black",
     private bgColor?: string
-  ) {}
+  ) { }
 
   with(args: { strokeWidth?: number; strokeColor?: string; bgColor?: string }): Shapes {
     return new Shapes(
@@ -100,5 +100,11 @@ export class Shapes {
     this.ctx.strokeStyle = this.strokeColor;
     this.ctx.lineWidth = this.strokeWidth;
     this.ctx.stroke();
+  }
+
+  text(x: number, y: number, fontSize: number, content: string): void {
+    this.ctx.font = `${fontSize}px sans-serif`;
+    this.ctx.fillStyle = this.strokeColor;
+    this.ctx.fillText(content, x, y);
   }
 }

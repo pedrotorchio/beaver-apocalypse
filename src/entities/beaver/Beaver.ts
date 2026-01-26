@@ -98,6 +98,8 @@ export class Beaver implements Updates, Renders {
   readonly #args: BeaverArguments;
 
   constructor(name: string, game: GameModules, args: BeaverArguments) {
+    window.beavers ??= {}
+    window.beavers[name] = this;
     this.#name = name;
     this.#game = game;
     this.#args = args;
@@ -123,14 +125,12 @@ export class Beaver implements Updates, Renders {
       body: this.#body,
       game: this.#game,
     });
-    this.#brain = new LLMBasedBrain(this.#game, {
-      character: this,
-      getEnemies: () => this.#game.core.entityManager.getBeavers().filter(b => b !== this),
-    });
+    this.#brain = new LLMBasedBrain(this.#game, this);
   }
 
   // Updates implementation
   update(): void {
+    this.#brain.update();
     this.#groundDetection.update();
     this.#entityState.update();
     this.#health.update();
@@ -159,6 +159,7 @@ export class Beaver implements Updates, Renders {
 
     // Other
     this.#groundDetection.render();
+    this.#brain.render();
   }
 
   // Public methods

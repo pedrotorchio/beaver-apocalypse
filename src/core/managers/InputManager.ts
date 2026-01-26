@@ -95,8 +95,4 @@ export class InputManager {
     return fired;
   }
 
-  isCharging(): boolean {
-    return this.keys.has(" ");
-  }
-
 }

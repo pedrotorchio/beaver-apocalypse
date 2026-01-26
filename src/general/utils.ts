@@ -12,3 +12,5 @@ export type TuplePick<
 > = {
     [I in keyof K]: T[K[I]]
   };
+
+export type Expand<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;

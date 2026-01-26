@@ -55,17 +55,9 @@ export class Aim {
     this.#angle = Math.max(-maxAngle, Math.min(maxAngle, this.#angle));
   }
 
-  updatePower(charging: boolean, justFired: boolean): void {
-    if (charging) {
-      this.#power = Math.min(this.#args.maxPower, this.#power + this.#args.powerAccumulationRate);
-    } else {
-      // Reset power when not charging (but don't reset if we just fired)
-      if (!justFired) {
-        this.#power = this.#args.minPower;
-      }
-    }
+  charge(): void {
+    this.#power = Math.min(this.#args.maxPower, this.#power + this.#args.powerAccumulationRate);
   }
-
   resetPower(): void {
     this.#power = this.#args.minPower;
   }

@@ -13,7 +13,7 @@ import { CoreModules, GameInitializer } from "./GameInitializer";
 import { GameLoop } from "./GameLoop";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { EntityManager } from "./managers/EntityManager";
-import { InputManager } from "./managers/InputManager";
+import { InputManager, InputState } from "./managers/InputManager";
 import { TurnManager, TurnPhase } from "./managers/TurnManager";
 import { WeaponManager } from "./managers/WeaponManager";
 import type { GameModules } from "./types/GameModules.type";
@@ -207,7 +207,7 @@ export class Game {
     if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
     // Handle player input
-    if (currentPlayerIndex === 1) this.handlePlayerInput(currentBeaver);
+    if (currentPlayerIndex === 1) this.handlePlayerInput(this.inputManager.getState(), currentBeaver);
     else this.handleBrainInput(currentBeaver);
     return false;
   }
@@ -248,14 +248,11 @@ export class Game {
   private handleBrainInput(beaver: Beaver): void {
     const brain = beaver.brain;
     if (brain.isThinking) return;
-    else if (brain.hasCommands && brain.commands.yield) {
-      this.turnManager.endTurn();
-      this.turnManager.startTurn();
-    } else brain.think();
+    else if (brain.hasCommands) this.handlePlayerInput(brain.commands, beaver);
+    else brain.think();
   }
 
-  private handlePlayerInput(beaver: Beaver): void {
-    const input = this.inputManager.getState();
+  private handlePlayerInput(input: InputState, beaver: Beaver): void {
     const aim = beaver.aim;
 
     // Movement
@@ -285,16 +282,19 @@ export class Game {
       aim.adjustAngle(angleStep);
     }
 
-    // Update aim power
-    const justFired = this.inputManager.shouldFire();
-    aim.updatePower(this.inputManager.isCharging(), justFired);
+    if (input.charging) aim.charge();
 
     // Handle firing
-    if (justFired) {
+    if (input.fire) {
       const projectile = beaver.attack(aim);
       this.entityManager.addProjectile(projectile);
       this.turnManager.fireWeapon();
       aim.resetPower();
+    }
+
+    if (input.yield) {
+      this.turnManager.endTurn();
+      this.turnManager.startTurn();
     }
   }
 
