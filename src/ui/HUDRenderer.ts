@@ -23,7 +23,7 @@ export class HUDRenderer implements Renders {
   constructor(private game: GameModules) {}
 
   render(): void {
-    const beavers = this.game.core.entityManager.getBeavers();
+    const beavers = this.game.core.entityManager.getBeavers().toArray();
     const ctx = this.game.canvas;
     const canvas = ctx.canvas;
     const hudHeight = 70;

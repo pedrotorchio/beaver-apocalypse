@@ -11,7 +11,8 @@ import { RockProjectile, RockProjectileArguments } from "../projectiles/RockProj
 import { EntityState } from "../properties/EntityState";
 import { GroundDetection } from "../properties/GroundDetection";
 import { Health } from "../properties/Health";
-import { LLMBasedBrain } from "./brain/LLMBasedBrain";
+import { AlgorithmicBasedBrain } from "./brain/AlgorithmicBasedBrain";
+import { BaseBrain } from "./brain/BaseBrain";
 
 export interface BeaverArguments {
   x: number;
@@ -62,8 +63,8 @@ export class Beaver implements Updates, Renders {
     return this.#args.aim;
   }
 
-  #brain: LLMBasedBrain;
-  get brain(): LLMBasedBrain {
+  #brain: BaseBrain;
+  get brain(): BaseBrain {
     return this.#brain;
   }
 
@@ -125,7 +126,7 @@ export class Beaver implements Updates, Renders {
       body: this.#body,
       game: this.#game,
     });
-    this.#brain = new LLMBasedBrain(this.#game, this);
+    this.#brain = new AlgorithmicBasedBrain(this.#game, this);
   }
 
   // Updates implementation

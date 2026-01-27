@@ -1,5 +1,6 @@
 import { Beaver } from "../../entities/beaver/Beaver";
 import { Projectile } from "../../entities/Projectile";
+import { BeaverList } from "./BeaverList";
 
 /**
  * Manages collections of game entities (beavers and projectiles).
@@ -17,14 +18,14 @@ import { Projectile } from "../../entities/Projectile";
  * for entity state.
  */
 export class EntityManager {
-  private beavers: Beaver[] = [];
+  private beavers: BeaverList = new BeaverList();
   private projectiles: Projectile[] = [];
 
   addBeaver(beaver: Beaver): void {
     this.beavers.push(beaver);
   }
 
-  getBeavers(): Beaver[] {
+  getBeavers(): BeaverList {
     return this.beavers;
   }
 
@@ -33,11 +34,7 @@ export class EntityManager {
   }
 
   getBeaver(currentPlayerIndex: number): Beaver | undefined {
-    return this.beavers[currentPlayerIndex];
-  }
-
-  getAliveBeavers(): Beaver[] {
-    return this.beavers.filter((b) => b.health.isAlive());
+    return this.beavers.get(currentPlayerIndex);
   }
 
   addProjectile(projectile: Projectile): void {

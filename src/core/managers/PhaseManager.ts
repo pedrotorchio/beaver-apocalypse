@@ -54,7 +54,7 @@ export class PhaseManager {
 
   private handleTurnEnd(): void {
     // Check for game over
-    const aliveBeavers = this.options.entityManager.getAliveBeavers();
+    const aliveBeavers = this.options.entityManager.getBeavers().getAlive();
     if (aliveBeavers.length <= 1) alert("Beaver wins!");
 
     this.options.turnManager.endTurn();

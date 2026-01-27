@@ -182,7 +182,9 @@ export class Game {
     this.physicsWorld.step();
 
     // Update entities
-    this.entityManager.getBeavers().forEach(beaver => beaver.update());
+    for (const beaver of this.entityManager.getBeavers()) {
+      beaver.update();
+    }
     this.entityManager.updateProjectiles();
 
     if (this.checkAndRun(TurnPhase.PlayerInput)) return;
@@ -227,7 +229,7 @@ export class Game {
     // If the physics are still settling, skip the update until it is settled
     if (!this.physicsWorld.isSettled()) return true;
     // Handle turn end: check for game over, end turn, and begin player input
-    const aliveBeavers = this.entityManager.getAliveBeavers();
+    const aliveBeavers = this.entityManager.getBeavers().getAlive();
     if (aliveBeavers.length <= 1) alert("Beaver wins!");
 
     this.turnManager.endTurn();

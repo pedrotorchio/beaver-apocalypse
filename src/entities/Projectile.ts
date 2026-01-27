@@ -194,16 +194,17 @@ export abstract class Projectile implements Renders, Updates {
     this.#groundDetection.update();
 
     const beavers = this.game.core.entityManager.getBeavers();
-    const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beavers);
+    const beaversArray = beavers.toArray();
+    const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beaversArray);
     if (hitBeaver) {
-      this.explode(beavers, hitBeaver);
+      this.explode(beaversArray, hitBeaver);
       this.on.notify("collision");
       this.destroy();
       return;
     }
 
     if (this.#groundDetection.isGrounded) {
-      this.explode(beavers);
+      this.explode(beaversArray);
       this.on.notify("collision");
       this.destroy();
       return;
