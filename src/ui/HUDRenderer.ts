@@ -137,5 +137,52 @@ export class HUDRenderer implements Renders {
 
       rightX -= sectionSpacing;
     }
+
+    this.renderRulers(canvas, ctx);
+  }
+
+  private renderRulers(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
+    const width = this.game.terrain.getWidth();
+    const height = this.game.terrain.getHeight();
+    const dashInterval = 10;
+    const longDashInterval = 100;
+    const shortDashLen = 4;
+    const longDashLen = 10;
+    const labelSkipNearEnd = 20;
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.lineWidth = 1;
+    ctx.font = "10px sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+
+    // Horizontal ruler at bottom: vertical dashes
+    const hRulerY = height - 1;
+    for (let x = 0; x <= width; x += dashInterval) {
+      const isLong = x % longDashInterval === 0;
+      const len = isLong ? longDashLen : shortDashLen;
+      ctx.beginPath();
+      ctx.moveTo(x, hRulerY);
+      ctx.lineTo(x, hRulerY - len);
+      ctx.stroke();
+    }
+    for (let x = longDashInterval; x < width; x += longDashInterval) {
+      if (x >= width - labelSkipNearEnd) continue;
+      ctx.fillText(String(x), x - ctx.measureText(String(x)).width / 2, hRulerY - longDashLen - 2);
+    }
+
+    // Vertical ruler on left: horizontal dashes
+    const vRulerX = 0;
+    for (let y = 0; y <= height; y += dashInterval) {
+      const isLong = y % longDashInterval === 0;
+      const len = isLong ? longDashLen : shortDashLen;
+      ctx.beginPath();
+      ctx.moveTo(vRulerX, y);
+      ctx.lineTo(vRulerX + len, y);
+      ctx.stroke();
+    }
+    for (let y = longDashInterval; y < height; y += longDashInterval) {
+      if (y >= height - labelSkipNearEnd) continue;
+      ctx.fillText(String(y), vRulerX + longDashLen + 2, y + 4);
+    }
   }
 }
