@@ -27,17 +27,21 @@ export class AlgorithmicBasedBrain extends BaseBrain {
 
     private calculateMoveTarget(enemyPosition: Vec2): [number, number] {
         const characterPos = this.character.body.getPosition();
-        const direction = Vec2({ x: enemyPosition.x - characterPos.x, y: enemyPosition.y - characterPos.y });
-        const distance = direction.length();
+        // Calculate vector from character to enemy
+        const distanceVector = enemyPosition.clone().sub(characterPos);
+        // Get the straight-line distance to enemy
+        const scalarDistance = distanceVector.length();
 
-        const moveDistance = Math.min(distance - this.EFFECTIVE_ATTACK_RANGE + 20, 50);
-        const normalizedDirection = direction.clone();
-        normalizedDirection.mul(1 / distance);
-        normalizedDirection.mul(moveDistance);
+        // Move close enough to attack (within range) but cap at 50 units per turn
+        const closeEnoughDistance = scalarDistance - this.EFFECTIVE_ATTACK_RANGE;
+        // Convert direction vector to unit vector (length 1) pointing toward enemy
+        const normalizedDirection = distanceVector.clone();
+        normalizedDirection.normalize();
+        // Scale unit vector by desired move distance to get movement vector
+        normalizedDirection.mul(closeEnoughDistance);
+        // Calculate target X by moving in enemy direction
 
-        const targetX = characterPos.x + normalizedDirection.x;
-        const targetY = characterPos.y;
 
-        return [targetX, targetY];
+        return [normalizedDirection.x, normalizedDirection.y];
     }
 }
