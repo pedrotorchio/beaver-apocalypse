@@ -1,3 +1,11 @@
+export const createTwoWayDictionary = <K1 extends string, K2 extends string>(
+  dictionary: Record<K1, K2>
+): Record<K1 | K2, K1 | K2> =>
+  Object.assign(
+    { ...dictionary },
+    Object.fromEntries(Object.entries(dictionary).map(([k, v]) => [v, k]))
+  ) as Record<K1 | K2, K1 | K2>;
+
 export const iterate = <T>(count: number, callback: (index: number, count: number) => T): T[] => {
   return Array.from({ length: count }, (_, index) => callback(index, count));
 };
