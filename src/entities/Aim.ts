@@ -20,10 +20,14 @@ export interface AimArguments {
  * direction, and power accumulates when the weapon is charging.
  */
 export class Aim {
-  #angle: number = 0; // Aim angle in radians (0 = right, PI/2 = down, -PI/2 = up)
+  #angle: number = 0; // Aim angle in radians (0 = right, PI/2 = up, -PI/2 = down)
   #power: number;
   readonly #game: GameModules;
   readonly #args: AimArguments;
+  /** Max aim angle in radians (≈120°). */
+  static readonly MAX_ANGLE = 120 * Math.PI / 180;
+  /** Min aim angle in radians (-90°). */
+  static readonly MIN_ANGLE = -90 * Math.PI / 180;
 
   constructor(game: GameModules, args: AimArguments) {
     this.#game = game;
@@ -49,10 +53,8 @@ export class Aim {
 
   adjustAngle(delta: number): void {
     this.#angle += delta;
-    // Clamp angle to reasonable range: -2*PI/3 to 2*PI/3
-    // This allows aiming from up-left to down-right when facing right
-    const maxAngle = (2 * Math.PI) / 3;
-    this.#angle = Math.max(-maxAngle, Math.min(maxAngle, this.#angle));
+    // Clamp: angle increases = up (capped by -MIN_ANGLE), decreases = down (capped by -MAX_ANGLE); limits negated vs canvas y
+    this.#angle = Math.max(-Aim.MAX_ANGLE, Math.min(-Aim.MIN_ANGLE, this.#angle));
   }
 
   charge(): void {

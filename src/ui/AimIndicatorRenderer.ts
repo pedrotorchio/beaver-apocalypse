@@ -1,3 +1,4 @@
+import { Aim } from "../entities/Aim";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
@@ -53,6 +54,38 @@ export class AimIndicatorRenderer implements Renders {
 
     // Draw circle at spawn point
     this.game.core.shapes.with({ bgColor: color }).circle(spawnPoint, 5);
+
+    // Degree indicator ring (dashes every 30° within [MIN_ANGLE, MAX_ANGLE])
+    const dashInner = 30;
+    const dashOuter = 40;
+    const labelRadius = 46;
+    const minDeg = (Aim.MIN_ANGLE * 180) / Math.PI;
+    const maxDeg = (Aim.MAX_ANGLE * 180) / Math.PI;
+    const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
+    for (let deg = minDeg; deg <= maxDeg; deg += 30) {
+      const rad = (deg * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      shapes.line(
+        { x: pos.x + dashInner * cos, y: pos.y - dashInner * sin },
+        { x: pos.x + dashOuter * cos, y: pos.y - dashOuter * sin }
+      );
+    }
+    const labelShapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.8)" });
+    const labelFontSize = 10;
+    ([
+      { deg: 0, text: "0" },
+      { deg: 45, text: "45" },
+      { deg: 90, text: "90" },
+      { deg: 120, text: "120" },
+      { deg: -45, text: "-45" },
+      { deg: -90, text: "-90" },
+    ]).forEach(({ deg, text }) => {
+      const rad = (deg * Math.PI) / 180;
+      const lx = pos.x + labelRadius * Math.cos(rad);
+      const ly = pos.y - labelRadius * Math.sin(rad);
+      labelShapes.text(lx, ly, labelFontSize, text);
+    });
 
     // Render power indicator if charging
     const input = this.game.core.inputManager.getState();
