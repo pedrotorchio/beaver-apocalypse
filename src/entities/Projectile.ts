@@ -172,10 +172,9 @@ export abstract class Projectile implements Renders, Updates {
       if (distance >= maxDistance) continue;
 
       const damage = this.calculateDamage(distance, maxDistance, directHitBeaver === beaver);
-      const direction = beaverPos.clone();
-      direction.sub(explosionPos);
-      direction.normalize();
-      direction.mul(this.beaverKnockback);
+      const delta = planck.Vec2.sub(beaverPos, explosionPos);
+      const len = planck.Vec2.lengthOf(delta);
+      const direction = len < 1e-9 ? planck.Vec2.zero() : planck.Vec2.mul(delta, this.beaverKnockback / len);
       beaver.hit(damage, direction);
     }
   }

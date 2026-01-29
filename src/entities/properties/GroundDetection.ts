@@ -43,23 +43,25 @@ export class GroundDetection implements Updates, Renders {
 
       this.#isGrounded.value = true;
       this.#groundTouchPoints.push(point);
-      const normalVector = pos.clone().sub(planck.Vec2(point));
-      this.#groundNormalDirection.add(normalVector);
+      const normalVector = planck.Vec2.sub(pos, planck.Vec2(point));
+      this.#groundNormalDirection = planck.Vec2.add(this.#groundNormalDirection, normalVector);
     }
-    this.#groundNormalDirection.normalize();
+    const len = planck.Vec2.lengthOf(this.#groundNormalDirection);
+    this.#groundNormalDirection = len < 1e-9 ? vec.ZERO() : planck.Vec2.mul(this.#groundNormalDirection, 1 / len);
     if (!this.#isGrounded.value) return;
     const velocity = this.#body.getLinearVelocity();
     const velocityInGroundNormalDirection = vec.project(velocity, this.#groundNormalDirection);
     const mass = this.#body.getMass()
     const gravity = PhysicsWorld.GRAVITY;
     const weight = gravity*mass;
-    const normalForce = this.#groundNormalDirection.clone().mul(weight);
-    this.#body.setLinearVelocity(velocity.sub(velocityInGroundNormalDirection));
+    const normalForce = planck.Vec2.mul(this.#groundNormalDirection, weight);
+    const newVelocity = planck.Vec2.sub(velocity, velocityInGroundNormalDirection);
+    this.#body.setLinearVelocity(newVelocity);
     this.#body.applyForce(normalForce, pos);
-    
+
     // Apply velocity stop threshold when grounded
-    if (Math.abs(velocity.x) < this.#velocityStopThreshold) {
-      this.#body.setLinearVelocity(planck.Vec2(0, velocity.y));
+    if (Math.abs(newVelocity.x) < this.#velocityStopThreshold) {
+      this.#body.setLinearVelocity(planck.Vec2(0, newVelocity.y));
     }
   }
 
@@ -77,7 +79,7 @@ export class GroundDetection implements Updates, Renders {
       const color = isGrounded ? 'red' : 'grey';
       this.#game.core.shapes.with({ strokeColor: color, strokeWidth: 1 }).line(position, point);
     }
-    this.#game.core.shapes.with({ strokeColor: "orange", strokeWidth: 1 }).arrow(position, position.clone().add(this.#groundNormalDirection.clone().mul(50)));
+    this.#game.core.shapes.with({ strokeColor: "orange", strokeWidth: 1 }).arrow(position, planck.Vec2.add(position, planck.Vec2.mul(this.#groundNormalDirection, 50)));
   }
 
   // Private methods
@@ -97,8 +99,7 @@ export class GroundDetection implements Updates, Renders {
       const fractionOf180 = i / 12;
       const angle = Math.PI * fractionOf180;
       const dir = vec.fromAngle(angle);
-      const scaledDir = planck.Vec2(dir.x, dir.y);
-      scaledDir.mul(radius);
+      const scaledDir = planck.Vec2.mul(planck.Vec2(dir.x, dir.y), radius);
       const enumValue = `${fractionOf180 * 180}deg`;
       return [enumValue, {
         x: pos.x + scaledDir.x,

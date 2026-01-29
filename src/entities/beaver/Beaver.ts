@@ -151,8 +151,7 @@ export class Beaver implements Updates, Renders {
     // Draw velocity arrow
     const velocity = this.#body.getLinearVelocity();
     if (velocity.length() > 0) {
-      const velocityEnd = pos.clone();
-      velocityEnd.add(velocity);
+      const velocityEnd = planck.Vec2.add(pos, velocity);
       this.#game.core.shapes
         .with({ strokeColor: "green" })
         .arrow(pos, velocityEnd);
@@ -180,7 +179,7 @@ export class Beaver implements Updates, Renders {
    */
   jump(): void {
     if (!this.health.isAlive() || !this.#groundDetection.isGrounded) return;
-    const point = this.#body.getPosition();
+    const point = planck.Vec2.clone(this.#body.getPosition());
     this.#body.applyLinearImpulse(planck.Vec2(0, this.#jumpStrength), point);
   }
 
@@ -206,8 +205,7 @@ export class Beaver implements Updates, Renders {
     const power = aim.getPower();
     const powerMultiplier = 10; // Increase projectile velocity
     const direction = vec.fromAngle(fireAngle);
-    const velocity = planck.Vec2(direction.x, direction.y);
-    velocity.mul(power * powerMultiplier);
+    const velocity = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), power * powerMultiplier);
 
     // Create projectile
     const projectile = this.createProjectile(spawnPoint, velocity);
@@ -242,16 +240,13 @@ export class Beaver implements Updates, Renders {
 
     const direction = vec.fromAngle(fireAngle);
     const offset = planck.Vec2(direction.x, direction.y);
-    offset.mul(offsetDistance);
-    const result = pos.clone();
-    result.add(offset);
-    return result;
+    return planck.Vec2.add(pos, planck.Vec2.mul(offset, offsetDistance));
   }
 
   hit(amount: number, direction: planck.Vec2): void {
     this.#health.damage(amount);
     this.#entityState.setState("hit");
-    this.#body.applyLinearImpulse(direction, this.#body.getWorldCenter(), true);
+    this.#body.applyLinearImpulse(planck.Vec2.clone(direction), planck.Vec2.clone(this.#body.getWorldCenter()), true);
   }
 
   // Private methods

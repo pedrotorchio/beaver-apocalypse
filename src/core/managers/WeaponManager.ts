@@ -65,15 +65,13 @@ export class WeaponManager {
 
   calculateVelocity(fireAngle: number): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
-    const velocity = planck.Vec2(direction.x, direction.y);
-    velocity.mul(this.currentPower);
+    const velocity = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), this.currentPower);
     return { x: velocity.x, y: velocity.y };
   }
 
   calculateSpawnOffset(fireAngle: number, offsetDistance: number = 15): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
-    const offset = planck.Vec2(direction.x, direction.y);
-    offset.mul(offsetDistance);
+    const offset = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), offsetDistance);
     return { x: offset.x, y: offset.y };
   }
 

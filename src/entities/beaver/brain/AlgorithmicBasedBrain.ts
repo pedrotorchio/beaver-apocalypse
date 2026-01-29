@@ -3,7 +3,7 @@ import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT } from '../../../core/t
 import { Action, BaseBrain } from "./BaseBrain";
 
 export class AlgorithmicBasedBrain extends BaseBrain {
-    private readonly EFFECTIVE_ATTACK_RANGE = 100;
+    private readonly EFFECTIVE_ATTACK_RANGE = 200;
 
     protected async executeThink(): Promise<Action[]> {
         const enemies = this.game.core.entityManager.getBeavers().getEnemies(this.character);
@@ -27,10 +27,10 @@ export class AlgorithmicBasedBrain extends BaseBrain {
 
     calculateMove(enemyPosition: planck.Vec2) {
         return () => {
-            const characterPos = this.character.body.getPosition().clone();
-            const distance = enemyPosition.clone().sub(characterPos);
-            if (distance.x > this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_RIGHT;
-            else if (distance.x < -this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_LEFT;
+            const characterPos = this.character.body.getPosition();
+            const delta = planck.Vec2.sub(enemyPosition, characterPos);
+            if (delta.x > this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_RIGHT;
+            else if (delta.x < -this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_LEFT;
             return DIRECTION_NONE;
         }
     }

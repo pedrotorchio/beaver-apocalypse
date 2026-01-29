@@ -99,7 +99,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
     }
 
     render(): void {
-        const pos = this.character.body.getPosition().clone();
+        const pos = Vec2.clone(this.character.body.getPosition());
         if (this.#isThinking) this.game.core.shapes.with({ strokeColor: 'black' }).text(pos.x, pos.y - this.character.radius - 16, 16, 'Hmm...');
     }
 
@@ -112,9 +112,9 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
         const targetX = target?.[0] ?? 0;
         const targetY = target?.[1] ?? 0;
         until ??= (): Direction => {
-            const position = this.character.body.getPosition()
+            const position = this.character.body.getPosition();
             const targetPosition = Vec2({ x: targetX, y: targetY });
-            const direction = targetPosition.sub(position);
+            const direction = Vec2.sub(targetPosition, position);
             if (direction.x > 5) return DIRECTION_RIGHT;
             else if (direction.x < -5) return DIRECTION_LEFT;
             return DIRECTION_NONE;
@@ -175,7 +175,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
     protected createAttackAction(enemy: Beaver): Action {
         const characterPos = this.character.body.getPosition();
         const enemyPos = enemy.body.getPosition();
-        const direction = enemyPos.sub(characterPos);
+        const direction = Vec2.sub(enemyPos, characterPos);
         const angle = Math.atan2(-direction.y, direction.x);
         const angleDegrees = (angle * 180) / Math.PI;
 

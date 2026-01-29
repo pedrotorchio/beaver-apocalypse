@@ -9,6 +9,7 @@ export class LLMBasedBrain extends BaseBrain {
         const character = this.character;
         const enemies = this.game.core.entityManager.getBeavers().getEnemies(character);
         this.#logarea.innerHTML = "";
+        const characterPos = character.body.getPosition();
         const response = await ollama.generate({
             model: 'deepseek-r1:1.5b',
             stream: true,
@@ -20,7 +21,7 @@ export class LLMBasedBrain extends BaseBrain {
                 character: {
                     id: character.name,
                     hp: character.health.health / character.health.maxHealth,
-                    position: character.body.getPosition(),
+                    position: { x: characterPos.x, y: characterPos.y },
                 },
                 enemies: enemies.toDataArray(),
             }),

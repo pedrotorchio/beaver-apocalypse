@@ -1,4 +1,3 @@
-import { Beaver } from "../entities/beaver/Beaver";
 import { TurnPhase } from "../core/managers/TurnManager";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
@@ -20,7 +19,7 @@ import type { Renders } from "../core/types/Renders.type";
  * to keep the HUD information current.
  */
 export class HUDRenderer implements Renders {
-  constructor(private game: GameModules) {}
+  constructor(private game: GameModules) { }
 
   render(): void {
     const beavers = this.game.core.entityManager.getBeavers().toArray();
@@ -72,18 +71,18 @@ export class HUDRenderer implements Renders {
     const barWidth = 100;
     const barHeight = 10;
     const barY = 30;
-    
+
     // Calculate total space needed for health bars (width of all bars + spacing between them)
     const totalHealthBarWidth = beavers.length * barWidth + (beavers.length - 1) * sectionSpacing;
     const minLeftEdge = leftSectionEnd + padding; // Minimum left edge to avoid overlap with left section
-    
+
     // Start from right edge of canvas
     let rightX = canvas.width - padding;
-    
+
     // Check if health bars would overlap with left section
     // Calculate where the leftmost bar would start if we position from the right edge
     const leftmostBarLeftEdge = rightX - totalHealthBarWidth;
-    
+
     // If bars would overlap with left section, adjust starting position
     // Ensure bars stay within canvas bounds
     if (leftmostBarLeftEdge < minLeftEdge) {
@@ -99,7 +98,7 @@ export class HUDRenderer implements Renders {
       const healthPercent = health / maxHealth;
 
       rightX -= barWidth;
-      
+
       // Skip if health bar would overlap with left section or go off left edge of canvas
       if (rightX < minLeftEdge || rightX < 0) {
         break;

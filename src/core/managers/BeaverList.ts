@@ -26,11 +26,14 @@ export class BeaverList implements Iterable<Beaver> {
     }
 
     toDataArray(): Array<{ id: string, hp: number, position: { x: number, y: number } }> {
-        return this.beavers.map(beaver => ({
-            id: beaver.name,
-            hp: beaver.health.health / beaver.health.maxHealth,
-            position: beaver.body.getPosition(),
-        }));
+        return this.beavers.map(beaver => {
+            const p = beaver.body.getPosition();
+            return {
+                id: beaver.name,
+                hp: beaver.health.health / beaver.health.maxHealth,
+                position: { x: p.x, y: p.y },
+            };
+        });
     }
 
     findClosest(position: Vec2): Beaver | null {
