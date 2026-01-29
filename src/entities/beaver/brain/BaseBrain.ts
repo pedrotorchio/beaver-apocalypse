@@ -1,5 +1,6 @@
 import { Vec2 } from 'planck-js';
 import { InputState } from '../../../core/managers/InputManager';
+import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../../../core/types/Entity.type';
 import { GameModules } from '../../../core/types/GameModules.type';
 import { Renders } from '../../../core/types/Renders.type';
 import { Updates } from '../../../core/types/Updates.type';
@@ -13,7 +14,8 @@ export type Action =
     }
     | {
         type: 'move',
-        target: [number, number]
+        target?: [number, number]
+        until?: () => Direction
     }
     | {
         type: 'attack',
@@ -99,26 +101,28 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
     render(): void {
         const pos = this.character.body.getPosition().clone();
         if (this.#isThinking) this.game.core.shapes.with({ strokeColor: 'black' }).text(pos.x, pos.y - this.character.radius - 16, 16, 'Hmm...');
-        if (!this.#actionPlan.hasActiveAction()) return;
-        const action = this.#actionPlan.getActiveAction()!;
-        if (action.type === 'move') {
-            const [x, y] = action.target;
-            this.game.core.shapes.with({ strokeColor: 'purple' }).arrow(pos, Vec2({ x, y }));
-        }
     }
 
     wait() {
         this.commands.yield = true;
         return true;
     }
-    move({ target }: ActionDetails<'move'>) {
-        const targetPosition = Vec2({ x: target[0], y: target[1] });
-        const currentPosition = this.character.body.getPosition().clone();
-        const direction = targetPosition.sub(currentPosition);
-
-        if (direction.x >= 0 && direction.x <= 5) return true;
-        else if (direction.x > 0) this.commands.moveRight = true;
-        else if (direction.x < 0) this.commands.moveLeft = true;
+    move({ target, until }: ActionDetails<'move'>) {
+        if (!target && !until) throw new Error('Move action must have a target or until function');
+        const targetX = target?.[0] ?? 0;
+        const targetY = target?.[1] ?? 0;
+        until ??= (): Direction => {
+            const position = this.character.body.getPosition()
+            const targetPosition = Vec2({ x: targetX, y: targetY });
+            const direction = targetPosition.sub(position);
+            if (direction.x > 5) return DIRECTION_RIGHT;
+            else if (direction.x < -5) return DIRECTION_LEFT;
+            return DIRECTION_NONE;
+        }
+        const theMove = until();
+        if (theMove === DIRECTION_NONE) return true;
+        else if (theMove === DIRECTION_RIGHT) this.commands.moveRight = true;
+        else if (theMove === DIRECTION_LEFT) this.commands.moveLeft = true;
         return false;
     }
     attack({ angle }: ActionDetails<'attack'>) {
@@ -155,10 +159,16 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
         };
     }
 
-    protected createMoveAction(target: [number, number]): Action {
+    protected createMoveAction(target: [number, number] | (() => Direction)): Action {
+        if (typeof target === 'function') {
+            return {
+                type: 'move',
+                until: target,
+            };
+        }
         return {
             type: 'move',
-            target,
+            target: target,
         };
     }
 

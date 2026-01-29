@@ -1,5 +1,5 @@
 import * as planck from 'planck-js';
-import { Vec2 } from 'planck-js';
+import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT } from '../../../core/types/Entity.type';
 import { Action, BaseBrain } from "./BaseBrain";
 
 export class AlgorithmicBasedBrain extends BaseBrain {
@@ -18,30 +18,21 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         const isInRange = distance <= this.EFFECTIVE_ATTACK_RANGE;
 
         if (isInRange) return [this.createAttackAction(closestEnemy)];
-        const moveTarget = this.calculateMoveTarget(enemyPosition);
+        const moveTarget = this.calculateMove(enemyPosition);
         return [
             this.createMoveAction(moveTarget),
             this.createAttackAction(closestEnemy)
         ];
     }
 
-    private calculateMoveTarget(enemyPosition: Vec2): [number, number] {
-        const characterPos = this.character.body.getPosition();
-        // Calculate vector from character to enemy
-        const distanceVector = enemyPosition.clone().sub(characterPos);
-        // Get the straight-line distance to enemy
-        const scalarDistance = distanceVector.length();
-
-        // Move close enough to attack (within range) but cap at 50 units per turn
-        const closeEnoughDistance = scalarDistance - this.EFFECTIVE_ATTACK_RANGE;
-        // Convert direction vector to unit vector (length 1) pointing toward enemy
-        const normalizedDirection = distanceVector.clone();
-        normalizedDirection.normalize();
-        // Scale unit vector by desired move distance to get movement vector
-        normalizedDirection.mul(closeEnoughDistance);
-        // Calculate target X by moving in enemy direction
-
-
-        return [normalizedDirection.x, normalizedDirection.y];
+    calculateMove(enemyPosition: planck.Vec2) {
+        return () => {
+            const characterPos = this.character.body.getPosition().clone();
+            const distance = enemyPosition.clone().sub(characterPos);
+            if (distance.x > this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_RIGHT;
+            else if (distance.x < -this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_LEFT;
+            return DIRECTION_NONE;
+        }
     }
+
 }

@@ -209,8 +209,9 @@ export class Game {
     if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
     // Handle player input
-    if (currentPlayerIndex === 1) this.handlePlayerInput(this.inputManager.getState(), currentBeaver);
-    else this.handleBrainInput(currentBeaver);
+    this.handleBrainInput(currentBeaver);
+    // if (currentPlayerIndex === 1) this.handlePlayerInput(this.inputManager.getState(), currentBeaver);
+    // else this.handleBrainInput(currentBeaver);
     return false;
   }
 
