@@ -60,10 +60,9 @@ export class AimIndicatorRenderer implements Renders {
     const dashOuter = 40;
     const labelRadius = 46;
     const facing = currentBeaver.facing;
-    const minDeg = (Aim.MIN_ANGLE * 180) / Math.PI;
-    const maxDeg = (Aim.MAX_ANGLE * 180) / Math.PI;
+    const dashDegrees = [0, 45, 90, 120, -45, -90];
     const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
-    for (let deg = minDeg; deg <= maxDeg; deg += 30) {
+    for (const deg of dashDegrees) {
       const rad = (deg * Math.PI) / 180;
       const cos = Math.cos(rad) * facing;
       const sin = Math.sin(rad);
