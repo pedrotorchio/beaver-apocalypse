@@ -1,6 +1,7 @@
 import * as planck from "planck-js";
 import { tilesheet } from "../../assets";
 import { PhysicsWorld } from "../../core/PhysicsWorld";
+import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
@@ -69,7 +70,10 @@ export class Beaver implements Updates, Renders {
   }
 
   #mass: number = 125;
-  #facing: number = 1; // 1 for right, -1 for left
+  #facing: Direction = DIRECTION_RIGHT; // 1 for right, -1 for left
+  get facing(): Direction {
+    return this.#facing;
+  }
   #jumpStrength: number = -PhysicsWorld.GRAVITY * this.#mass;
   #moveSpeed: number = 20;
   #groundDetection: GroundDetection;
@@ -143,7 +147,7 @@ export class Beaver implements Updates, Renders {
     const pos = this.#body.getPosition();
 
     // Draw beaver sprite using tilesheet
-    this.#entityState.draw(ctx, pos, this.#facing as 1 | -1);
+    this.#entityState.draw(ctx, pos, this.#facing);
 
     // Draw health bar
     this.#health.render();
@@ -167,7 +171,7 @@ export class Beaver implements Updates, Renders {
    * Makes the beaver walk in the specified direction.
    * @param direction -1 for left, 1 for right
    */
-  walk(direction: number): void {
+  walk(direction: Direction): void {
     if (!this.health.isAlive()) return;
     const vel = this.#body.getLinearVelocity();
     this.#body.setLinearVelocity(planck.Vec2(direction * this.#moveSpeed, vel.y));

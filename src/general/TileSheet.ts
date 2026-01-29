@@ -1,3 +1,4 @@
+import { DIRECTION_LEFT, DIRECTION_RIGHT, Direction } from "../core/types/Entity.type";
 import { Asset } from "./AssetLoader";
 
 type SpriteDefinition<StateKey extends string = string> = {
@@ -64,8 +65,8 @@ export class TileSheet<const StateKey extends string> {
       if (typeof state === 'object' && 'key' in state) return set(acc, state.key, applyDefaultsFor(index, state));
       if (Array.isArray(state) && acc[state[1]]) return set(acc, state[0], applyDefaultsFor(index, acc[state[1]]));
       // Postpone resolution of alias definitions until all states are resolved
-      if(Array.isArray(state)) originalArray.push(state);
-      
+      if (Array.isArray(state)) originalArray.push(state);
+
       return acc;
     }, {} as Record<StateKey, SpriteDefinition<StateKey>>);
   }
@@ -89,8 +90,8 @@ export class TileSheet<const StateKey extends string> {
     state: StateKey,
     x: number,
     y: number,
-    direction: 1 | -1 = 1
-  ): void { 
+    direction: Direction = DIRECTION_RIGHT
+  ): void {
     if (!this.tileDefinitions[state]) throw new Error(`Unknown state: ${state}`);
     const definition = this.tileDefinitions[state];
     const sx = definition.x;
@@ -102,7 +103,7 @@ export class TileSheet<const StateKey extends string> {
 
     ctx.save();
 
-    if (direction === -1) {
+    if (direction === DIRECTION_LEFT) {
       ctx.translate(x, y);
       ctx.scale(-1, 1);
       ctx.translate(-x, -y);

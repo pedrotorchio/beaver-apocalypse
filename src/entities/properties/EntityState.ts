@@ -1,4 +1,5 @@
 import * as planck from "planck-js";
+import { Direction } from "../../core/types/Entity.type";
 import { Updates } from "../../core/types/Updates.type";
 import { TileSheet } from "../../general/TileSheet";
 
@@ -49,7 +50,7 @@ export class EntityState<StateKey extends string> implements Updates {
   }
 
   // Public methods
-  draw(ctx: CanvasRenderingContext2D, position: planck.Vec2, facing: 1 | -1) {
+  draw(ctx: CanvasRenderingContext2D, position: planck.Vec2, facing: Direction) {
     this.#config.tilesheet.drawImage(ctx, this.state, position.x, position.y, facing);
   }
 

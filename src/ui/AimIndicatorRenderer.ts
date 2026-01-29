@@ -55,16 +55,17 @@ export class AimIndicatorRenderer implements Renders {
     // Draw circle at spawn point
     this.game.core.shapes.with({ bgColor: color }).circle(spawnPoint, 5);
 
-    // Degree indicator ring (dashes every 30° within [MIN_ANGLE, MAX_ANGLE])
+    // Degree indicator ring (dashes every 30° within [MIN_ANGLE, MAX_ANGLE]); mirrored when facing left
     const dashInner = 30;
     const dashOuter = 40;
     const labelRadius = 46;
+    const facing = currentBeaver.facing;
     const minDeg = (Aim.MIN_ANGLE * 180) / Math.PI;
     const maxDeg = (Aim.MAX_ANGLE * 180) / Math.PI;
     const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
     for (let deg = minDeg; deg <= maxDeg; deg += 30) {
       const rad = (deg * Math.PI) / 180;
-      const cos = Math.cos(rad);
+      const cos = Math.cos(rad) * facing;
       const sin = Math.sin(rad);
       shapes.line(
         { x: pos.x + dashInner * cos, y: pos.y - dashInner * sin },
@@ -82,7 +83,7 @@ export class AimIndicatorRenderer implements Renders {
       { deg: -90, text: "-90" },
     ]).forEach(({ deg, text }) => {
       const rad = (deg * Math.PI) / 180;
-      const lx = pos.x + labelRadius * Math.cos(rad);
+      const lx = pos.x + labelRadius * Math.cos(rad) * facing;
       const ly = pos.y - labelRadius * Math.sin(rad);
       labelShapes.text(lx, ly, labelFontSize, text);
     });
