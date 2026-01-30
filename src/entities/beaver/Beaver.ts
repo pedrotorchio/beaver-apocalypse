@@ -70,9 +70,9 @@ export class Beaver implements Updates, Renders {
   }
 
   #mass: number = 125;
-  #facing: Direction = DIRECTION_RIGHT; // 1 for right, -1 for left
-  get facing(): Direction {
-    return this.#facing;
+  #direction: Direction = DIRECTION_RIGHT;
+  get direction(): Direction {
+    return this.#direction;
   }
   #jumpStrength: number = -PhysicsWorld.GRAVITY * this.#mass;
   #moveSpeed: number = 20;
@@ -147,7 +147,7 @@ export class Beaver implements Updates, Renders {
     const pos = this.#body.getPosition();
 
     // Draw beaver sprite using tilesheet
-    this.#entityState.draw(ctx, pos, this.#facing);
+    this.#entityState.draw(ctx, pos, this.#direction);
 
     // Draw health bar
     this.#health.render();
@@ -175,7 +175,7 @@ export class Beaver implements Updates, Renders {
     if (!this.health.isAlive()) return;
     const vel = this.#body.getLinearVelocity();
     this.#body.setLinearVelocity(planck.Vec2(direction * this.#moveSpeed, vel.y));
-    this.#facing = direction;
+    this.#direction = direction;
   }
 
   /**
@@ -201,7 +201,7 @@ export class Beaver implements Updates, Renders {
 
     // Adjust aim angle based on facing direction
     let fireAngle = aimAngle;
-    if (this.#facing === -1) {
+    if (this.#direction === -1) {
       fireAngle = Math.PI - fireAngle;
     }
 
@@ -225,7 +225,7 @@ export class Beaver implements Updates, Renders {
 
     // Adjust aim angle based on facing direction
     let fireAngle = aimAngle;
-    if (this.#facing === -1) {
+    if (this.#direction === -1) {
       fireAngle = Math.PI - fireAngle;
     }
 

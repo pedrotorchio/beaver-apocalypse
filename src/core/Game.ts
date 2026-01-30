@@ -274,8 +274,8 @@ export class Game {
     // aimUp decreases angle, aimDown increases (correct when facing left; facing right uses same convention).
     const angleStep = 0.02;
 
-    if (input.aimUp) aim.adjustAngle(-angleStep);
-    if (input.aimDown) aim.adjustAngle(angleStep);
+    if (input.aimUp) aim.angleUp(angleStep);
+    if (input.aimDown) aim.angleDown(angleStep);
 
     if (input.charging) aim.charge();
 

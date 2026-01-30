@@ -25,7 +25,7 @@ export class Aim {
   readonly #game: GameModules;
   readonly #args: AimArguments;
   /** Max aim angle in radians (≈120°). */
-  static readonly MAX_ANGLE = 120 * Math.PI / 180;
+  static readonly MAX_ANGLE = 90 * Math.PI / 180;
   /** Min aim angle in radians (-90°). */
   static readonly MIN_ANGLE = -90 * Math.PI / 180;
 
@@ -55,6 +55,14 @@ export class Aim {
     this.#angle += delta;
     // Clamp: angle increases = up (capped by -MIN_ANGLE), decreases = down (capped by -MAX_ANGLE); limits negated vs canvas y
     this.#angle = Math.max(-Aim.MAX_ANGLE, Math.min(-Aim.MIN_ANGLE, this.#angle));
+  }
+
+  angleUp(delta: number): void {
+    this.adjustAngle(-delta)
+  }
+
+  angleDown(delta: number): void {
+    this.adjustAngle(delta)
   }
 
   charge(): void {

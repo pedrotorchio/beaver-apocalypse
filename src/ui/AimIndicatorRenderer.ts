@@ -58,7 +58,7 @@ export class AimIndicatorRenderer implements Renders {
     const dashInner = 30;
     const dashOuter = 40;
     const labelRadius = 46;
-    const facing = currentBeaver.facing;
+    const facing = currentBeaver.direction;
     const dashDegrees = [0, 45, 90, 120, -45, -90];
     const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
     for (const deg of dashDegrees) {

@@ -22,6 +22,8 @@ export type Action =
         target: string,
         angle: number,
     }
+export type ActionGenerator = () => Action
+export type ActionList = (Action | ActionGenerator)[]
 export type ActionDetails<T extends ActionType> = Action & { type: T }
 export type Behaviour<K extends ActionType = ActionType> = (action: ActionDetails<K>, plan: BrainActionPlan) => boolean;
 export type Behaviours = {
@@ -29,8 +31,8 @@ export type Behaviours = {
 }
 
 export class BrainActionPlan {
-    #actions: Action[] = [];
-    set actions(actions: Action[]) {
+    #actions: ActionList = [];
+    set actions(actions: ActionList) {
         this.#actions = actions;
         this.#currentActionInExecution = -1;
     }
@@ -43,7 +45,8 @@ export class BrainActionPlan {
 
     doAction() {
         if (!this.hasActiveAction()) return false;
-        const action = this.getActiveAction()!;
+        const actionOrGenerator = this.getActiveAction()!;
+        const action = typeof actionOrGenerator === 'function' ? actionOrGenerator() : actionOrGenerator;
         const behaviour = this.behaviours[action.type].bind(this.behaviours) as Behaviour;
         return behaviour(action, this);
     }
@@ -52,11 +55,11 @@ export class BrainActionPlan {
         return this.#currentActionInExecution >= 0 && this.#currentActionInExecution < this.#actions.length;
     }
 
-    getActiveAction(): Action | null {
+    getActiveAction(): ActionList[number] | null {
         return this.#actions[this.#currentActionInExecution] ?? null;
     }
 
-    nextAction(): Action | null {
+    nextAction(): ActionList[number] | null {
         this.#currentActionInExecution++;
         const action = this.getActiveAction();
         console.log(action?.type, action);
@@ -150,7 +153,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         this.#isThinking = false;
     }
 
-    protected abstract executeThink(): Promise<Action[]>;
+    protected abstract executeThink(): Promise<ActionList>;
 
     protected createWaitAction(reason: string): Action {
         return {
@@ -169,20 +172,6 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         return {
             type: 'move',
             target: target,
-        };
-    }
-
-    protected createAttackAction(enemy: Beaver): Action {
-        const characterPos = this.character.body.getPosition();
-        const enemyPos = enemy.body.getPosition();
-        const direction = Vec2.sub(enemyPos, characterPos);
-        const angle = Math.atan2(-direction.y, direction.x);
-        const angleDegrees = (angle * 180) / Math.PI;
-
-        return {
-            type: 'attack',
-            target: enemy.name,
-            angle: angleDegrees,
         };
     }
 
