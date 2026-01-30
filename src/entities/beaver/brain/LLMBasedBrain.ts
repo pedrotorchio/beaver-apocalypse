@@ -21,7 +21,7 @@ export class LLMBasedBrain extends BaseBrain {
                 character: {
                     id: character.name,
                     hp: character.health.health / character.health.maxHealth,
-                    position: { x: characterPos.x, y: characterPos.y },
+                    position: characterPos,
                 },
                 enemies: enemies.toDataArray(),
             }),
