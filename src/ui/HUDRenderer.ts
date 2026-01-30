@@ -177,8 +177,18 @@ export class HUDRenderer implements Renders {
       const rot = planck.Rot(angleRad);
       const dir = planck.Rot.mulVec2(rot, baseVec);
       const labelPos = planck.Vec2.mul(dir, labelRadius);
-      ctx.fillText(String(deg), centerX + labelPos.x, centerY + labelPos.y);
+      ctx.fillText(`${deg}°`, centerX + labelPos.x, centerY + labelPos.y);
     }
+    ctx.fillText("Planck", centerX, centerY);
+    const signDistance = radius * 0.55;
+    ctx.fillText("-", centerX - signDistance, centerY);
+    ctx.fillText("+", centerX + signDistance, centerY);
+    ctx.fillText("-", centerX, centerY - signDistance);
+    ctx.fillText("+", centerX, centerY + signDistance);
+    ctx.fillText("-", centerX - signDistance, centerY);
+    ctx.fillText("+", centerX + signDistance, centerY);
+    ctx.fillText("-", centerX, centerY - signDistance);
+    ctx.fillText("+", centerX, centerY + signDistance);
   }
 
   private renderRulers(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
