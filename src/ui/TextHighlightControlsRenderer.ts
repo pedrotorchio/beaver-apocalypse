@@ -21,11 +21,11 @@ import { TabUpdateObject } from "../devtools/store";
 export class TextHighlightControlsRenderer {
     private tabStorage: TabUpdateObject;
     constructor(private game: GameModules) {
-        const {devtools} = game.core;
-        this.tabStorage =devtools.addTab('Controls')
+        const { devtools } = game.core;
+        this.tabStorage = devtools.addTab('Controls')
     }
     render() {
-        const inputState = this.game.core.inputManager.getState();
+        const inputState = this.game.core.inputManager.getInputState();
         this.tabStorage.update('left', inputState.moveLeft);
         this.tabStorage.update('right', inputState.moveRight);
         this.tabStorage.update('jump', inputState.jump);

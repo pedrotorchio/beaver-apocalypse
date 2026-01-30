@@ -1,10 +1,10 @@
-import { TurnManager } from "./managers/TurnManager";
-import { InputManager } from "./managers/InputManager";
-import { WeaponManager } from "./managers/WeaponManager";
-import { EntityManager } from "./managers/EntityManager";
-import { PhysicsWorld } from "./PhysicsWorld";
-import { throwError } from "../general/errors";
 import { Shapes } from "../general/Shapes";
+import { throwError } from "../general/errors";
+import { PhysicsWorld } from "./PhysicsWorld";
+import { EntityManager } from "./managers/EntityManager";
+import { InputManager } from "./managers/InputManager";
+import { TurnManager } from "./managers/TurnManager";
+import { WeaponManager } from "./managers/WeaponManager";
 
 export interface GameInitializerOptions {
   canvas: HTMLCanvasElement;

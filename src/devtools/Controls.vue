@@ -19,9 +19,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import type { InputState } from '../core/managers/InputManager';
+import { onMounted, onUnmounted, ref } from 'vue';
 import type { CoreModules } from '../core/GameInitializer';
+import type { InputState } from '../core/managers/InputManager';
 
 interface Props {
   core: CoreModules;
@@ -42,7 +42,7 @@ const inputState = ref<InputState>({
 let animationFrameId: number | null = null;
 
 const updateInputState = () => {
-  inputState.value = props.core.inputManager.getState();
+  inputState.value = props.core.inputManager.getInputState();
   animationFrameId = requestAnimationFrame(updateInputState);
 };
 

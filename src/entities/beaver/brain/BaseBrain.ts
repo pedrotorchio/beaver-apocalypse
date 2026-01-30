@@ -1,5 +1,5 @@
 import { Vec2 } from 'planck-js';
-import { InputState } from '../../../core/managers/InputManager';
+import { InputState, InputStateManager } from '../../../core/managers/InputManager';
 import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../../../core/types/Entity.type';
 import { GameModules } from '../../../core/types/GameModules.type';
 import { Renders } from '../../../core/types/Renders.type';
@@ -69,7 +69,7 @@ export class BrainActionPlan {
     }
 }
 
-export abstract class BaseBrain implements Updates, Renders, Behaviours {
+export abstract class BaseBrain implements Updates, Renders, Behaviours, InputStateManager {
     #isThinking: boolean = false;
     get isThinking(): boolean {
         return this.#isThinking;
@@ -79,7 +79,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
         return this.#hasCommands;
     }
     #commands: InputState;
-    get commands(): InputState {
+    getInputState(): InputState {
         return this.#commands;
     }
 
@@ -104,7 +104,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
     }
 
     wait() {
-        this.commands.yield = true;
+        this.#commands.yield = true;
         return true;
     }
     move({ target, until }: ActionDetails<'move'>) {
@@ -121,22 +121,22 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
         }
         const theMove = until();
         if (theMove === DIRECTION_NONE) return true;
-        else if (theMove === DIRECTION_RIGHT) this.commands.moveRight = true;
-        else if (theMove === DIRECTION_LEFT) this.commands.moveLeft = true;
+        else if (theMove === DIRECTION_RIGHT) this.#commands.moveRight = true;
+        else if (theMove === DIRECTION_LEFT) this.#commands.moveLeft = true;
         return false;
     }
     attack({ angle }: ActionDetails<'attack'>) {
-        if (this.commands.fire) {
-            this.commands.fire = false;
+        if (this.#commands.fire) {
+            this.#commands.fire = false;
             return true;
         }
 
         const currentAngle = this.character.aim.getAngle();
         const deltaAngle = currentAngle - angle;
 
-        if (Math.abs(deltaAngle) < 2) this.commands.fire = true;
-        else if (deltaAngle > 0) this.commands.aimUp = true;
-        else if (deltaAngle < 0) this.commands.aimDown = true;
+        if (Math.abs(deltaAngle) < 2) this.#commands.fire = true;
+        else if (deltaAngle > 0) this.#commands.aimUp = true;
+        else if (deltaAngle < 0) this.#commands.aimDown = true;
         return false;
     }
 
@@ -188,6 +188,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours {
 
     resetCommands(): InputState {
         this.#commands = {
+            wait: false,
             charging: false,
             pause: false,
             stop: false,

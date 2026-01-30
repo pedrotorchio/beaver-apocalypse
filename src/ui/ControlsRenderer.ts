@@ -38,10 +38,10 @@ export class ControlsRenderer implements Renders {
     return canvas.height - this.totalGridSize - this.gridPadding - 20;
   }
 
-  constructor(private game: GameModules) {}
+  constructor(private game: GameModules) { }
 
   render(): void {
-    const input = this.game.core.inputManager.getState();
+    const input = this.game.core.inputManager.getInputState();
 
     // Draw Up (top middle) - grid position (1, 0), 1 square wide
     this.drawRectangle(1, 0, 1, 1, input.jump);
@@ -57,7 +57,7 @@ export class ControlsRenderer implements Renders {
 
     const currentBeaver = this.game.core.entityManager.getBeaver(this.game.core.turnManager.getCurrentPlayerIndex());
     this.writeText(currentBeaver?.isGrounded ? "Grounded" : "In the air");
-    
+
   }
 
   /**

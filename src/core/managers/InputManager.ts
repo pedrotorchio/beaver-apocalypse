@@ -1,20 +1,10 @@
-import { useDevtoolsStore } from "../../devtools/store";
+import { EventHub, useEventHub } from "../../general/eventHub";
 
-export interface InputState {
-  moveLeft: boolean;
-  moveRight: boolean;
-  jump: boolean;
-  aimUp: boolean;
-  aimDown: boolean;
-  fire: boolean;
-  charging: boolean;
-  pause: boolean;
-  stop: boolean;
-  yield: boolean;
+export type InputKey = "moveLeft" | "moveRight" | "jump" | "aimUp" | "aimDown" | "fire" | "charging" | "pause" | "stop" | "yield" | "wait";
+export type InputState = Record<InputKey, boolean>
+export type InputStateManager = {
+  getInputState: () => InputState;
 }
-
-type EventListener = (state: InputState) => void;
-
 /**
  * Manages keyboard input state for the game.
  *
@@ -28,13 +18,13 @@ type EventListener = (state: InputState) => void;
  * state of all game controls. It provides methods to query input state
  * and detect specific events like firing.
  */
-export class InputManager {
-  private keys: Set<string> = new Set();
-  private justFired: boolean = false;
-  private wasSpacePressed: boolean = false;
-  private listeners: EventListener[] = [];
-  private devtools = useDevtoolsStore();
-  private controlsTab = this.devtools.addTab("controls");
+export class InputManager implements InputStateManager {
+  private down: Set<string> = new Set();
+  private up: Set<string> = new Set(); // state only lasts for one read and gets removed after reading
+  #eventHub = useEventHub<InputState>();
+  get eventHub(): EventHub<InputState> {
+    return this.#eventHub;
+  }
 
   constructor() {
     window.addEventListener("keydown", (e) => this.handleKeyDown(e));
@@ -43,56 +33,36 @@ export class InputManager {
 
   private handleKeyDown(e: KeyboardEvent): void {
     if (e.repeat) return;
-    this.keys.add(e.key.toLowerCase());
-    // Track spacebar press for charging
-    if (e.key.toLowerCase() === " " && !this.wasSpacePressed) {
-      this.wasSpacePressed = true;
-    }
-    this.alert();
+    this.down.add(e.key.toLowerCase());
+    this.#eventHub.notify(this.getInputState());
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
     if (e.repeat) return;
-    this.keys.delete(e.key.toLowerCase());
+    this.up.add(e.key.toLowerCase());
+    this.down.delete(e.key.toLowerCase());
+    this.#eventHub.notify(this.getInputState());
+  }
 
-    // Detect fire event (spacebar just released)
-    if (e.key.toLowerCase() === " ") {
-      if (this.wasSpacePressed) {
-        this.justFired = true;
-      }
-      this.wasSpacePressed = false;
+  getInputState(): InputState {
+    const releasedState = {
+      fire: this.up.has(" "),
     }
-    this.alert();
-  }
-
-  private alert(): void {
-    this.controlsTab.update("", this.getState());
-    this.listeners.forEach(listener => listener(this.getState()));
-  }
-
-  addListener(listener: EventListener): void {
-    this.listeners.push(listener);
-  }
-
-  getState(): InputState {
+    const activeState = {
+      moveLeft: this.down.has("a"),
+      moveRight: this.down.has("d"),
+      jump: this.down.has("w"),
+      aimUp: this.down.has("arrowup"),
+      aimDown: this.down.has("arrowdown"),
+      charging: this.down.has(" "),
+      pause: this.down.has("p"),
+      stop: this.down.has("enter"),
+    }
     return {
-      moveLeft: this.keys.has("a"),
-      moveRight: this.keys.has("d"),
-      jump: this.keys.has("w"),
-      aimUp: this.keys.has("arrowup"),
-      aimDown: this.keys.has("arrowdown"),
-      fire: this.keys.has(" "),
-      charging: this.keys.has(" "),
-      pause: this.keys.has("p"),
-      stop: this.keys.has("enter"),
-      yield: false
+      ...releasedState,
+      ...activeState,
+      wait: false,
+      yield: false,
     };
   }
-
-  shouldFire(): boolean {
-    const fired = this.justFired;
-    this.justFired = false; // Reset after reading
-    return fired;
-  }
-
 }

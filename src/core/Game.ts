@@ -13,7 +13,7 @@ import { CoreModules, GameInitializer } from "./GameInitializer";
 import { GameLoop } from "./GameLoop";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { EntityManager } from "./managers/EntityManager";
-import { InputManager, InputState } from "./managers/InputManager";
+import { InputManager, InputStateManager } from "./managers/InputManager";
 import { TurnManager, TurnPhase } from "./managers/TurnManager";
 import { WeaponManager } from "./managers/WeaponManager";
 import type { GameModules } from "./types/GameModules.type";
@@ -130,7 +130,7 @@ export class Game {
       onUpdate: () => this.update(),
       onRender: () => this.render(),
     });
-    this.inputManager.addListener((state) => {
+    this.inputManager.eventHub.addListener?.((state) => {
       if (state.pause && this.gameLoop.isRunning) this.gameLoop.stop();
       else if (state.pause && !this.gameLoop.isRunning) this.gameLoop.start();
     });
@@ -209,7 +209,7 @@ export class Game {
     if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
     // Handle player input
-    if (currentPlayerIndex === 0) this.handlePlayerInput(this.inputManager.getState(), currentBeaver);
+    if (currentPlayerIndex === 0) this.handlePlayerInput(this.inputManager, currentBeaver);
     else this.handleBrainInput(currentBeaver);
     return false;
   }
@@ -250,12 +250,13 @@ export class Game {
   private handleBrainInput(beaver: Beaver): void {
     const brain = beaver.brain;
     if (brain.isThinking) return;
-    else if (brain.hasCommands) this.handlePlayerInput(brain.commands, beaver);
+    else if (brain.hasCommands) this.handlePlayerInput(brain, beaver);
     else brain.think();
   }
 
-  private handlePlayerInput(input: InputState, beaver: Beaver): void {
+  private handlePlayerInput(inputManager: InputStateManager, beaver: Beaver): void {
     const aim = beaver.aim;
+    const input = inputManager.getInputState();
 
     // Movement
     if (input.moveLeft) {

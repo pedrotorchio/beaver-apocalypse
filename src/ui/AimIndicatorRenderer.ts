@@ -1,7 +1,6 @@
-import { Aim } from "../entities/Aim";
-import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
+import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 
 export interface AimIndicatorRendererArguments {
   powerIndicator: PowerIndicatorRenderer;
@@ -22,7 +21,7 @@ export interface AimIndicatorRendererArguments {
  * their shots accurately.
  */
 export class AimIndicatorRenderer implements Renders {
-  constructor(private game: GameModules, private args: AimIndicatorRendererArguments) {}
+  constructor(private game: GameModules, private args: AimIndicatorRendererArguments) { }
 
   /**
    * Renders the aim indicator and power indicator for a beaver.
@@ -40,7 +39,7 @@ export class AimIndicatorRenderer implements Renders {
     const power = aim.getPower();
     const minPower = aim.getMinPower();
     const maxPower = aim.getMaxPower();
-    
+
     // Calculate spawn point with current power
     const spawnPoint = currentBeaver.getProjectileSpawnPoint(power);
     const pos = currentBeaver.body.getPosition();
@@ -88,7 +87,7 @@ export class AimIndicatorRenderer implements Renders {
     });
 
     // Render power indicator if charging
-    const input = this.game.core.inputManager.getState();
+    const input = this.game.core.inputManager.getInputState();
     if (input.charging) {
       this.args.powerIndicator.render({
         x: pos.x,
