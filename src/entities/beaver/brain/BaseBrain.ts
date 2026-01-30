@@ -59,9 +59,10 @@ export class BrainActionPlan {
         return this.#actions[this.#currentActionInExecution] ?? null;
     }
 
-    nextAction(): ActionList[number] | null {
+    nextAction(): Action | null {
         this.#currentActionInExecution++;
-        const action = this.getActiveAction();
+        const actionOrGenerator = this.getActiveAction();
+        const action = typeof actionOrGenerator === 'function' ? actionOrGenerator() : actionOrGenerator;
         console.log(action?.type, action);
         return action;
     }
