@@ -1,3 +1,4 @@
+import * as planck from "planck-js";
 import { TurnPhase } from "../core/managers/TurnManager";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
@@ -138,6 +139,46 @@ export class HUDRenderer implements Renders {
     }
 
     this.renderRulers(canvas, ctx);
+    this.renderAngleReference(canvas, ctx);
+  }
+
+  private renderAngleReference(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
+    const centerX = canvas.width - 100;
+    const centerY = 200;
+    const radius = 50;
+    const dashLen = 8;
+    const labelRadius = radius + 14;
+    const baseVec = planck.Vec2(1, 0);
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    this.game.core.shapes.with({ strokeColor: "rgba(255, 255, 255, 0.8)" }).circle({ x: centerX, y: centerY }, radius);
+
+    for (let deg = 0; deg < 360; deg += 30) {
+      const angleRad = (deg * Math.PI) / 180;
+      const rot = planck.Rot(angleRad);
+      const dir = planck.Rot.mulVec2(rot, baseVec);
+      const inner = planck.Vec2.mul(dir, radius - dashLen);
+      const outer = planck.Vec2.mul(dir, radius);
+      ctx.beginPath();
+      ctx.moveTo(centerX + inner.x, centerY + inner.y);
+      ctx.lineTo(centerX + outer.x, centerY + outer.y);
+      ctx.stroke();
+    }
+
+    const labelAngles = [0, 90, 180, 270];
+    for (const deg of labelAngles) {
+      const angleRad = (deg * Math.PI) / 180;
+      const rot = planck.Rot(angleRad);
+      const dir = planck.Rot.mulVec2(rot, baseVec);
+      const labelPos = planck.Vec2.mul(dir, labelRadius);
+      ctx.fillText(String(deg), centerX + labelPos.x, centerY + labelPos.y);
+    }
   }
 
   private renderRulers(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
