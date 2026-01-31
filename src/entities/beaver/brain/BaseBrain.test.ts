@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BaseBrain } from "./BaseBrain";
-import type { GameModules } from "../../../core/types/GameModules.type";
-import type { Beaver } from "../Beaver";
-import { CCWRad } from "../../../general/coordinateSystem";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DIRECTION_LEFT, DIRECTION_RIGHT } from "../../../core/types/Entity.type";
+import type { GameModules } from "../../../core/types/GameModules.type";
+import { CCWRad } from "../../../general/coordinateSystem";
+import type { Beaver } from "../Beaver";
+import { BaseBrain } from "./BaseBrain";
 
 class TestBrain extends BaseBrain {
   executeThink = vi.fn().mockResolvedValue([]);

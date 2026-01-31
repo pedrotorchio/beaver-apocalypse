@@ -1,6 +1,6 @@
+import * as planck from "planck-js";
 import { CCWRad } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
-import * as planck from "planck-js";
 
 export interface WeaponManagerOptions {
   minPower: number;

@@ -1,13 +1,13 @@
-import { CCWRad } from "../../general/coordinateSystem";
-import * as vec from "../../general/vector";
 import { signal } from "@preact/signals";
 import * as planck from "planck-js";
+import { PhysicsWorld } from "../../core/PhysicsWorld";
+import { GameModules } from "../../core/types/GameModules.type";
 import { Renders } from "../../core/types/Renders.type";
 import { Updates } from "../../core/types/Updates.type";
-import { Vec2Like } from "../../general/vector";
+import { CCWRad } from "../../general/coordinateSystem";
 import { iterate, makeEnumArray } from "../../general/utils";
-import { GameModules } from "../../core/types/GameModules.type";
-import { PhysicsWorld } from "../../core/PhysicsWorld";
+import * as vec from "../../general/vector";
+import { Vec2Like } from "../../general/vector";
 
 export class GroundDetection implements Updates, Renders {
   // Private properties
@@ -54,7 +54,7 @@ export class GroundDetection implements Updates, Renders {
     const velocityInGroundNormalDirection = vec.project(velocity, this.#groundNormalDirection);
     const mass = this.#body.getMass()
     const gravity = PhysicsWorld.GRAVITY;
-    const weight = gravity*mass;
+    const weight = gravity * mass;
     const normalForce = planck.Vec2.mul(this.#groundNormalDirection, weight);
     const newVelocity = planck.Vec2.sub(velocity, velocityInGroundNormalDirection);
     this.#body.setLinearVelocity(newVelocity);
@@ -70,9 +70,9 @@ export class GroundDetection implements Updates, Renders {
   render(): void {
     const position = this.#body.getPosition();
     // Draw collision circle border for debugging
-    this.#game.core.shapes.with({ 
-      strokeWidth: 1, 
-      strokeColor: this.#isGrounded.value ? 'red' : 'grey' 
+    this.#game.core.shapes.with({
+      strokeWidth: 1,
+      strokeColor: this.#isGrounded.value ? 'red' : 'grey'
     }).circle(position, this.#radius);
 
     for (const point of this.#collisionCheckPoints) {
