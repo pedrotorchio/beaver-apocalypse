@@ -135,12 +135,24 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
             return true;
         }
 
+        const characterDirection = this.character.direction;
         const currentAngle = this.character.aim.getAngle();
         const deltaAngle = currentAngle - angle;
 
+        const aimDown = (() => {
+            if (characterDirection === DIRECTION_RIGHT && deltaAngle > 0) return true
+            if (characterDirection === DIRECTION_LEFT && deltaAngle < 0) return true
+            return false;
+        })();
+        const aimUp = (() => {
+            if (characterDirection === DIRECTION_RIGHT && deltaAngle < 0) return true
+            if (characterDirection === DIRECTION_LEFT && deltaAngle > 0) return true
+            return false;
+        })()
+
         if (Math.abs(deltaAngle) < 2) this.#commands.fire = true;
-        else if (deltaAngle > 0) this.#commands.aimUp = true;
-        else if (deltaAngle < 0) this.#commands.aimDown = true;
+        else if (aimDown) this.#commands.aimDown = true;
+        else if (aimUp) this.#commands.aimUp = true;
         return false;
     }
 

@@ -33,6 +33,7 @@ import type { GameModules } from "./types/GameModules.type";
  * entire lifecycle from initialization through gameplay execution.
  */
 export class Game {
+  private playerIndex = -1;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private turnManager: TurnManager;
@@ -98,7 +99,9 @@ export class Game {
     // Initialize non-core systems: beavers
     const beaverCount = 2;
     const beavers = iterate(beaverCount, (i) => {
-      const x = canvas.width * (0.25 + i * 0.5);
+      // const x = canvas.width * (0.25 + i * 0.5);
+      // const y = canvas.height * 0.3;
+      const x = canvas.width * (0.25 + i * 0.1);
       const y = canvas.height * 0.3;
       const aim = new Aim(gameModules, {
         minPower: this.minPower,
@@ -209,7 +212,7 @@ export class Game {
     if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
     // Handle player input
-    if (currentPlayerIndex === 0) this.handlePlayerInput(this.inputManager, currentBeaver);
+    if (currentPlayerIndex === this.playerIndex) this.handlePlayerInput(this.inputManager, currentBeaver);
     else this.handleBrainInput(currentBeaver);
     return false;
   }
