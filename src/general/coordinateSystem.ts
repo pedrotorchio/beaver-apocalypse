@@ -111,3 +111,13 @@ export const ccwdeg2rad = (deg: CCWDeg): CCWRad => CCWRad((deg * Math.PI) / 180)
 
 /** Convert CWDeg to CWRad. */
 export const cwdeg2rad = (deg: CWDeg): CWRad => CWRad((deg * Math.PI) / 180);
+
+/** Normalize radians to [0, 2π). */
+export const normalizeRadians = <A extends CCWRad | CWRad>(angle: A): A => {
+    return (angle - 2 * Math.PI * Math.floor(angle / (2 * Math.PI))) as A;
+};
+
+/** Mirror angle vertically (0↔π, π/4↔3π/4, etc). */
+export const mirrorAngle = <T extends CCWRad | CWRad>(angle: T): T => {
+    return CCWRad(Math.PI - Number(angle)) as T;
+};

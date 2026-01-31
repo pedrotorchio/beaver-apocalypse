@@ -1,5 +1,5 @@
 import type { GameModules } from "../core/types/GameModules.type";
-import { CCWRad } from "../general/coordinateSystem";
+import { CCWRad, normalizeRadians } from "../general/coordinateSystem";
 
 export interface AimArguments {
   minPower: number;
@@ -22,6 +22,9 @@ export interface AimArguments {
  */
 export class Aim {
   #radiansAngle: CCWRad = CCWRad(0); // Aim angle (0 = right, π/2 = up, -π/2 = down)
+  set angle(angle: CCWRad) {
+    this.#radiansAngle = normalizeRadians(angle);
+  }
   #power: number;
   readonly #game: GameModules;
   readonly #args: AimArguments;
