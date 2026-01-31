@@ -1,3 +1,4 @@
+import { CCWRad } from "./coordinateSystem";
 import type { Vec2Like } from "./vector";
 
 export class Shapes {
@@ -32,10 +33,10 @@ export class Shapes {
   arrow(start: Vec2Like, end: Vec2Like): void {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
-    const angle = Math.atan2(dy, dx);
+    const angle = CCWRad(Math.atan2(dy, dx));
     const arrowLength = Math.sqrt(dx * dx + dy * dy);
     const arrowheadSize = Math.min(arrowLength * 0.2, 10);
-    const arrowheadAngle = Math.PI / 6;
+    const arrowheadAngle = CCWRad(Math.PI / 6);
 
     this.ctx.beginPath();
     this.ctx.moveTo(start.x, start.y);

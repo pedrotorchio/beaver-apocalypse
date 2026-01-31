@@ -1,5 +1,6 @@
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
+import { CCWDeg, ccwdeg2rad } from "../general/coordinateSystem";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 
 export interface AimIndicatorRendererArguments {
@@ -59,10 +60,10 @@ export class AimIndicatorRenderer implements Renders {
     const dashOuter = 40;
     const labelRadius = 46;
     const facing = currentBeaver.direction;
-    const dashDegrees = [0, 45, 90, 120, -45, -90];
+    const dashDegrees: CCWDeg[] = [0, 45, 90, 120, -45, -90].map(CCWDeg);
     const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
     for (const deg of dashDegrees) {
-      const rad = (deg * Math.PI) / 180;
+      const rad = ccwdeg2rad(deg);
       const cos = Math.cos(rad) * facing;
       const sin = Math.sin(rad);
       shapes.line(
@@ -73,14 +74,14 @@ export class AimIndicatorRenderer implements Renders {
     const labelShapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.8)" });
     const labelFontSize = 10;
     ([
-      { deg: 0, text: "0" },
-      { deg: 45, text: "45" },
-      { deg: 90, text: "90" },
-      { deg: 120, text: "120" },
-      { deg: -45, text: "-45" },
-      { deg: -90, text: "-90" },
+      { deg: CCWDeg(0), text: "0" },
+      { deg: CCWDeg(45), text: "45" },
+      { deg: CCWDeg(90), text: "90" },
+      { deg: CCWDeg(120), text: "120" },
+      { deg: CCWDeg(-45), text: "-45" },
+      { deg: CCWDeg(-90), text: "-90" },
     ]).forEach(({ deg, text }) => {
-      const rad = (deg * Math.PI) / 180;
+      const rad = ccwdeg2rad(deg);
       const lx = pos.x + labelRadius * Math.cos(rad) * facing;
       const ly = pos.y - labelRadius * Math.sin(rad);
       labelShapes.text(lx, ly, labelFontSize, text);

@@ -272,9 +272,8 @@ export class Game {
       beaver.jump();
     }
 
-    // Aiming: arrow keys adjust the aim angle
+    // Aiming: arrow keys adjust the aim angle (CCWRad delta)
     // The angle is stored relative to "facing right" and will be transformed when facing left.
-    // aimUp decreases angle, aimDown increases (correct when facing left; facing right uses same convention).
     const angleStep = 0.02;
 
     if (input.aimUp) aim.angleUp(angleStep);

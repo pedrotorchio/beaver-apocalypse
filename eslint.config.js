@@ -9,5 +9,11 @@ export default tseslint.config(
     rules: {
       // Add any custom rules here
     },
+  },
+  {
+    files: ['src/general/coordinateSystem.ts'],
+    rules: {
+      '@typescript-eslint/no-wrapper-object-types': 'off',
+    },
   }
 );

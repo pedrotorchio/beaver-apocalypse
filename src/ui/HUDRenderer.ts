@@ -2,6 +2,7 @@ import * as planck from "planck-js";
 import { TurnPhase } from "../core/managers/TurnManager";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
+import { CWDeg, cwdeg2rad } from "../general/coordinateSystem";
 
 /**
  * Renders the Heads-Up Display (HUD) overlay showing game state information.
@@ -160,8 +161,8 @@ export class HUDRenderer implements Renders {
     this.game.core.shapes.with({ strokeColor: "rgba(255, 255, 255, 0.8)" }).circle({ x: centerX, y: centerY }, radius);
 
     for (let deg = 0; deg < 360; deg += 30) {
-      const angleRad = (deg * Math.PI) / 180;
-      const rot = planck.Rot(angleRad);
+      const angleRad = cwdeg2rad(CWDeg(deg));
+      const rot = planck.Rot(Number(angleRad));
       const dir = planck.Rot.mulVec2(rot, baseVec);
       const inner = planck.Vec2.mul(dir, radius - dashLen);
       const outer = planck.Vec2.mul(dir, radius);
@@ -171,10 +172,10 @@ export class HUDRenderer implements Renders {
       ctx.stroke();
     }
 
-    const labelAngles = [0, 90, 180, 270];
+    const labelAngles: CWDeg[] = [0, 90, 180, 270].map(CWDeg);
     for (const deg of labelAngles) {
-      const angleRad = (deg * Math.PI) / 180;
-      const rot = planck.Rot(angleRad);
+      const angleRad = cwdeg2rad(deg);
+      const rot = planck.Rot(Number(angleRad));
       const dir = planck.Rot.mulVec2(rot, baseVec);
       const labelPos = planck.Vec2.mul(dir, labelRadius);
       ctx.fillText(`${deg}°`, centerX + labelPos.x, centerY + labelPos.y);

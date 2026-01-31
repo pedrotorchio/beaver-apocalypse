@@ -1,4 +1,5 @@
 import ollama from 'ollama';
+import { CCWRad } from "../../../general/coordinateSystem";
 import { Action, BaseBrain } from "./BaseBrain";
 import prompt from "./llmprompt";
 
@@ -33,9 +34,15 @@ export class LLMBasedBrain extends BaseBrain {
         }
         try {
             const jsonResponseString = replyString.substring(replyString.indexOf('{'), replyString.lastIndexOf('}') + 1);
-            const reply = JSON.parse(jsonResponseString) as { actions: Action[] };
+            const reply = JSON.parse(jsonResponseString) as { actions: Array<Action & { angle?: number }> };
             console.dir(reply);
-            return reply.actions ?? [];
+            const actions = (reply.actions ?? []).map((a) => {
+                if (a.type === 'attack' && typeof a.angle === 'number') {
+                    return { ...a, angle: CCWRad((a.angle * Math.PI) / 180) };
+                }
+                return a as Action;
+            });
+            return actions;
         } catch (error) {
             console.error("Error parsing commands:", error);
             console.log(replyString);

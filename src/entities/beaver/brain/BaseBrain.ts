@@ -4,6 +4,7 @@ import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../.
 import { GameModules } from '../../../core/types/GameModules.type';
 import { Renders } from '../../../core/types/Renders.type';
 import { Updates } from '../../../core/types/Updates.type';
+import type { CCWRad } from '../../../general/coordinateSystem';
 import { Beaver } from "../Beaver";
 
 export type ActionType = Action['type']
@@ -20,7 +21,7 @@ export type Action =
     | {
         type: 'attack',
         target: string,
-        angle: number,
+        angle: CCWRad,
     }
 export type ActionGenerator = () => Action
 export type ActionList = (Action | ActionGenerator)[]
@@ -31,7 +32,7 @@ export type Behaviours = {
 }
 
 /** Angle tolerance in radians (≈2°) for attack aim alignment. */
-const ANGLE_TOLERANCE_RAD = (2 * Math.PI) / 180;
+const ANGLE_TOLERANCE_RAD: number = (2 * Math.PI) / 180;
 
 export class BrainActionPlan {
     #actions: ActionList = [];

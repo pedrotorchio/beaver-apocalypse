@@ -1,3 +1,4 @@
+import { CCWRad } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
 import * as planck from "planck-js";
 
@@ -54,22 +55,21 @@ export class WeaponManager {
     this.currentPower = this.options.minPower;
   }
 
-  calculateFireAngle(aimAngle: number, facing: number): number {
+  calculateFireAngle(aimAngle: CCWRad, facing: number): CCWRad {
     // Adjust aim angle based on facing direction
-    let fireAngle = aimAngle;
     if (facing === -1) {
-      fireAngle = Math.PI - fireAngle;
+      return CCWRad(Math.PI - aimAngle);
     }
-    return fireAngle;
+    return aimAngle;
   }
 
-  calculateVelocity(fireAngle: number): { x: number; y: number } {
+  calculateVelocity(fireAngle: CCWRad): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
     const velocity = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), this.currentPower);
     return { x: velocity.x, y: velocity.y };
   }
 
-  calculateSpawnOffset(fireAngle: number, offsetDistance: number = 15): { x: number; y: number } {
+  calculateSpawnOffset(fireAngle: CCWRad, offsetDistance: number = 15): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
     const offset = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), offsetDistance);
     return { x: offset.x, y: offset.y };

@@ -5,6 +5,7 @@ import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
+import { CCWRad } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
 import { Projectile } from "../Projectile";
@@ -200,9 +201,9 @@ export class Beaver implements Updates, Renders {
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
-    let fireAngle = aimAngle;
+    let fireAngle: CCWRad = aimAngle;
     if (this.#direction === -1) {
-      fireAngle = Math.PI - fireAngle;
+      fireAngle = CCWRad(Math.PI - aimAngle);
     }
 
     // Calculate velocity from fire angle and power
@@ -224,9 +225,9 @@ export class Beaver implements Updates, Renders {
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
-    let fireAngle = aimAngle;
+    let fireAngle: CCWRad = aimAngle;
     if (this.#direction === -1) {
-      fireAngle = Math.PI - fireAngle;
+      fireAngle = CCWRad(Math.PI - aimAngle);
     }
 
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)

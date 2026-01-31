@@ -1,3 +1,4 @@
+import { CCWRad } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
 import { signal } from "@preact/signals";
 import * as planck from "planck-js";
@@ -97,7 +98,7 @@ export class GroundDetection implements Updates, Renders {
     const checkPoints = makeEnumArray(iterate(13, (i) => {
       // Visit 12 points along the bottom arc
       const fractionOf180 = i / 12;
-      const angle = Math.PI * fractionOf180;
+      const angle = CCWRad(Math.PI * fractionOf180);
       const dir = vec.fromAngle(angle);
       const scaledDir = planck.Vec2.mul(planck.Vec2(dir.x, dir.y), radius);
       const enumValue = `${fractionOf180 * 180}deg`;

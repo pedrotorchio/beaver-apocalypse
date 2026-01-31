@@ -1,5 +1,6 @@
 import * as planck from 'planck-js';
 import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT } from '../../../core/types/Entity.type';
+import { CCWRad } from '../../../general/coordinateSystem';
 import { Beaver } from '../Beaver';
 import { Action, ActionList, BaseBrain } from "./BaseBrain";
 
@@ -38,7 +39,7 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         const characterPos = this.character.body.getPosition();
         const enemyPos = enemy.body.getPosition();
         const direction = planck.Vec2.sub(enemyPos, characterPos);
-        const angle = Math.atan2(direction.y, direction.x);
+        const angle = CCWRad(Math.atan2(direction.y, direction.x));
 
         return {
             type: 'attack',
