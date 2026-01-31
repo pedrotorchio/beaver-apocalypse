@@ -33,7 +33,7 @@ import type { GameModules } from "./types/GameModules.type";
  * entire lifecycle from initialization through gameplay execution.
  */
 export class Game {
-  private playerIndex = -1;
+  private playerIndex = 0;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private turnManager: TurnManager;

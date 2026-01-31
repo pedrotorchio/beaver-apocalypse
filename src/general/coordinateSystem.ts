@@ -1,7 +1,7 @@
 /**
- * Runtime-tagged angle types for different coordinate system conventions.
- * Angles are Number instances with _brand attached via defineProperty, so they
- * behave as numbers (Math.cos, arithmetic) while carrying runtime _brand for toCCWRad.
+ * Compile-time branded angle types for different coordinate system conventions.
+ * Angles are plain numbers - typeof returns "number", native numeric operations work.
+ * Use per-type conversion functions to convert to CCWRad (game canonical).
  *
  * ## Naming Convention
  *
@@ -27,87 +27,87 @@
  *
  * ## Usage
  *
- * Use tagged types to prevent mixing angles from different conventions.
- * Use toCCWRad() to convert any angle to the game's canonical CCWRad.
+ * Use branded types to prevent mixing angles from different conventions.
+ * Use the per-type toCCWRad functions to convert to game canonical.
  */
 
-type AngleBrand = 'CCWRad' | 'CCWDeg' | 'CWRad' | 'CWDeg' | 'MCCWRad' | 'MCCWDeg' | 'MCWRad' | 'MCWDeg';
-
-type Angle<T extends AngleBrand> = Number & { readonly _brand: T };
-
-function createAngle<T extends AngleBrand>(value: number, brand: T): Angle<T> {
-    const num = new Number(value) as Angle<T>;
-    Object.defineProperty(num, '_brand', { value: brand, writable: false, enumerable: true });
-    return num;
-}
+declare const __angleBrand: unique symbol;
+type AngleBrand<B extends string> = number & { readonly [__angleBrand]: B };
 
 /** Radians, CCW from right (math convention, Y-up). Game canonical. */
-export type CCWRad = Angle<'CCWRad'>;
+export type CCWRad = AngleBrand<'CCWRad'>;
 
 /** Degrees, CCW from right (math convention, Y-up). */
-export type CCWDeg = Angle<'CCWDeg'>;
+export type CCWDeg = AngleBrand<'CCWDeg'>;
 
 /** Radians, CW from right (screen convention, Y-down). */
-export type CWRad = Angle<'CWRad'>;
+export type CWRad = AngleBrand<'CWRad'>;
 
 /** Degrees, CW from right (screen convention, Y-down). */
-export type CWDeg = Angle<'CWDeg'>;
+export type CWDeg = AngleBrand<'CWDeg'>;
 
 /** Radians, CCW mirrored (CCW in Y-down space). */
-export type MCCWRad = Angle<'MCCWRad'>;
+export type MCCWRad = AngleBrand<'MCCWRad'>;
 
 /** Degrees, CCW mirrored (CCW in Y-down space). */
-export type MCCWDeg = Angle<'MCCWDeg'>;
+export type MCCWDeg = AngleBrand<'MCCWDeg'>;
 
 /** Radians, CW mirrored (CW in Y-up space). */
-export type MCWRad = Angle<'MCWRad'>;
+export type MCWRad = AngleBrand<'MCWRad'>;
 
 /** Degrees, CW mirrored (CW in Y-up space). */
-export type MCWDeg = Angle<'MCWDeg'>;
+export type MCWDeg = AngleBrand<'MCWDeg'>;
 
-export type AnyAngle = CCWRad | CCWDeg | CWRad | CWDeg | MCCWRad | MCCWDeg | MCWRad | MCWDeg;
+/** Cast a number to CCWRad. Use when the value is known to be in math convention (π/2 = up). */
+export const CCWRad = (n: number): CCWRad => n as CCWRad;
 
-/** Create CCWRad. Use when the value is known to be in math convention (π/2 = up). */
-export const CCWRad = (n: number): CCWRad => createAngle(n, 'CCWRad');
+/** Cast a number to CCWDeg. */
+export const CCWDeg = (n: number): CCWDeg => n as CCWDeg;
 
-/** Create CCWDeg. */
-export const CCWDeg = (n: number): CCWDeg => createAngle(n, 'CCWDeg');
+/** Cast a number to CWRad. Use when the value is in Planck/screen convention (π/2 = down). */
+export const CWRad = (n: number): CWRad => n as CWRad;
 
-/** Create CWRad. Use when the value is in Planck/screen convention (π/2 = down). */
-export const CWRad = (n: number): CWRad => createAngle(n, 'CWRad');
+/** Cast a number to CWDeg. */
+export const CWDeg = (n: number): CWDeg => n as CWDeg;
 
-/** Create CWDeg. */
-export const CWDeg = (n: number): CWDeg => createAngle(n, 'CWDeg');
+/** Cast a number to MCCWRad. */
+export const MCCWRad = (n: number): MCCWRad => n as MCCWRad;
 
-/** Create MCCWRad. */
-export const MCCWRad = (n: number): MCCWRad => createAngle(n, 'MCCWRad');
+/** Cast a number to MCCWDeg. */
+export const MCCWDeg = (n: number): MCCWDeg => n as MCCWDeg;
 
-/** Create MCCWDeg. */
-export const MCCWDeg = (n: number): MCCWDeg => createAngle(n, 'MCCWDeg');
+/** Cast a number to MCWRad. */
+export const MCWRad = (n: number): MCWRad => n as MCWRad;
 
-/** Create MCWRad. */
-export const MCWRad = (n: number): MCWRad => createAngle(n, 'MCWRad');
+/** Cast a number to MCWDeg. */
+export const MCWDeg = (n: number): MCWDeg => n as MCWDeg;
 
-/** Create MCWDeg. */
-export const MCWDeg = (n: number): MCWDeg => createAngle(n, 'MCWDeg');
-
-/** Convert any angle to CCWRad (game canonical). Runtime-checked via _brand. */
-export const toCCWRad = (angle: AnyAngle): CCWRad => {
-    const v = Number(angle);
-    switch (angle._brand) {
-        case 'CCWRad': return angle;
-        case 'CCWDeg': return CCWRad((v * Math.PI) / 180);
-        case 'CWRad': return CCWRad(-v);
-        case 'CWDeg': return CCWRad(-(v * Math.PI) / 180);
-        case 'MCCWRad': return CCWRad(v);
-        case 'MCCWDeg': return CCWRad((v * Math.PI) / 180);
-        case 'MCWRad': return CCWRad(-v);
-        case 'MCWDeg': return CCWRad(-(v * Math.PI) / 180);
-    }
-};
+/** Convert CCWRad to CCWRad (identity). */
+export const ccwrad2ccwrad = (a: CCWRad): CCWRad => a;
 
 /** Convert CCWDeg to CCWRad. */
-export const ccwdeg2rad = (deg: CCWDeg): CCWRad => CCWRad((Number(deg) * Math.PI) / 180);
+export const ccwdeg2ccwrad = (a: CCWDeg): CCWRad => CCWRad((a * Math.PI) / 180);
+
+/** Convert CWRad to CCWRad. */
+export const cwrad2ccwrad = (a: CWRad): CCWRad => CCWRad(-a);
+
+/** Convert CWDeg to CCWRad. */
+export const cwdeg2ccwrad = (a: CWDeg): CCWRad => CCWRad(-(a * Math.PI) / 180);
+
+/** Convert MCCWRad to CCWRad. */
+export const mccwrad2ccwrad = (a: MCCWRad): CCWRad => CCWRad(a);
+
+/** Convert MCCWDeg to CCWRad. */
+export const mccwdeg2ccwrad = (a: MCCWDeg): CCWRad => CCWRad((a * Math.PI) / 180);
+
+/** Convert MCWRad to CCWRad. */
+export const mcwrad2ccwrad = (a: MCWRad): CCWRad => CCWRad(-a);
+
+/** Convert MCWDeg to CCWRad. */
+export const mcwdeg2ccwrad = (a: MCWDeg): CCWRad => CCWRad(-(a * Math.PI) / 180);
+
+/** Convert CCWDeg to CCWRad. */
+export const ccwdeg2rad = (deg: CCWDeg): CCWRad => CCWRad((deg * Math.PI) / 180);
 
 /** Convert CWDeg to CWRad. */
-export const cwdeg2rad = (deg: CWDeg): CWRad => CWRad((Number(deg) * Math.PI) / 180);
+export const cwdeg2rad = (deg: CWDeg): CWRad => CWRad((deg * Math.PI) / 180);
