@@ -38,13 +38,12 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         const characterPos = this.character.body.getPosition();
         const enemyPos = enemy.body.getPosition();
         const direction = planck.Vec2.sub(enemyPos, characterPos);
-        const angle = Math.atan2(-direction.y, direction.x);
-        const angleDegrees = (angle * 180) / Math.PI;
+        const angle = Math.atan2(direction.y, direction.x);
 
         return {
             type: 'attack',
             target: enemy.name,
-            angle: angleDegrees,
+            angle,
         };
     }
 

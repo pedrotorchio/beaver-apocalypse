@@ -30,6 +30,9 @@ export type Behaviours = {
     [K in ActionType]: Behaviour<K>
 }
 
+/** Angle tolerance in radians (≈2°) for attack aim alignment. */
+const ANGLE_TOLERANCE_RAD = (2 * Math.PI) / 180;
+
 export class BrainActionPlan {
     #actions: ActionList = [];
     set actions(actions: ActionList) {
@@ -140,17 +143,17 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         const deltaAngle = currentAngle - angle;
 
         const aimDown = (() => {
-            if (characterDirection === DIRECTION_RIGHT && deltaAngle > 0) return true
-            if (characterDirection === DIRECTION_LEFT && deltaAngle < 0) return true
-            return false;
-        })();
-        const aimUp = (() => {
             if (characterDirection === DIRECTION_RIGHT && deltaAngle < 0) return true
             if (characterDirection === DIRECTION_LEFT && deltaAngle > 0) return true
             return false;
+        })();
+        const aimUp = (() => {
+            if (characterDirection === DIRECTION_RIGHT && deltaAngle > 0) return true
+            if (characterDirection === DIRECTION_LEFT && deltaAngle < 0) return true
+            return false;
         })()
 
-        if (Math.abs(deltaAngle) < 2) this.#commands.fire = true;
+        if (Math.abs(deltaAngle) < ANGLE_TOLERANCE_RAD) this.#commands.fire = true;
         else if (aimDown) this.#commands.aimDown = true;
         else if (aimUp) this.#commands.aimUp = true;
         return false;

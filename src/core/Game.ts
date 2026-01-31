@@ -287,6 +287,7 @@ export class Game {
       const projectile = beaver.attack(aim);
       this.entityManager.addProjectile(projectile);
       this.turnManager.fireWeapon();
+      aim.resetAngle();
       aim.resetPower();
     }
 
