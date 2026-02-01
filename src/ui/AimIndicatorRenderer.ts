@@ -1,7 +1,7 @@
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
 import type { Aim } from "../entities/Aim";
-import { CCWDeg, CCWRad, ccwdeg2rad, mirrorRadians } from "../general/coordinateSystem";
+import { CCWDeg, ccwdeg2rad } from "../general/coordinateSystem";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 
 export interface AimIndicatorRendererArguments {
@@ -60,7 +60,6 @@ export class AimIndicatorRenderer implements Renders {
 
   private drawAimCircle(pos: { x: number; y: number }, aim: Aim, facing: number, beaverRadius: number): void {
     const aimAngle = aim.getAngle();
-    const fireAngle: CCWRad = facing === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
     const power = aim.getPower();
     const minPower = aim.getMinPower();
     const maxPower = aim.getMaxPower();
@@ -71,8 +70,8 @@ export class AimIndicatorRenderer implements Renders {
     const maxDistance = baseOffsetDistance * 2.5;
     const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
     const indicatorEnd = {
-      x: pos.x + offsetDistance * Math.cos(fireAngle),
-      y: pos.y - offsetDistance * Math.sin(fireAngle),
+      x: pos.x + offsetDistance * Math.cos(aimAngle),
+      y: pos.y - offsetDistance * Math.sin(aimAngle),
     };
     const red = 255;
     const green = Math.round(255 * (1 - powerRatio));

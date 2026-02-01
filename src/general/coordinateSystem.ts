@@ -94,7 +94,7 @@ export const cwdeg2rad = (deg: CWDeg): CWRad => CWRad((deg * Math.PI) / 180);
 /** Convert RelativeRad to CCWRad (world angle). Facing right: 0=right. Facing left: 0=left (π). */
 export const relativerad2ccwrad = (a: RelativeRad): CCWRad => {
     if (a.facing === DIRECTION_RIGHT) return CCWRad(a.angle);
-    if (a.facing === DIRECTION_LEFT) return CCWRad(mirrorRadians(-a.angle));
+    if (a.facing === DIRECTION_LEFT) return CCWRad(mirrorRadians(a.angle));
     throw new Error(`Invalid direction: ${a.facing}`);
 }
 
