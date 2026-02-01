@@ -106,10 +106,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         if (this.#actionPlan.doAction()) this.#actionPlan.nextAction();
     }
 
-    render(): void {
-        const pos = Vec2.clone(this.character.body.getPosition());
-        if (this.#isThinking) this.game.core.shapes.with({ strokeColor: 'black' }).text(pos.x, pos.y - this.character.radius - 16, 16, 'Hmm...');
-    }
+    render(): void { }
 
     wait() {
         this.#commands.yield = true;
@@ -139,20 +136,11 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
             return true;
         }
 
-        const characterDirection = this.character.direction;
         const currentAngle = this.character.aim.getAngle();
         const deltaAngle = currentAngle - angle;
 
-        const aimDown = (() => {
-            if (characterDirection === DIRECTION_RIGHT && deltaAngle < 0) return true
-            if (characterDirection === DIRECTION_LEFT && deltaAngle > 0) return true
-            return false;
-        })();
-        const aimUp = (() => {
-            if (characterDirection === DIRECTION_RIGHT && deltaAngle > 0) return true
-            if (characterDirection === DIRECTION_LEFT && deltaAngle < 0) return true
-            return false;
-        })()
+        const aimUp = angle > 0 && angle < Math.PI;
+        const aimDown = angle > -Math.PI && angle < 0;
 
         if (Math.abs(deltaAngle) < ANGLE_TOLERANCE_RAD) this.#commands.fire = true;
         else if (aimDown) this.#commands.aimDown = true;

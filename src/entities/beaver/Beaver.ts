@@ -5,7 +5,7 @@ import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
-import { CCWRad } from "../../general/coordinateSystem";
+import { CCWRad, mirrorRadians } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
 import { Projectile } from "../Projectile";
@@ -75,6 +75,12 @@ export class Beaver implements Updates, Renders {
   get direction(): Direction {
     return this.#direction;
   }
+  set direction(direction: Direction) {
+    if (this.#direction === direction) return;
+    this.#direction = direction;
+    this.aim.facing = direction;
+  }
+
   #jumpStrength: number = -PhysicsWorld.GRAVITY * this.#mass;
   #moveSpeed: number = 20;
   #groundDetection: GroundDetection;
@@ -176,7 +182,7 @@ export class Beaver implements Updates, Renders {
     if (!this.health.isAlive()) return;
     const vel = this.#body.getLinearVelocity();
     this.#body.setLinearVelocity(planck.Vec2(direction * this.#moveSpeed, vel.y));
-    this.#direction = direction;
+    this.direction = direction;
   }
 
   /**
@@ -201,10 +207,7 @@ export class Beaver implements Updates, Renders {
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
-    let fireAngle: CCWRad = aimAngle;
-    if (this.#direction === -1) {
-      fireAngle = CCWRad(Math.PI - aimAngle);
-    }
+    const fireAngle: CCWRad = this.#direction === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
 
     // Calculate velocity from fire angle and power
     const power = aim.getPower();
@@ -225,10 +228,7 @@ export class Beaver implements Updates, Renders {
     const aimAngle = aim.getAngle();
 
     // Adjust aim angle based on facing direction
-    let fireAngle: CCWRad = aimAngle;
-    if (this.#direction === -1) {
-      fireAngle = CCWRad(Math.PI - aimAngle);
-    }
+    const fireAngle: CCWRad = this.#direction === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
 
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
     const projectileRadius = 4; // Projectile.radius

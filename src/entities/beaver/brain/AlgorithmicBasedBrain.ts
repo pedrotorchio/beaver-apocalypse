@@ -1,6 +1,6 @@
 import * as planck from 'planck-js';
 import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT } from '../../../core/types/Entity.type';
-import { CCWRad } from '../../../general/coordinateSystem';
+import { CCWRad, normalizeRadians } from '../../../general/coordinateSystem';
 import { Beaver } from '../Beaver';
 import { Action, ActionList, BaseBrain } from "./BaseBrain";
 
@@ -34,13 +34,18 @@ export class AlgorithmicBasedBrain extends BaseBrain {
             return DIRECTION_NONE;
         }
     }
-
+    render(): void {
+        if (this.lookingAt) {
+            this.game.core.shapes.with({ strokeColor: 'purple' }).line(this.character.body.getPosition(), this.lookingAt);
+        }
+    }
+    lookingAt: planck.Vec2 | null = null;
     protected createAttackAction(enemy: Beaver): Action {
         const characterPos = this.character.body.getPosition();
         const enemyPos = enemy.body.getPosition();
         const direction = planck.Vec2.sub(enemyPos, characterPos);
-        const angle = CCWRad(Math.atan2(direction.y, direction.x));
-
+        const angle = normalizeRadians(CCWRad(Math.atan2(-direction.y, direction.x)));
+        this.lookingAt = enemyPos;
         return {
             type: 'attack',
             target: enemy.name,

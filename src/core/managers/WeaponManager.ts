@@ -1,5 +1,5 @@
 import * as planck from "planck-js";
-import { CCWRad } from "../../general/coordinateSystem";
+import { CCWRad, mirrorRadians } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
 
 export interface WeaponManagerOptions {
@@ -56,11 +56,7 @@ export class WeaponManager {
   }
 
   calculateFireAngle(aimAngle: CCWRad, facing: number): CCWRad {
-    // Adjust aim angle based on facing direction
-    if (facing === -1) {
-      return CCWRad(Math.PI - aimAngle);
-    }
-    return aimAngle;
+    return facing === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
   }
 
   calculateVelocity(fireAngle: CCWRad): { x: number; y: number } {

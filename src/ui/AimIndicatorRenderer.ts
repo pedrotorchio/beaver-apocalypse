@@ -40,22 +40,32 @@ export class AimIndicatorRenderer implements Renders {
     const power = aim.getPower();
     const minPower = aim.getMinPower();
     const maxPower = aim.getMaxPower();
-
-    // Calculate spawn point with current power
-    const spawnPoint = currentBeaver.getProjectileSpawnPoint(power);
     const pos = currentBeaver.body.getPosition();
+    const aimAngle = aim.getAngle();
+
+    // Compute indicator position from aim angle (CCW: π/2=up; canvas: y - sin)
+    const projectileRadius = 4;
+    const baseOffsetDistance = currentBeaver.radius + projectileRadius;
+    const powerRatio = (power - minPower) / (maxPower - minPower);
+    const minDistance = baseOffsetDistance * 1.2;
+    const maxDistance = baseOffsetDistance * 2.5;
+    const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
+    const indicatorEnd = {
+      x: pos.x + offsetDistance * Math.cos(aimAngle),
+      y: pos.y - offsetDistance * Math.sin(aimAngle),
+    };
 
     // Interpolate color from yellow (#FFFF00) to red (#FF0000) based on power
-    const powerRatio = (power - minPower) / (maxPower - minPower);
     const red = 255;
     const green = Math.round(255 * (1 - powerRatio));
     const blue = 0;
     const color = `rgb(${red}, ${green}, ${blue})`;
 
-    // Draw circle at spawn point
-    this.game.core.shapes.with({ bgColor: color }).circle(spawnPoint, 5);
+    // Draw line and circle at aim direction
+    this.game.core.shapes.with({ strokeColor: color, strokeWidth: 2 }).line(pos, indicatorEnd);
+    this.game.core.shapes.with({ bgColor: color }).circle(indicatorEnd, 5);
 
-    // Degree indicator ring (dashes every 30° within [MIN_ANGLE, MAX_ANGLE]); mirrored when facing left
+    // Degree indicator ring (dashes every 30° within [MIN_ANGLE, MAX_ANGLE]); uses aim angle directly
     const dashInner = 30;
     const dashOuter = 40;
     const labelRadius = 46;

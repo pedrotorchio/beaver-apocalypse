@@ -14,7 +14,6 @@
  * - **CW** = clockwise from right = positive angle (screen convention, Y-down)
  * - **Rad** = radians
  * - **Deg** = degrees
- * - **M** prefix = mirrored (negated/flipped interpretation; same value, opposite Y-axis context)
  *
  * ## Angle Direction Reference
  *
@@ -22,14 +21,14 @@
  * |------------|--------|--------------------------|-------------|
  * | CCW        | Y-up   | Up (counterclockwise)    | Math.atan2, Aim |
  * | CW         | Y-down | Down (clockwise)         | PlanckJS, Canvas |
- * | MCCW       | Y-down | Up (CCW mirrored)        | CCW angle in Y-down space |
- * | MCW        | Y-up   | Down (CW mirrored)        | CW angle in Y-up space |
  *
  * ## Usage
  *
  * Use branded types to prevent mixing angles from different conventions.
  * Use the per-type toCCWRad functions to convert to game canonical.
  */
+
+import { DIRECTION_LEFT, DIRECTION_RIGHT, Direction } from "../core/types/Entity.type";
 
 declare const __angleBrand: unique symbol;
 type AngleBrand<B extends string> = number & { readonly [__angleBrand]: B };
@@ -46,18 +45,22 @@ export type CWRad = AngleBrand<'CWRad'>;
 /** Degrees, CW from right (screen convention, Y-down). */
 export type CWDeg = AngleBrand<'CWDeg'>;
 
-/** Radians, CCW mirrored (CCW in Y-down space). */
-export type MCCWRad = AngleBrand<'MCCWRad'>;
+/** Radians, relative to a local horizontal direction. */
+export type RelativeRad = {
+    angle: number;
+    facing: Direction;
+}
 
-/** Degrees, CCW mirrored (CCW in Y-down space). */
-export type MCCWDeg = AngleBrand<'MCCWDeg'>;
-
-/** Radians, CW mirrored (CW in Y-up space). */
-export type MCWRad = AngleBrand<'MCWRad'>;
-
-/** Degrees, CW mirrored (CW in Y-up space). */
-export type MCWDeg = AngleBrand<'MCWDeg'>;
-
+/**
+ * Factory for relative radians. When facing is set, transforms angle: left = CCW→CW, right = CW→CCW.
+ * @returns {RelativeRad} An object with angle and facing properties.
+ */
+export const RelativeRad = (angle: number, facing: Direction) => {
+    return {
+        angle,
+        facing,
+    }
+};
 /** Cast a number to CCWRad. Use when the value is known to be in math convention (π/2 = up). */
 export const CCWRad = (n: number): CCWRad => n as CCWRad;
 
@@ -69,18 +72,6 @@ export const CWRad = (n: number): CWRad => n as CWRad;
 
 /** Cast a number to CWDeg. */
 export const CWDeg = (n: number): CWDeg => n as CWDeg;
-
-/** Cast a number to MCCWRad. */
-export const MCCWRad = (n: number): MCCWRad => n as MCCWRad;
-
-/** Cast a number to MCCWDeg. */
-export const MCCWDeg = (n: number): MCCWDeg => n as MCCWDeg;
-
-/** Cast a number to MCWRad. */
-export const MCWRad = (n: number): MCWRad => n as MCWRad;
-
-/** Cast a number to MCWDeg. */
-export const MCWDeg = (n: number): MCWDeg => n as MCWDeg;
 
 /** Convert CCWRad to CCWRad (identity). */
 export const ccwrad2ccwrad = (a: CCWRad): CCWRad => a;
@@ -94,30 +85,23 @@ export const cwrad2ccwrad = (a: CWRad): CCWRad => CCWRad(-a);
 /** Convert CWDeg to CCWRad. */
 export const cwdeg2ccwrad = (a: CWDeg): CCWRad => CCWRad(-(a * Math.PI) / 180);
 
-/** Convert MCCWRad to CCWRad. */
-export const mccwrad2ccwrad = (a: MCCWRad): CCWRad => CCWRad(a);
-
-/** Convert MCCWDeg to CCWRad. */
-export const mccwdeg2ccwrad = (a: MCCWDeg): CCWRad => CCWRad((a * Math.PI) / 180);
-
-/** Convert MCWRad to CCWRad. */
-export const mcwrad2ccwrad = (a: MCWRad): CCWRad => CCWRad(-a);
-
-/** Convert MCWDeg to CCWRad. */
-export const mcwdeg2ccwrad = (a: MCWDeg): CCWRad => CCWRad(-(a * Math.PI) / 180);
-
 /** Convert CCWDeg to CCWRad. */
 export const ccwdeg2rad = (deg: CCWDeg): CCWRad => CCWRad((deg * Math.PI) / 180);
 
 /** Convert CWDeg to CWRad. */
 export const cwdeg2rad = (deg: CWDeg): CWRad => CWRad((deg * Math.PI) / 180);
 
-/** Normalize radians to [0, 2π). */
-export const normalizeRadians = <A extends CCWRad | CWRad>(angle: A): A => {
-    return (angle - 2 * Math.PI * Math.floor(angle / (2 * Math.PI))) as A;
-};
+/** Convert RelativeRad to CCWRad (world angle). Facing right: 0=right. Facing left: 0=left (π). */
+export const relativerad2ccwrad = (a: RelativeRad): CCWRad => {
+    if (a.facing === DIRECTION_RIGHT) return CCWRad(a.angle);
+    if (a.facing === DIRECTION_LEFT) return CCWRad(mirrorRadians(-a.angle));
+    throw new Error(`Invalid direction: ${a.facing}`);
+}
 
-/** Mirror angle vertically (0↔π, π/4↔3π/4, etc). */
-export const mirrorAngle = <T extends CCWRad | CWRad>(angle: T): T => {
-    return CCWRad(Math.PI - Number(angle)) as T;
+/** Mirror angle horizontally (left↔right). */
+export const mirrorRadians = (angle: number): number => Math.PI - angle;
+
+/** Normalize radians to [0, 2π). */
+export const normalizeRadians = <A extends CCWRad | CWRad | number>(angle: A): A => {
+    return (angle - 2 * Math.PI * Math.floor(angle / (2 * Math.PI))) as A;
 };
