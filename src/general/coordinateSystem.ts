@@ -82,6 +82,9 @@ export const ccwdeg2ccwrad = (a: CCWDeg): CCWRad => CCWRad((a * Math.PI) / 180);
 /** Convert CWRad to CCWRad. */
 export const cwrad2ccwrad = (a: CWRad): CCWRad => CCWRad(-a);
 
+/** Convert CCWRad to CWRad. */
+export const ccwrad2cwrad = (a: CCWRad): CWRad => CWRad(-a);
+
 /** Convert CWDeg to CCWRad. */
 export const cwdeg2ccwrad = (a: CWDeg): CCWRad => CCWRad(-(a * Math.PI) / 180);
 

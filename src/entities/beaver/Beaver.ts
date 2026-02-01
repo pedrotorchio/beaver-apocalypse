@@ -5,7 +5,6 @@ import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
-import { CCWRad, mirrorRadians } from "../../general/coordinateSystem";
 import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
 import { Projectile } from "../Projectile";
@@ -222,10 +221,6 @@ export class Beaver implements Updates, Renders {
     const pos = this.#body.getPosition();
     const aim = this.#args.aim;
     const aimAngle = aim.getAngle();
-
-    // Adjust aim angle based on facing direction
-    const fireAngle: CCWRad = this.#direction === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
-
     // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
     const projectileRadius = 4; // Projectile.radius
     const baseOffsetDistance = this.#radius + projectileRadius;
@@ -239,7 +234,7 @@ export class Beaver implements Updates, Renders {
     const maxDistance = baseOffsetDistance * 2.5;
     const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
 
-    const direction = vec.fromAngle(fireAngle);
+    const direction = vec.fromAngle(aimAngle);
     const offset = planck.Vec2(direction.x, direction.y);
     return planck.Vec2.add(pos, planck.Vec2.mul(offset, offsetDistance));
   }

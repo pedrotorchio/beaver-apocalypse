@@ -1,5 +1,5 @@
 import * as planck from "planck-js";
-import type { CCWRad } from "./coordinateSystem";
+import { ccwrad2cwrad, type CCWRad } from "./coordinateSystem";
 
 export type Vec2Like = {
   x: number;
@@ -8,11 +8,11 @@ export type Vec2Like = {
 
 /**
  * Converts an angle (CCWRad: 0=right, π/2=up) to a unit vector.
- * This function is not available in planck.js, so it's kept here.
- * Returns a planck.Vec2 instance. In Y-down physics, π/2 points down.
+ * Converts to CWRad for Planck (Y-down, π/2=down) before creating the vector.
  */
 export const fromAngle = (angle: CCWRad): planck.Vec2 => {
-  return planck.Vec2(Math.cos(angle), Math.sin(angle));
+  const cwAngle = ccwrad2cwrad(angle);
+  return planck.Vec2(Math.cos(cwAngle), Math.sin(cwAngle));
 };
 
 export const UP = () => planck.Vec2(0, -1);

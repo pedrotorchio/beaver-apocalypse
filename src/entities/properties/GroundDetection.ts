@@ -96,9 +96,9 @@ export class GroundDetection implements Updates, Renders {
     const radius = this.#radius;
     // Check bottom points only, for ground collision
     const checkPoints = makeEnumArray(iterate(13, (i) => {
-      // Visit 12 points along the bottom arc
+      // Visit 12 points along the bottom arc (CCW: 0=right, -π/2=down, -π=left)
       const fractionOf180 = i / 12;
-      const angle = CCWRad(Math.PI * fractionOf180);
+      const angle = CCWRad(-Math.PI * fractionOf180);
       const dir = vec.fromAngle(angle);
       const scaledDir = planck.Vec2.mul(planck.Vec2(dir.x, dir.y), radius);
       const enumValue = `${fractionOf180 * 180}deg`;
