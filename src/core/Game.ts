@@ -4,6 +4,7 @@ import { initDevtools } from "../devtools/index";
 import { Aim } from "../entities/Aim";
 import { Terrain } from "../entities/Terrain";
 import { Beaver } from "../entities/beaver/Beaver";
+import flags from "../flags";
 import { AssetLoader } from "../general/AssetLoader";
 import { iterate } from "../general/utils";
 import { AimIndicatorRenderer } from "../ui/AimIndicatorRenderer";
@@ -17,7 +18,6 @@ import { InputManager, InputStateManager } from "./managers/InputManager";
 import { TurnManager, TurnPhase } from "./managers/TurnManager";
 import { WeaponManager } from "./managers/WeaponManager";
 import type { GameModules } from "./types/GameModules.type";
-
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
  *
@@ -33,7 +33,6 @@ import type { GameModules } from "./types/GameModules.type";
  * entire lifecycle from initialization through gameplay execution.
  */
 export class Game {
-  private playerIndex = 0;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private turnManager: TurnManager;
@@ -212,7 +211,7 @@ export class Game {
     if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
     // Handle player input
-    if (currentPlayerIndex === this.playerIndex) this.handlePlayerInput(this.inputManager, currentBeaver);
+    if (currentPlayerIndex === flags.playerIndex || flags.playerIndex === Infinity) this.handlePlayerInput(this.inputManager, currentBeaver);
     else this.handleBrainInput(currentBeaver);
     return false;
   }
@@ -230,7 +229,7 @@ export class Game {
 
   private updatePhysicsSettlingPhase(): boolean {
     // If the physics are still settling, skip the update until it is settled
-    if (!this.physicsWorld.isSettled()) return true;
+    if (flags.waitPhysicsSettling && !this.physicsWorld.isSettled()) return true;
     // Handle turn end: check for game over, end turn, and begin player input
     const aliveBeavers = this.entityManager.getBeavers().getAlive();
     if (aliveBeavers.length <= 1) alert("Beaver wins!");
@@ -271,7 +270,6 @@ export class Game {
     if (input.jump) {
       beaver.jump();
     }
-    debugger;
     // Aiming: arrow keys adjust the aim angle (CCWRad delta)
     // The angle is stored relative to "facing right" and will be transformed when facing left.
     const angleStep = 0.02;

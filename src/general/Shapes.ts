@@ -2,31 +2,37 @@ import { CCWRad } from "./coordinateSystem";
 import type { Vec2Like } from "./vector";
 
 export class Shapes {
+  private styles: {
+    strokeWidth: number;
+    strokeColor: string;
+    bgColor?: string;
+  }
   constructor(
     private ctx: CanvasRenderingContext2D,
-    private strokeWidth: number = 1,
-    private strokeColor: string = "black",
-    private bgColor?: string
-  ) { }
+    styles: typeof Shapes.prototype.styles,
+  ) {
+    this.styles = Object.assign({
+      strokeWidth: 1,
+      strokeColor: "black",
+    }, styles)
+  }
 
-  with(args: { strokeWidth?: number; strokeColor?: string; bgColor?: string }): Shapes {
+  with(args: Partial<typeof Shapes.prototype.styles>): Shapes {
     return new Shapes(
       this.ctx,
-      args.strokeWidth ?? this.strokeWidth,
-      args.strokeColor ?? this.strokeColor,
-      args.bgColor ?? this.bgColor
+      Object.assign({}, this.styles, args)
     );
   }
 
   circle(center: Vec2Like, radius: number): void {
     this.ctx.beginPath();
     this.ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    if (this.bgColor) {
-      this.ctx.fillStyle = this.bgColor;
+    if (this.styles.bgColor) {
+      this.ctx.fillStyle = this.styles.bgColor;
       this.ctx.fill();
     }
-    this.ctx.strokeStyle = this.strokeColor;
-    this.ctx.lineWidth = this.strokeWidth;
+    this.ctx.strokeStyle = this.styles.strokeColor;
+    this.ctx.lineWidth = this.styles.strokeWidth;
     this.ctx.stroke();
   }
 
@@ -41,8 +47,8 @@ export class Shapes {
     this.ctx.beginPath();
     this.ctx.moveTo(start.x, start.y);
     this.ctx.lineTo(end.x, end.y);
-    this.ctx.strokeStyle = this.strokeColor;
-    this.ctx.lineWidth = this.strokeWidth;
+    this.ctx.strokeStyle = this.styles.strokeColor;
+    this.ctx.lineWidth = this.styles.strokeWidth;
     this.ctx.stroke();
 
     this.ctx.beginPath();
@@ -50,8 +56,8 @@ export class Shapes {
     this.ctx.lineTo(end.x - arrowheadSize * Math.cos(angle - arrowheadAngle), end.y - arrowheadSize * Math.sin(angle - arrowheadAngle));
     this.ctx.lineTo(end.x - arrowheadSize * Math.cos(angle + arrowheadAngle), end.y - arrowheadSize * Math.sin(angle + arrowheadAngle));
     this.ctx.closePath();
-    if (this.bgColor) {
-      this.ctx.fillStyle = this.bgColor;
+    if (this.styles.bgColor) {
+      this.ctx.fillStyle = this.styles.bgColor;
       this.ctx.fill();
     }
     this.ctx.stroke();
@@ -85,12 +91,12 @@ export class Shapes {
 
     this.ctx.beginPath();
     this.ctx.rect(x, y, w, h);
-    if (this.bgColor) {
-      this.ctx.fillStyle = this.bgColor;
+    if (this.styles.bgColor) {
+      this.ctx.fillStyle = this.styles.bgColor;
       this.ctx.fill();
     }
-    this.ctx.strokeStyle = this.strokeColor;
-    this.ctx.lineWidth = this.strokeWidth;
+    this.ctx.strokeStyle = this.styles.strokeColor;
+    this.ctx.lineWidth = this.styles.strokeWidth;
     this.ctx.stroke();
   }
 
@@ -98,14 +104,14 @@ export class Shapes {
     this.ctx.beginPath();
     this.ctx.moveTo(start.x, start.y);
     this.ctx.lineTo(end.x, end.y);
-    this.ctx.strokeStyle = this.strokeColor;
-    this.ctx.lineWidth = this.strokeWidth;
+    this.ctx.strokeStyle = this.styles.strokeColor;
+    this.ctx.lineWidth = this.styles.strokeWidth;
     this.ctx.stroke();
   }
 
   text(x: number, y: number, fontSize: number, content: string): void {
     this.ctx.font = `${fontSize}px sans-serif`;
-    this.ctx.fillStyle = this.strokeColor;
+    this.ctx.fillStyle = this.styles.strokeColor;
     this.ctx.fillText(content, x, y);
   }
 }

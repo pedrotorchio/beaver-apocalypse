@@ -204,15 +204,11 @@ export class Beaver implements Updates, Renders {
 
     this.#entityState.setState("attacking");
     const spawnPoint = this.getProjectileSpawnPoint();
-    const aimAngle = aim.getAngle();
-
-    // Adjust aim angle based on facing direction
-    const fireAngle: CCWRad = this.#direction === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
-
+    const aimAngle = aim.getAngle();;
     // Calculate velocity from fire angle and power
     const power = aim.getPower();
     const powerMultiplier = 10; // Increase projectile velocity
-    const direction = vec.fromAngle(fireAngle);
+    const direction = vec.fromAngle(aimAngle);
     const velocity = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), power * powerMultiplier);
 
     // Create projectile

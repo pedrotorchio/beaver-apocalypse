@@ -20,7 +20,7 @@ export type InputStateManager = {
  */
 export class InputManager implements InputStateManager {
   private down: Set<string> = new Set();
-  private up: Set<string> = new Set(); // state only lasts for one read and gets removed after reading
+  private up: Set<string> = new Set(); // up states only lasts for one update and gets removed after reading
   #eventHub = useEventHub<InputState>();
   get eventHub(): EventHub<InputState> {
     return this.#eventHub;
@@ -34,17 +34,18 @@ export class InputManager implements InputStateManager {
   private handleKeyDown(e: KeyboardEvent): void {
     if (e.repeat) return;
     this.down.add(e.key.toLowerCase());
-    this.#eventHub.notify(this.getInputState());
+    this.#eventHub.notify(this.getInputState(false));
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
     if (e.repeat) return;
     this.up.add(e.key.toLowerCase());
     this.down.delete(e.key.toLowerCase());
-    this.#eventHub.notify(this.getInputState());
+    this.#eventHub.notify(this.getInputState(false));
   }
 
-  getInputState(): InputState {
+  getInputState(clear: boolean = true): InputState {
+
     const releasedState = {
       fire: this.up.has(" "),
     }
@@ -58,6 +59,7 @@ export class InputManager implements InputStateManager {
       pause: this.down.has("p"),
       stop: this.down.has("enter"),
     }
+    if (clear) this.up.clear();
     return {
       ...releasedState,
       ...activeState,
