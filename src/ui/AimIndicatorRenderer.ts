@@ -1,6 +1,7 @@
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
-import { CCWDeg, ccwdeg2rad } from "../general/coordinateSystem";
+import type { Aim } from "../entities/Aim";
+import { CCWDeg, CCWRad, ccwdeg2rad, mirrorRadians } from "../general/coordinateSystem";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
 
 export interface AimIndicatorRendererArguments {
@@ -8,68 +9,42 @@ export interface AimIndicatorRendererArguments {
 }
 
 /**
- * Renders the aim indicator line showing where the beaver is aiming.
+ * Renders the aim indicator around the beaver.
  *
  * This class is responsible for:
- * - Drawing a line from the beaver's position in the direction of aim
- * - Adjusting the line length based on weapon charging state (longer when charging)
+ * - Drawing degree indicator dashes and labels around the beaver
+ * - Drawing a circle at the aim position (no line from center)
  * - Rendering the power indicator when the weapon is charging
- * - Providing visual feedback for aim direction and power level
- *
- * The AimIndicatorRenderer displays a yellow line extending from the beaver
- * in the direction they are aiming. The line length increases when the weapon
- * is charging to indicate power level. This visual aid helps players aim
- * their shots accurately.
  */
 export class AimIndicatorRenderer implements Renders {
   constructor(private game: GameModules, private args: AimIndicatorRendererArguments) { }
 
   /**
    * Renders the aim indicator and power indicator for a beaver.
-   * This method handles all the logic for displaying aim direction and power level.
    */
   render(): void {
+    const currentBeaver = this.getRenderableBeaver();
+    if (!currentBeaver) return;
+
+    const pos = currentBeaver.body.getPosition();
+    const aim = currentBeaver.aim;
+    this.drawDegreeIndicator(pos, currentBeaver.direction);
+    this.drawAimCircle(pos, aim, currentBeaver.direction, currentBeaver.radius);
+    this.drawDegreeLabels(pos, currentBeaver.direction);
+    this.maybeRenderPowerIndicator(pos, aim.getPower(), aim.getMinPower(), aim.getMaxPower());
+  }
+
+  private getRenderableBeaver() {
     const currentBeaver = this.game.core.entityManager.getBeaver(
       this.game.core.turnManager.getCurrentPlayerIndex()
     );
-    if (!currentBeaver?.health.isAlive() || !this.game.core.turnManager.canAcceptInput()) {
-      return;
-    }
+    if (!currentBeaver?.health.isAlive() || !this.game.core.turnManager.canAcceptInput()) return null;
+    return currentBeaver;
+  }
 
-    const aim = currentBeaver.aim;
-    const power = aim.getPower();
-    const minPower = aim.getMinPower();
-    const maxPower = aim.getMaxPower();
-    const pos = currentBeaver.body.getPosition();
-    const aimAngle = aim.getAngle();
-
-    // Compute indicator position from aim angle (CCW: π/2=up; canvas: y - sin)
-    const projectileRadius = 4;
-    const baseOffsetDistance = currentBeaver.radius + projectileRadius;
-    const powerRatio = (power - minPower) / (maxPower - minPower);
-    const minDistance = baseOffsetDistance * 1.2;
-    const maxDistance = baseOffsetDistance * 2.5;
-    const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
-    const indicatorEnd = {
-      x: pos.x + offsetDistance * Math.cos(aimAngle),
-      y: pos.y - offsetDistance * Math.sin(aimAngle),
-    };
-
-    // Interpolate color from yellow (#FFFF00) to red (#FF0000) based on power
-    const red = 255;
-    const green = Math.round(255 * (1 - powerRatio));
-    const blue = 0;
-    const color = `rgb(${red}, ${green}, ${blue})`;
-
-    // Draw line and circle at aim direction
-    this.game.core.shapes.with({ strokeColor: color, strokeWidth: 2 }).line(pos, indicatorEnd);
-    this.game.core.shapes.with({ bgColor: color }).circle(indicatorEnd, 5);
-
-    // Degree indicator ring (dashes every 30° within [MIN_ANGLE, MAX_ANGLE]); uses aim angle directly
+  private drawDegreeIndicator(pos: { x: number; y: number }, facing: number): void {
     const dashInner = 30;
     const dashOuter = 40;
-    const labelRadius = 46;
-    const facing = currentBeaver.direction;
     const dashDegrees: CCWDeg[] = [0, 45, 90, 120, -45, -90].map(CCWDeg);
     const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
     for (const deg of dashDegrees) {
@@ -81,32 +56,59 @@ export class AimIndicatorRenderer implements Renders {
         { x: pos.x + dashOuter * cos, y: pos.y - dashOuter * sin }
       );
     }
-    const labelShapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.8)" });
+  }
+
+  private drawAimCircle(pos: { x: number; y: number }, aim: Aim, facing: number, beaverRadius: number): void {
+    const aimAngle = aim.getAngle();
+    const fireAngle: CCWRad = facing === -1 ? CCWRad(mirrorRadians(aimAngle)) : aimAngle;
+    const power = aim.getPower();
+    const minPower = aim.getMinPower();
+    const maxPower = aim.getMaxPower();
+    const powerRatio = (power - minPower) / (maxPower - minPower);
+    const projectileRadius = 4;
+    const baseOffsetDistance = beaverRadius + projectileRadius;
+    const minDistance = baseOffsetDistance * 1.2;
+    const maxDistance = baseOffsetDistance * 2.5;
+    const offsetDistance = minDistance + (maxDistance - minDistance) * powerRatio;
+    const indicatorEnd = {
+      x: pos.x + offsetDistance * Math.cos(fireAngle),
+      y: pos.y - offsetDistance * Math.sin(fireAngle),
+    };
+    const red = 255;
+    const green = Math.round(255 * (1 - powerRatio));
+    const color = `rgb(${red}, ${green}, 0)`;
+    this.game.core.shapes.with({ bgColor: color }).circle(indicatorEnd, 5);
+  }
+
+  private drawDegreeLabels(pos: { x: number; y: number }, facing: number): void {
+    const labelRadius = 46;
     const labelFontSize = 10;
-    ([
+    const labelShapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.8)" });
+    const labels = [
       { deg: CCWDeg(0), text: "0" },
       { deg: CCWDeg(45), text: "45" },
       { deg: CCWDeg(90), text: "90" },
       { deg: CCWDeg(120), text: "120" },
       { deg: CCWDeg(-45), text: "-45" },
       { deg: CCWDeg(-90), text: "-90" },
-    ]).forEach(({ deg, text }) => {
+    ];
+    labels.forEach(({ deg, text }) => {
       const rad = ccwdeg2rad(deg);
       const lx = pos.x + labelRadius * Math.cos(rad) * facing;
       const ly = pos.y - labelRadius * Math.sin(rad);
       labelShapes.text(lx, ly, labelFontSize, text);
     });
+  }
 
-    // Render power indicator if charging
+  private maybeRenderPowerIndicator(pos: { x: number; y: number }, power: number, minPower: number, maxPower: number): void {
     const input = this.game.core.inputManager.getInputState();
-    if (input.charging) {
-      this.args.powerIndicator.render({
-        x: pos.x,
-        y: pos.y - 30,
-        currentPower: power,
-        minPower: minPower,
-        maxPower: maxPower,
-      });
-    }
+    if (!input.charging) return;
+    this.args.powerIndicator.render({
+      x: pos.x,
+      y: pos.y - 30,
+      currentPower: power,
+      minPower,
+      maxPower,
+    });
   }
 }
