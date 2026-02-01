@@ -38,6 +38,7 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         if (this.lookingAt) {
             this.game.core.shapes.with({ strokeColor: 'purple' }).line(this.character.body.getPosition(), this.lookingAt);
         }
+        this.lookingAt = null;
     }
     lookingAt: planck.Vec2 | null = null;
     protected createAttackAction(enemy: Beaver): Action {

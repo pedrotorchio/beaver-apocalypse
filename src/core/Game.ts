@@ -100,7 +100,7 @@ export class Game {
     const beavers = iterate(beaverCount, (i) => {
       // const x = canvas.width * (0.25 + i * 0.5);
       // const y = canvas.height * 0.3;
-      const x = canvas.width * (0.15 + i * 0.1);
+      const x = Math.max(50, Math.min(canvas.width - 50, canvas.width * Math.random()));
       const y = canvas.height * 0.3;
       const aim = new Aim(gameModules, {
         minPower: this.minPower,
