@@ -4,7 +4,7 @@ import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../.
 import { GameModules } from '../../../core/types/GameModules.type';
 import { Renders } from '../../../core/types/Renders.type';
 import { Updates } from '../../../core/types/Updates.type';
-import type { CCWRad } from '../../../general/coordinateSystem';
+import { CCWRad } from '../../../general/coordinateSystem';
 import { Beaver } from "../Beaver";
 
 export type ActionType = Action['type']
@@ -32,7 +32,7 @@ export type Behaviours = {
 }
 
 /** Angle tolerance in radians (≈2°) for attack aim alignment. */
-const ANGLE_TOLERANCE_RAD: number = (2 * Math.PI) / 180;
+const ANGLE_TOLERANCE_RAD: number = (5 * Math.PI) / 180;
 
 export class BrainActionPlan {
     #actions: ActionList = [];
@@ -137,14 +137,25 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         }
 
         const currentAngle = this.character.aim.getAngle();
-        const deltaAngle = currentAngle - angle;
+        let deltaAngle: CCWRad = CCWRad(angle - currentAngle);
+        if (deltaAngle > Math.PI) deltaAngle = CCWRad(deltaAngle - 2 * Math.PI);
+        if (deltaAngle < -Math.PI) deltaAngle = CCWRad(deltaAngle + 2 * Math.PI);
 
-        const aimUp = angle > 0 && angle < Math.PI;
-        const aimDown = angle > -Math.PI && angle < 0;
+        const createDirectionCommands = (dir: 'up' | 'down') => {
+            return {
+                aimUp: dir === 'up',
+                aimDown: dir === 'down',
+            }
+        }
+        const { aimUp, aimDown } = createDirectionCommands(this.character.direction * deltaAngle > 0 ? 'up' : 'down');
+        const isWithinAngleTolerance = Math.abs(deltaAngle) < ANGLE_TOLERANCE_RAD;
+        const chargeLevel = this.character.aim.getPower()
+        const chargeFraction = chargeLevel / this.character.aim.getMaxPower();
 
-        if (Math.abs(deltaAngle) < ANGLE_TOLERANCE_RAD) this.#commands.fire = true;
-        else if (aimDown) this.#commands.aimDown = true;
+        if (isWithinAngleTolerance && chargeFraction === 1) this.#commands.fire = true;
+        else if (isWithinAngleTolerance && chargeFraction < 1) this.#commands.charging = true;
         else if (aimUp) this.#commands.aimUp = true;
+        else if (aimDown) this.#commands.aimDown = true;
         return false;
     }
 

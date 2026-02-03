@@ -1,8 +1,10 @@
 import * as planck from "planck-js";
 import { TurnPhase } from "../core/managers/TurnManager";
+import { DIRECTION_LEFT } from "../core/types/Entity.type";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
 import { CWDeg, cwdeg2rad } from "../general/coordinateSystem";
+import type { Beaver } from "../entities/beaver/Beaver";
 
 /**
  * Renders the Heads-Up Display (HUD) overlay showing game state information.
@@ -27,6 +29,8 @@ export class HUDRenderer implements Renders {
     const beavers = this.game.core.entityManager.getBeavers().toArray();
     const ctx = this.game.canvas;
     const canvas = ctx.canvas;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
     const hudHeight = 70;
     const padding = 15;
     const sectionSpacing = 20;
@@ -139,11 +143,38 @@ export class HUDRenderer implements Renders {
       rightX -= sectionSpacing;
     }
 
+    for (const beaver of beavers) {
+      this.renderBeaverName(beaver, ctx);
+    }
     this.renderRulers(canvas, ctx);
     this.renderAngleReference(canvas, ctx);
   }
 
+  private renderBeaverName(beaver: Beaver, ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    const pos = beaver.body.getPosition();
+    const centerX = pos.x;
+    const centerY = pos.y;
+    const radius = beaver.radius;
+    const backDistance = radius * 1.2;
+    const facingLeft = beaver.direction === DIRECTION_LEFT;
+
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textBaseline = "middle";
+
+    if (facingLeft) {
+      ctx.textAlign = "left";
+      ctx.fillText(beaver.name, centerX + backDistance, centerY);
+    } else {
+      ctx.textAlign = "right";
+      ctx.fillText(beaver.name, centerX - backDistance, centerY);
+    }
+    ctx.restore();
+  }
+
   private renderAngleReference(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
+    ctx.save();
     const centerX = canvas.width - 100;
     const centerY = 200;
     const radius = 50;
@@ -190,6 +221,7 @@ export class HUDRenderer implements Renders {
     ctx.fillText("+", centerX + signDistance, centerY);
     ctx.fillText("-", centerX, centerY - signDistance);
     ctx.fillText("+", centerX, centerY + signDistance);
+    ctx.restore();
   }
 
   private renderRulers(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {

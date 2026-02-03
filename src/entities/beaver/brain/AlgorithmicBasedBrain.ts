@@ -1,5 +1,5 @@
 import * as planck from 'planck-js';
-import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT } from '../../../core/types/Entity.type';
+import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../../../core/types/Entity.type';
 import { CCWRad, normalizeRadians } from '../../../general/coordinateSystem';
 import { Beaver } from '../Beaver';
 import { Action, ActionList, BaseBrain } from "./BaseBrain";
@@ -22,16 +22,21 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         ];
     }
 
-    calculateMove(enemyPosition: planck.Vec2) {
-        return () => {
+    calculateMove(enemyPosition: planck.Vec2): () => Direction {
+        return (): Direction => {
             const characterPos = this.character.body.getPosition();
             const delta = planck.Vec2.sub(enemyPosition, characterPos);
             const enemyDirection = delta.x > 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
+            const TOLERANCE = this.EFFECTIVE_ATTACK_RANGE * .2;
+            const absoluteDelta = Math.abs(delta.x);
 
-            if (enemyDirection !== this.character.direction) return enemyDirection;
-            if (delta.x > this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_RIGHT;
-            if (delta.x < -this.EFFECTIVE_ATTACK_RANGE) return DIRECTION_LEFT;
-            return DIRECTION_NONE;
+            const isTooFar = absoluteDelta > this.EFFECTIVE_ATTACK_RANGE + TOLERANCE;
+            const isTooClose = absoluteDelta < this.EFFECTIVE_ATTACK_RANGE - TOLERANCE;
+            if (isTooFar) return <Direction>enemyDirection;
+            if (isTooClose) return <Direction>-enemyDirection;
+
+            this.character.direction = enemyDirection;
+            return <Direction>DIRECTION_NONE;
         }
     }
     render(): void {
