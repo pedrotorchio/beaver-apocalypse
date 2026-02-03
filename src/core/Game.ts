@@ -232,7 +232,7 @@ export class Game {
     if (flags.waitPhysicsSettling && !this.physicsWorld.isSettled()) return true;
     // Handle turn end: check for game over, end turn, and begin player input
     const aliveBeavers = this.entityManager.getBeavers().getAlive();
-    if (aliveBeavers.length <= 1) alert("Beaver wins!");
+    if (aliveBeavers.length === 1) alert(aliveBeavers.get(0)?.name + " wins!");
 
     this.turnManager.endTurn();
     this.turnManager.beginPlayerInput();
