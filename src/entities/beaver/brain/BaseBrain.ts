@@ -22,6 +22,7 @@ export type Action =
         type: 'attack',
         target: string,
         angle: CCWRad,
+        power: number,
     }
 export type ActionGenerator = () => Action
 export type ActionList = (Action | ActionGenerator)[]
@@ -104,6 +105,11 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         if (!this.#actionPlan.hasActiveAction()) this.#actionPlan.nextAction();
         if (!this.#actionPlan.hasActiveAction()) this.#hasCommands = false;
         if (this.#actionPlan.doAction()) this.#actionPlan.nextAction();
+
+        if (!this.#actionPlan.getActiveAction()) {
+            this.#hasCommands = false
+            this.#actionPlan.clear()
+        }
     }
 
     render(): void { }
@@ -130,7 +136,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         else if (theMove === DIRECTION_LEFT) this.#commands.moveLeft = true;
         return false;
     }
-    attack({ angle }: ActionDetails<'attack'>) {
+    attack({ angle, power }: ActionDetails<'attack'>) {
         if (this.#commands.fire) {
             this.#commands.fire = false;
             return true;
@@ -149,11 +155,9 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         }
         const { aimUp, aimDown } = createDirectionCommands(this.character.direction * deltaAngle > 0 ? 'up' : 'down');
         const isWithinAngleTolerance = Math.abs(deltaAngle) < ANGLE_TOLERANCE_RAD;
-        const chargeLevel = this.character.aim.getPower()
-        const chargeFraction = chargeLevel / this.character.aim.getMaxPower();
 
-        if (isWithinAngleTolerance && chargeFraction === 1) this.#commands.fire = true;
-        else if (isWithinAngleTolerance && chargeFraction < 1) this.#commands.charging = true;
+        if (isWithinAngleTolerance && this.character.aim.getPower() === power) this.#commands.fire = true;
+        else if (isWithinAngleTolerance && this.character.aim.getPower() < power) this.#commands.charging = true;
         else if (aimUp) this.#commands.aimUp = true;
         else if (aimDown) this.#commands.aimDown = true;
         return false;

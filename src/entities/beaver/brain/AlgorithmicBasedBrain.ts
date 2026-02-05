@@ -1,11 +1,21 @@
 import * as planck from 'planck-js';
 import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../../../core/types/Entity.type';
+import { GameModules } from '../../../core/types/GameModules.type';
 import { CCWRad, normalizeRadians } from '../../../general/coordinateSystem';
 import { Beaver } from '../Beaver';
+import { BallisticAdvisor } from './BallisticAdvisor';
 import { Action, ActionList, BaseBrain } from "./BaseBrain";
+import { ShotMemory } from './ShotMemory';
 
 export class AlgorithmicBasedBrain extends BaseBrain {
+    private readonly ballisticAdvisor: BallisticAdvisor;
     private readonly EFFECTIVE_ATTACK_RANGE = 200;
+
+    constructor(game: GameModules, character: Beaver) {
+        super(game, character)
+        const shotMemory = new ShotMemory();
+        this.ballisticAdvisor = new BallisticAdvisor(game, { character, shotMemory });
+    }
 
     protected async executeThink(): Promise<ActionList> {
         const enemies = this.game.core.entityManager.getBeavers().getEnemies(this.character);
@@ -51,11 +61,13 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         const enemyPos = enemy.body.getPosition();
         const direction = planck.Vec2.sub(enemyPos, characterPos);
         const angle = normalizeRadians(CCWRad(Math.atan2(-direction.y, direction.x)));
+        const power = this.ballisticAdvisor.suggest(enemy).power;
         this.lookingAt = enemyPos;
         return {
             type: 'attack',
             target: enemy.name,
             angle,
+            power
         };
     }
 

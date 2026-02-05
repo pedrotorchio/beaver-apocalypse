@@ -9,9 +9,9 @@ export interface AimArguments {
 }
 
 /** Max aim angle in radians (≈90°). */
-const MAX_ANGLE_RADIANS = RelativeRad(90 * Math.PI / 180, DIRECTION_RIGHT);
+export const MAX_ANGLE_RADIANS = RelativeRad(90 * Math.PI / 180, DIRECTION_RIGHT);
 /** Min aim angle in radians (-90°). */
-const MIN_ANGLE_RADIANS = RelativeRad(-90 * Math.PI / 180, DIRECTION_RIGHT);
+export const MIN_ANGLE_RADIANS = RelativeRad(-90 * Math.PI / 180, DIRECTION_RIGHT);
 /**
  * Represents the aiming state of a beaver, including direction and power.
  *
