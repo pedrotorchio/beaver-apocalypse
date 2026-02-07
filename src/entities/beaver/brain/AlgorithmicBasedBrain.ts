@@ -1,6 +1,7 @@
 import * as planck from 'planck-js';
 import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../../../core/types/Entity.type';
 import { GameModules } from '../../../core/types/GameModules.type';
+import { throwError } from '../../../general/errors';
 import { Beaver } from '../Beaver';
 import { AimingSkill } from './AimingSkill';
 import { Action, ActionList, BaseBrain } from "./BaseBrain";
@@ -23,36 +24,35 @@ export class AlgorithmicBasedBrain extends BaseBrain {
         this.#lookingAt = null;
     }
     protected async executeThink(): Promise<ActionList> {
-        const enemies = this.game.core.entityManager.getBeavers().getEnemies(this.character);
-        if (enemies.isEmpty()) return [this.createWaitAction('No enemies to target')];
+        const getEnemies = () => this.game.core.entityManager.getBeavers().getEnemies(this.character);
+        const enemies = getEnemies();
+        if (enemies.isEmpty()) return [{ type: 'wait', reason: 'No enemies to target' }];
 
-        const characterPos = this.character.body.getPosition();
-        const closestEnemy = enemies.findClosest(characterPos);
-        if (!closestEnemy) return [this.createWaitAction('No valid enemy found')];
+        const getClosestEnemy = () => (
+            getEnemies().findClosest(this.character.body.getPosition())
+        ) ?? throwError('No closest enemy found');
 
-        const moveTarget = this.createMoveActionGenerator(closestEnemy.body.getPosition());
         return [
-            () => this.createMoveAction(moveTarget),
-            () => this.createAttackAction(closestEnemy)
+            () => this.createMoveAction(getClosestEnemy()),
+            () => this.createAttackAction(getClosestEnemy())
         ];
     }
 
-    private createMoveActionGenerator(enemyPosition: planck.Vec2): () => Direction {
-        return (): Direction => {
-            const characterPos = this.character.body.getPosition();
-            const delta = planck.Vec2.sub(enemyPosition, characterPos);
-            const enemyDirection = delta.x > 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
-            const TOLERANCE = this.#EFFECTIVE_ATTACK_RANGE * .2;
-            const absoluteDelta = Math.abs(delta.x);
+    private createMoveAction(enemy: Beaver): Action {
+        const enemyPosition = enemy.body.getPosition();
+        const characterPos = this.character.body.getPosition();
+        const delta = planck.Vec2.sub(enemyPosition, characterPos);
+        const enemyDirection: Direction = delta.x > 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
+        const TOLERANCE = this.#EFFECTIVE_ATTACK_RANGE * .2;
+        const absoluteDelta = Math.abs(delta.x);
 
-            const isTooFar = absoluteDelta > this.#EFFECTIVE_ATTACK_RANGE + TOLERANCE;
-            const isTooClose = absoluteDelta < this.#EFFECTIVE_ATTACK_RANGE - TOLERANCE;
-            if (isTooFar) return <Direction>enemyDirection;
-            if (isTooClose) return <Direction>-enemyDirection;
-
-            this.character.direction = enemyDirection;
-            return <Direction>DIRECTION_NONE;
-        }
+        const isTooFar = absoluteDelta > this.#EFFECTIVE_ATTACK_RANGE + TOLERANCE;
+        const isTooClose = absoluteDelta < this.#EFFECTIVE_ATTACK_RANGE - TOLERANCE;
+        if (isTooFar) return { type: 'move', direction: enemyDirection };
+        if (isTooClose) return { type: 'move', direction: <Direction>-enemyDirection };
+        // If already at the right distance, simply turn towards the enemy, but don't move
+        this.character.direction = enemyDirection;
+        return { type: 'move', direction: DIRECTION_NONE };
     }
     protected createAttackAction(enemy: Beaver): Action {
         const enemyPos = enemy.body.getPosition();
