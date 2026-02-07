@@ -51,16 +51,6 @@ export type RelativeRad = {
     facing: Direction;
 }
 
-/**
- * Factory for relative radians. When facing is set, transforms angle: left = CCW→CW, right = CW→CCW.
- * @returns {RelativeRad} An object with angle and facing properties.
- */
-export const RelativeRad = (angle: number, facing: Direction) => {
-    return {
-        angle,
-        facing,
-    }
-};
 /** Cast a number to CCWRad. Use when the value is known to be in math convention (π/2 = up). */
 export const CCWRad = (n: number): CCWRad => n as CCWRad;
 
@@ -72,6 +62,11 @@ export const CWRad = (n: number): CWRad => n as CWRad;
 
 /** Cast a number to CWDeg. */
 export const CWDeg = (n: number): CWDeg => n as CWDeg;
+
+type RadEquivalentType<D> = D extends CCWDeg ? CCWRad : CWRad
+export const toRadians = <D extends CCWDeg | CWDeg>(a: D): RadEquivalentType<D> => {
+    return a * Math.PI / 180 as RadEquivalentType<D>
+}
 
 /** Convert CCWRad to CCWRad (identity). */
 export const ccwrad2ccwrad = (a: CCWRad): CCWRad => a;
@@ -107,4 +102,34 @@ export const mirrorRadians = (angle: number): number => Math.PI - angle;
 /** Normalize radians to [0, 2π). */
 export const normalizeRadians = <A extends CCWRad | CWRad | number>(angle: A): A => {
     return (angle - 2 * Math.PI * Math.floor(angle / (2 * Math.PI))) as A;
+};
+
+
+/**
+ * Factory for relative radians. When facing is set, transforms angle: left = CCW→CW, right = CW→CCW.
+ * @returns {RelativeRad} An object with angle and facing properties.
+ */
+export const RelativeRad = (angle: CCWRad, facing: Direction): RelativeRad => {
+    const normalizedAngle = normalizeRadians(angle);
+    const RAD_000 = toRadians(CCWDeg(0));
+    const RAD_180 = toRadians(CCWDeg(180));
+    const RAD_360 = toRadians(CCWDeg(360));
+
+    const isBetween = (min: number, max: number) => normalizedAngle >= min && normalizedAngle <= max;
+    const isFacing = (dir: Direction) => dir === facing;
+
+    const isRightFacing = isFacing(DIRECTION_RIGHT);
+    const isUpHalf = isBetween(RAD_000, RAD_180);
+    const isDownHalf = isBetween(RAD_180, RAD_360);
+
+    const resolvedAngle = ((): CCWRad => {
+        if (isRightFacing && isUpHalf) return normalizedAngle;
+        if (isRightFacing && isDownHalf) return CCWRad(normalizedAngle - RAD_360);
+        return CCWRad(normalizedAngle - RAD_180);
+    })();
+
+    return {
+        angle: resolvedAngle,
+        facing,
+    }
 };
