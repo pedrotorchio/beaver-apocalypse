@@ -6,81 +6,12 @@ import { Renders } from '../../../core/types/Renders.type';
 import { Updates } from '../../../core/types/Updates.type';
 import { CCWRad } from '../../../general/coordinateSystem';
 import { Beaver } from "../Beaver";
+import { ActionDetails, ActionList, Behaviours, BrainActionPlan } from "./BrainActionPlan";
 
-export type ActionType = Action['type']
-export type Action =
-    | {
-        type: 'wait',
-        reason: string
-    }
-    | {
-        type: 'move',
-        target?: [number, number]
-        until?: () => Direction
-    }
-    | {
-        type: 'attack',
-        target: string,
-        angle: CCWRad,
-        power: number,
-    }
-export type ActionGenerator = () => Action
-export type ActionList = (Action | ActionGenerator)[]
-export type ActionDetails<T extends ActionType> = Action & { type: T }
-export type Behaviour<K extends ActionType = ActionType> = (action: ActionDetails<K>, plan: BrainActionPlan) => boolean;
-export type Behaviours = {
-    [K in ActionType]: Behaviour<K>
-}
+export type { Action, ActionDetails, ActionGenerator, ActionList, ActionType, Behaviour, Behaviours } from "./BrainActionPlan";
 
 /** Angle tolerance in radians (≈2°) for attack aim alignment. */
 const ANGLE_TOLERANCE_RAD: number = (5 * Math.PI) / 180;
-
-export class BrainActionPlan {
-    #actionList: ActionList = [];
-    set actions(actions: ActionList) {
-        this.#actionList = actions;
-        this.#currentActionInExecution = -1;
-    }
-    #currentActionInExecution = -1;
-
-    /**
-     * @param behaviours a dictionary of action types and their corresponding functions. The function should return true if the action was completed, false otherwise.
-     */
-    constructor(private behaviours: Behaviours) { }
-
-    doAction() {
-        if (!this.hasActiveAction()) return false;
-        const actionOrGenerator = this.getActiveAction()!;
-        const action = typeof actionOrGenerator === 'function' ? actionOrGenerator() : actionOrGenerator;
-        const behaviour = this.behaviours[action.type].bind(this.behaviours) as Behaviour;
-        return behaviour(action, this);
-    }
-
-    hasActiveAction(): this is { getActiveAction: () => Action } {
-        return this.#currentActionInExecution >= 0 && this.#currentActionInExecution < this.#actionList.length;
-    }
-
-    actionCount(): number {
-        return this.#actionList.length;
-    }
-
-    getActiveAction(): ActionList[number] | null {
-        return this.#actionList[this.#currentActionInExecution] ?? null;
-    }
-
-    nextAction(): Action | null {
-        this.#currentActionInExecution++;
-        const actionOrGenerator = this.getActiveAction();
-        const action = typeof actionOrGenerator === 'function' ? actionOrGenerator() : actionOrGenerator;
-        console.log(action?.type, action);
-        return action;
-    }
-
-    clear(): void {
-        this.#actionList = [];
-        this.#currentActionInExecution = -1;
-    }
-}
 
 export abstract class BaseBrain implements Updates, Renders, Behaviours, InputStateManager {
     #isThinking: boolean = false;
@@ -119,20 +50,20 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         this.setCommand('yield');
         return true;
     }
-    move({ target, until }: ActionDetails<'move'>) {
-        if (!target && !until) throw new Error('Move action must have a target or until function');
+    move({ target, until, direction }: ActionDetails<'move'>) {
+        if (!target && !until && !direction) throw new Error('Move action must have a target, direction or until function');
         this.resetCommands();
         const targetX = target?.[0] ?? 0;
         const targetY = target?.[1] ?? 0;
         until ??= (): Direction => {
             const position = this.character.body.getPosition();
             const targetPosition = Vec2({ x: targetX, y: targetY });
-            const direction = Vec2.sub(targetPosition, position);
-            if (direction.x > 5) return DIRECTION_RIGHT;
-            else if (direction.x < -5) return DIRECTION_LEFT;
+            const calculatedDirection = Vec2.sub(targetPosition, position);
+            if (calculatedDirection.x > 5) return DIRECTION_RIGHT;
+            else if (calculatedDirection.x < -5) return DIRECTION_LEFT;
             return DIRECTION_NONE;
         }
-        const theMove = until();
+        const theMove = direction ?? until();
         if (theMove === DIRECTION_NONE) return true;
         else if (theMove === DIRECTION_RIGHT) this.setCommand('moveRight');
         else if (theMove === DIRECTION_LEFT) this.setCommand('moveLeft');
@@ -177,26 +108,6 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
     }
 
     protected abstract executeThink(): Promise<ActionList>;
-
-    protected createWaitAction(reason: string): Action {
-        return {
-            type: 'wait',
-            reason,
-        };
-    }
-
-    protected createMoveAction(target: [number, number] | (() => Direction)): Action {
-        if (typeof target === 'function') {
-            return {
-                type: 'move',
-                until: target,
-            };
-        }
-        return {
-            type: 'move',
-            target: target,
-        };
-    }
 
     setCommand(key: keyof InputState) {
         this.#hasCommands = true;
