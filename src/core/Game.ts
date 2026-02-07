@@ -60,6 +60,7 @@ export class Game {
 
     // Initialize core systems
     const core: CoreModules = GameInitializer.initialize({
+      beaverCount: flags.beaverCount,
       canvas,
       minPower: this.minPower,
       maxPower: this.maxPower,
@@ -96,8 +97,7 @@ export class Game {
     };
 
     // Initialize non-core systems: beavers
-    const beaverCount = 2;
-    const beavers = iterate(beaverCount, (i) => {
+    const beavers = iterate(flags.beaverCount, (i) => {
       // const x = canvas.width * (0.25 + i * 0.5);
       // const y = canvas.height * 0.3;
       const x = Math.max(100, Math.min(canvas.width - 100, canvas.width * Math.random()));
@@ -182,34 +182,45 @@ export class Game {
 
     // Update physics
     this.physicsWorld.step();
+    this.skipDeadBeaversTurn()
 
     // Update entities
-    for (const beaver of this.entityManager.getBeavers()) {
-      beaver.update();
-    }
+    this.entityManager.updateBeavers();
     this.entityManager.updateProjectiles();
 
     if (this.checkAndRun(TurnPhase.PlayerInput)) return;
     if (this.checkAndRun(TurnPhase.ProjectileFlying)) return;
     if (this.checkAndRun(TurnPhase.PhysicsSettling)) return;
-    if (this.checkAndRun(TurnPhase.EndTurn)) return;
+    if (this.checkAndRun(TurnPhase.EndTurn)) {
+      this.gameLoop.stop();
+    };
 
   }
 
-  private updatePlayerInputPhase(): boolean {
-    const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
+  private getCurrentBeaver(): Beaver | null {
+    const currentPlayerIndex: number = this.turnManager.getCurrentPlayerIndex();
     const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
-    const isCurrentBeaverDead = !currentBeaver || !currentBeaver.health.isAlive();
-
-    if (!currentBeaver || !currentBeaver.health.isAlive()) return false;
+    return currentBeaver ?? null;
+  }
+  private skipDeadBeaversTurn() {
+    const isCurrentBeaverDead = () => {
+      const currentBeaver = this.getCurrentBeaver();
+      return !currentBeaver || !currentBeaver.health.isAlive();
+    }
     // Handle dead beaver: end turn and start next turn
-    if (isCurrentBeaverDead) {
+    while (isCurrentBeaverDead()) {
       this.turnManager.endTurn();
       this.turnManager.startTurn();
-      return true;
     }
-    if (!this.turnManager.checkPhase(TurnPhase.PlayerInput)) return false;
 
+    if (this.entityManager.getBeavers().getAlive().length <= 1) throw new Error("No beavers left to play. This shouldn't have happened.");
+  }
+
+  private updatePlayerInputPhase(): boolean {
+
+    const currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
+    const currentBeaver = this.entityManager.getBeaver(currentPlayerIndex);
+    if (!currentBeaver) return true;
     // Handle player input
     if (currentPlayerIndex === flags.playerIndex || flags.playerIndex === Infinity) this.handlePlayerInput(this.inputManager, currentBeaver);
     else this.handleBrainInput(currentBeaver);
@@ -228,22 +239,29 @@ export class Game {
   }
 
   private updatePhysicsSettlingPhase(): boolean {
-    // If the physics are still settling, skip the update until it is settled
+    // Skip checking other phases until physics is settled
     if (flags.waitPhysicsSettling && !this.physicsWorld.isSettled()) return true;
-    // Handle turn end: check for game over, end turn, and begin player input
-    const aliveBeavers = this.entityManager.getBeavers().getAlive();
-    if (aliveBeavers.length === 1) alert(aliveBeavers.get(0)?.name + " wins!");
-
-    this.turnManager.endTurn();
-    this.turnManager.beginPlayerInput();
-
+    this.turnManager.setPhase(TurnPhase.EndTurn);
     return false;
   }
 
   private updateEndTurnPhase(): boolean {
+    this.turnManager.endTurn();
+    this.turnManager.beginPlayerInput();
     // Reset power for all beavers when turn ends
     for (const beaver of this.entityManager.getBeavers()) {
       beaver.aim.resetPower();
+    }
+
+    // Handle turn end: check for game over, end turn, and begin player input
+    const aliveBeavers = this.entityManager.getBeavers().getAlive();
+    if (aliveBeavers.length === 1) {
+      alert(aliveBeavers.get(0)?.name + " wins!");
+      return true;
+    }
+    if (aliveBeavers.length === 0) {
+      alert("Everyone died... :(");
+      return true;
     }
 
     return false;

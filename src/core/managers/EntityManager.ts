@@ -53,6 +53,9 @@ export class EntityManager {
     }
     this.projectiles = activeProjectiles;
   }
+  updateBeavers(): void {
+    for (const beaver of this.getBeavers()) beaver.update();
+  }
 
   hasActiveProjectiles(): boolean {
     return this.projectiles.length > 0;

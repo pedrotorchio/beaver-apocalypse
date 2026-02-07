@@ -1,6 +1,6 @@
 import * as planck from "planck-js";
 import type { GameModules } from "../../../core/types/GameModules.type";
-import { CCWRad } from "../../../general/coordinateSystem";
+import { CCWDeg, CCWRad, RelativeRad, toRadians } from "../../../general/coordinateSystem";
 import type { Beaver } from "../Beaver";
 import type { ShotMemory } from "./ShotMemory";
 
@@ -36,9 +36,16 @@ export class AimingSkill {
     const terrainWidth = this.game.terrain.getWidth();
     const maxHeuristicDistance = terrainWidth * 0.2;
     const power = this.computeHeuristicPower(distance.length(), maxHeuristicDistance);
-    const angle = CCWRad(Math.atan2(-distance.y, distance.x));
 
-    return { angle, power };
+    const angle = CCWRad(Math.atan2(-distance.y, distance.x));
+    const relativeAngle = RelativeRad(angle, character.direction);
+    // Add 15 degrees to combat gravity. TODO: This needs to be calculated somehow
+    relativeAngle.angle += toRadians(CCWDeg(5))
+
+    return {
+      angle, //: relativerad2ccwrad(relativeAngle),
+      power
+    };
   }
 
   private suggestFromMemory(args: { enemy: Beaver }): ShotSuggestion {

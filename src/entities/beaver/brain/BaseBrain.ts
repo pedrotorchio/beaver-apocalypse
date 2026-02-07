@@ -156,7 +156,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         const { aimUp, aimDown } = createDirectionCommands(this.character.direction * deltaAngle > 0 ? 'up' : 'down');
         const isWithinAngleTolerance = Math.abs(deltaAngle) < ANGLE_TOLERANCE_RAD;
 
-        if (isWithinAngleTolerance && this.character.aim.getPower() === power) this.#commands.fire = true;
+        if (isWithinAngleTolerance && this.character.aim.getPower() >= power) this.#commands.fire = true;
         else if (isWithinAngleTolerance && this.character.aim.getPower() < power) this.#commands.charging = true;
         else if (aimUp) this.#commands.aimUp = true;
         else if (aimDown) this.#commands.aimDown = true;

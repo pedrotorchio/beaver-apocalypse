@@ -9,7 +9,7 @@ export class Shapes {
   }
   constructor(
     private ctx: CanvasRenderingContext2D,
-    styles: typeof Shapes.prototype.styles,
+    styles?: typeof Shapes.prototype.styles,
   ) {
     this.styles = Object.assign({
       strokeWidth: 1,

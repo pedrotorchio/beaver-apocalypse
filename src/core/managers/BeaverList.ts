@@ -44,6 +44,7 @@ export class BeaverList implements Iterable<Beaver> {
         let closestDistance = planck.Vec2.distance(position, closestPos);
 
         for (const beaver of this.beavers.slice(1)) {
+            if (!beaver.health.isAlive()) continue;
             const beaverPos = beaver.body.getPosition();
             const distance = planck.Vec2.distance(position, beaverPos);
             if (distance < closestDistance) {
