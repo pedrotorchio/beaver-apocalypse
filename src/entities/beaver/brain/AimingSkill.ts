@@ -1,6 +1,6 @@
 import * as planck from "planck-js";
 import type { GameModules } from "../../../core/types/GameModules.type";
-import { CCWDeg, CCWRad, RelativeRad, toRadians } from "../../../general/coordinateSystem";
+import { CCWDeg, CCWRad, RelativeRad, relativerad2ccwrad, toRadians } from "../../../general/coordinateSystem";
 import type { Beaver } from "../Beaver";
 import type { ShotMemory } from "./ShotMemory";
 
@@ -40,10 +40,10 @@ export class AimingSkill {
     const angle = CCWRad(Math.atan2(-distance.y, distance.x));
     const relativeAngle = RelativeRad(angle, character.direction);
     // Add 15 degrees to combat gravity. TODO: This needs to be calculated somehow
-    relativeAngle.angle += toRadians(CCWDeg(5))
+    relativeAngle.angle += toRadians(CCWDeg(10))
 
     return {
-      angle, //: relativerad2ccwrad(relativeAngle),
+      angle: relativerad2ccwrad(relativeAngle),
       power
     };
   }

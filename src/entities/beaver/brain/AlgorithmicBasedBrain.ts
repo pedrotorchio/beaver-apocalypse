@@ -32,12 +32,12 @@ export class AlgorithmicBasedBrain extends BaseBrain {
 
         const moveTarget = this.createMoveActionGenerator(closestEnemy.body.getPosition());
         return [
-            this.createMoveAction(moveTarget),
+            () => this.createMoveAction(moveTarget),
             () => this.createAttackAction(closestEnemy)
         ];
     }
 
-    createMoveActionGenerator(enemyPosition: planck.Vec2): () => Direction {
+    private createMoveActionGenerator(enemyPosition: planck.Vec2): () => Direction {
         return (): Direction => {
             const characterPos = this.character.body.getPosition();
             const delta = planck.Vec2.sub(enemyPosition, characterPos);

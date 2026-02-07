@@ -120,12 +120,11 @@ export const RelativeRad = (angle: CCWRad, facing: Direction): RelativeRad => {
 
     const isRightFacing = isFacing(DIRECTION_RIGHT);
     const isUpHalf = isBetween(RAD_000, RAD_180);
-    const isDownHalf = isBetween(RAD_180, RAD_360);
 
-    const resolvedAngle = ((): CCWRad => {
+    const resolvedAngle = ((): CCWRad | CWRad => {
         if (isRightFacing && isUpHalf) return normalizedAngle;
-        if (isRightFacing && isDownHalf) return CCWRad(normalizedAngle - RAD_360);
-        return CCWRad(normalizedAngle - RAD_180);
+        if (isRightFacing && !isUpHalf) return CCWRad(normalizedAngle - RAD_360);
+        return CWRad(RAD_180 - normalizedAngle);
     })();
 
     return {
