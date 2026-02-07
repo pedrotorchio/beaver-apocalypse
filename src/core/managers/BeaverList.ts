@@ -1,4 +1,3 @@
-import * as planck from 'planck-js';
 import { Vec2 } from 'planck-js';
 import { Beaver } from '../../entities/beaver/Beaver';
 
@@ -39,21 +38,15 @@ export class BeaverList implements Iterable<Beaver> {
     findClosest(position: Vec2): Beaver | null {
         if (this.beavers.length === 0) return null;
 
-        let closest = this.beavers[0];
-        const closestPos = closest.body.getPosition();
-        let closestDistance = planck.Vec2.distance(position, closestPos);
+        const [closestBeaver] = this.getAlive().toArray().reduce<[Beaver, number]>((closest: [Beaver, number], nextBeaver: Beaver) => {
+            const newDistance = Vec2.sub(position, nextBeaver.body.getPosition()).length();
+            const [closestBeaver, closestDistance] = closest;
 
-        for (const beaver of this.beavers.slice(1)) {
-            if (!beaver.health.isAlive()) continue;
-            const beaverPos = beaver.body.getPosition();
-            const distance = planck.Vec2.distance(position, beaverPos);
-            if (distance < closestDistance) {
-                closest = beaver;
-                closestDistance = distance;
-            }
-        }
+            if (newDistance < closestDistance) return [nextBeaver, newDistance];
+            return [closestBeaver, closestDistance];
+        }, [this.beavers[0], Infinity]);
 
-        return closest;
+        return closestBeaver;
     }
 
     getAlive(): BeaverList {
