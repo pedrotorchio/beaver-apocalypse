@@ -77,7 +77,7 @@ export abstract class Projectile implements Renders, Updates {
   }
 
   get explosionRadius(): number {
-    return this.args.radius * 8 + this.args.damage * 0.3;
+    return this.args.radius * 2 + this.args.damage * 0.3;
   }
 
   get beaverKnockback(): number {
