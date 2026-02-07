@@ -21,24 +21,24 @@ export enum TurnPhase {
  * and whether certain actions (like input processing) are permitted.
  */
 export class TurnManager {
-  private currentPlayerIndex: number = 0;
-  private phase: TurnPhase = TurnPhase.PlayerInput;
-  private playerCount: number;
+  #currentPlayerIndex: number = 0;
+  #phase: TurnPhase = TurnPhase.PlayerInput;
+  #playerCount: number;
 
   constructor(playerCount: number = 2) {
-    this.playerCount = playerCount;
+    this.#playerCount = playerCount;
   }
 
   getCurrentPlayerIndex(): number {
-    return this.currentPlayerIndex;
+    return this.#currentPlayerIndex;
   }
 
   getPhase(): TurnPhase {
-    return this.phase;
+    return this.#phase;
   }
 
   setPhase(phase: TurnPhase): void {
-    this.phase = phase;
+    this.#phase = phase;
   }
 
   startTurn(): void {
@@ -46,29 +46,29 @@ export class TurnManager {
   }
 
   beginPlayerInput(): void {
-    this.phase = TurnPhase.PlayerInput;
+    this.#phase = TurnPhase.PlayerInput;
   }
 
   fireWeapon(): void {
-    this.phase = TurnPhase.ProjectileFlying;
+    this.#phase = TurnPhase.ProjectileFlying;
   }
 
   beginPhysicsSettling(): void {
-    this.phase = TurnPhase.PhysicsSettling;
+    this.#phase = TurnPhase.PhysicsSettling;
   }
 
   endTurn(): void {
-    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.playerCount;
+    this.#currentPlayerIndex = (this.#currentPlayerIndex + 1) % this.#playerCount;
   }
 
   canAcceptInput(): boolean {
-    return this.phase === TurnPhase.PlayerInput;
+    return this.#phase === TurnPhase.PlayerInput;
   }
 
   isProjectileActive(): boolean {
     return (
-      this.phase === TurnPhase.ProjectileFlying ||
-      this.phase === TurnPhase.PhysicsSettling
+      this.#phase === TurnPhase.ProjectileFlying ||
+      this.#phase === TurnPhase.PhysicsSettling
     );
   }
 }

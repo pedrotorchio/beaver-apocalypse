@@ -36,9 +36,9 @@ export type Behaviours = {
 const ANGLE_TOLERANCE_RAD: number = (5 * Math.PI) / 180;
 
 export class BrainActionPlan {
-    #actions: ActionList = [];
+    #actionList: ActionList = [];
     set actions(actions: ActionList) {
-        this.#actions = actions;
+        this.#actionList = actions;
         this.#currentActionInExecution = -1;
     }
     #currentActionInExecution = -1;
@@ -57,15 +57,15 @@ export class BrainActionPlan {
     }
 
     hasActiveAction(): this is { getActiveAction: () => Action } {
-        return this.#currentActionInExecution >= 0 && this.#currentActionInExecution < this.#actions.length;
+        return this.#currentActionInExecution >= 0 && this.#currentActionInExecution < this.#actionList.length;
     }
 
     actionCount(): number {
-        return this.#actions.length;
+        return this.#actionList.length;
     }
 
     getActiveAction(): ActionList[number] | null {
-        return this.#actions[this.#currentActionInExecution] ?? null;
+        return this.#actionList[this.#currentActionInExecution] ?? null;
     }
 
     nextAction(): Action | null {
@@ -77,7 +77,7 @@ export class BrainActionPlan {
     }
 
     clear(): void {
-        this.#actions = [];
+        this.#actionList = [];
         this.#currentActionInExecution = -1;
     }
 }
@@ -104,15 +104,11 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
     }
 
     update(): void {
-        // If there's no active action, attempt to get the next action
         if (!this.#actionPlan.hasActiveAction()) this.#actionPlan.nextAction();
-        // If there's still no active action, clear brain's action state
         if (!this.#actionPlan.hasActiveAction()) {
             this.#actionPlan.clear();
             this.resetCommands();
         }
-        // If there is an active action, execute it. If action returns "true"
-        // That means the action is completed and the next action should be activated
         else if (this.#actionPlan.doAction()) this.#actionPlan.nextAction();
     }
 

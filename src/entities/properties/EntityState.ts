@@ -21,7 +21,6 @@ type Configuration<StateKey extends string> = {
   'states': Partial<Record<StateKey, StateConfig>>
 };
 export class EntityState<StateKey extends string> implements Updates {
-  // Private properties
   #currentState: StateKey;
   get state(): StateKey {
     return this.#currentState;
@@ -39,7 +38,6 @@ export class EntityState<StateKey extends string> implements Updates {
     this.#currentState = this.#config['defaultState'];
   }
 
-  // Updates implementation
   update(): void {
     this.#stateFramesCount++;
 
@@ -49,12 +47,10 @@ export class EntityState<StateKey extends string> implements Updates {
     this.setState(newState);
   }
 
-  // Public methods
   draw(ctx: CanvasRenderingContext2D, position: planck.Vec2, facing: Direction) {
     this.#config.tilesheet.drawImage(ctx, this.state, position.x, position.y, facing);
   }
 
-  // Private methods
   private detectState(): StateKey {
     const entries = Object.entries(this.#config.states) as [StateKey, StateConfig][];
     const [key] = entries.find(([, config]) => config.autoDetect?.()) ?? [];

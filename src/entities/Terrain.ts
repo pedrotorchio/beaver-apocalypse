@@ -24,7 +24,6 @@ export class Terrain implements Renders {
 
   constructor(game: Omit<GameModules, 'terrain'>) {
     this.#game = game;
-    // Create off-screen canvas for terrain bitmap
     this.#terrainCanvas = document.createElement("canvas");
     const canvas = game.canvas.canvas;
     this.#terrainCanvas.width = canvas.width;

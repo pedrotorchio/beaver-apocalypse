@@ -30,29 +30,29 @@ export interface TileSheetOptions<StateKey extends string> {
 }
 
 export class TileSheet<const StateKey extends string> {
-  private imageAsset: Asset<HTMLImageElement>;
-  private tileWidth: number;
-  private tileHeight: number;
-  private renderWidth: number;
-  private renderHeight: number;
-  private errorState: Error | null = null;
-  private readonly tileDefinitions: Record<StateKey, SpriteDefinition<StateKey>>;
+  #imageAsset: Asset<HTMLImageElement>;
+  #tileWidth: number;
+  #tileHeight: number;
+  #renderWidth: number;
+  #renderHeight: number;
+  #errorState: Error | null = null;
+  readonly #tileDefinitions: Record<StateKey, SpriteDefinition<StateKey>>;
 
   constructor(options: TileSheetOptions<StateKey>) {
-    this.imageAsset = options.image;
-    this.tileWidth = options.tileWidth;
-    this.tileHeight = options.tileHeight;
-    this.renderWidth = options.renderWidth ?? this.tileWidth;
-    this.renderHeight = options.renderHeight ?? this.tileHeight;
-    this.tileDefinitions = this.resolveTileDefinitions(options.states);
+    this.#imageAsset = options.image;
+    this.#tileWidth = options.tileWidth;
+    this.#tileHeight = options.tileHeight;
+    this.#renderWidth = options.renderWidth ?? this.#tileWidth;
+    this.#renderHeight = options.renderHeight ?? this.#tileHeight;
+    this.#tileDefinitions = this.resolveTileDefinitions(options.states);
   }
 
   private resolveTileDefinitions(states: TileSheetOptions<StateKey>['states']): Record<StateKey, SpriteDefinition<StateKey>> {
     const applyDefaultsFor = (index: number, partial: Partial<SpriteDefinition<StateKey>>) => ({
-      x: index * this.tileWidth,
+      x: index * this.#tileWidth,
       y: 0,
-      width: this.tileWidth,
-      height: this.tileHeight,
+      width: this.#tileWidth,
+      height: this.#tileHeight,
       key: '',
       ...partial
     }) as SpriteDefinition<StateKey>;
@@ -72,8 +72,8 @@ export class TileSheet<const StateKey extends string> {
   }
 
   setRenderSize(width: number, height: number): this {
-    this.renderWidth = width;
-    this.renderHeight = height;
+    this.#renderWidth = width;
+    this.#renderHeight = height;
     return this;
   }
 
@@ -92,14 +92,14 @@ export class TileSheet<const StateKey extends string> {
     y: number,
     direction: Direction = DIRECTION_RIGHT
   ): void {
-    if (!this.tileDefinitions[state]) throw new Error(`Unknown state: ${state}`);
-    const definition = this.tileDefinitions[state];
+    if (!this.#tileDefinitions[state]) throw new Error(`Unknown state: ${state}`);
+    const definition = this.#tileDefinitions[state];
     const sx = definition.x;
     const sy = definition.y;
     const sw = definition.width;
     const sh = definition.height;
-    const dx = x - this.renderWidth / 2;
-    const dy = y - this.renderHeight / 2;
+    const dx = x - this.#renderWidth / 2;
+    const dy = y - this.#renderHeight / 2;
 
     ctx.save();
 
@@ -108,22 +108,22 @@ export class TileSheet<const StateKey extends string> {
       ctx.scale(-1, 1);
       ctx.translate(-x, -y);
     }
-    if (this.errorState) return this.drawRectangle(ctx, dx, dy);
+    if (this.#errorState) return this.drawRectangle(ctx, dx, dy);
 
     try {
       ctx.drawImage(
-        this.imageAsset.value,
+        this.#imageAsset.value,
         sx,
         sy,
         sw,
         sh,
         dx,
         dy,
-        this.renderWidth,
-        this.renderHeight
+        this.#renderWidth,
+        this.#renderHeight
       );
     } catch (error) {
-      this.errorState = error as Error;
+      this.#errorState = error as Error;
       console.error(error);
       this.drawRectangle(ctx, dx, dy);
     }
@@ -134,7 +134,7 @@ export class TileSheet<const StateKey extends string> {
   private drawRectangle(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     ctx.save();
     ctx.strokeStyle = 'red';
-    ctx.strokeRect(x, y, this.renderWidth, this.renderHeight);
+    ctx.strokeRect(x, y, this.#renderWidth, this.#renderHeight);
     ctx.restore();
   }
 }

@@ -19,16 +19,18 @@ import { TabUpdateObject } from "../devtools/store";
  * - Space: fire or charging input
  */
 export class TextHighlightControlsRenderer {
-    private tabStorage: TabUpdateObject;
-    constructor(private game: GameModules) {
+    #tabStorage: TabUpdateObject;
+    #game: GameModules;
+    constructor(game: GameModules) {
+        this.#game = game;
         const { devtools } = game.core;
-        this.tabStorage = devtools.addTab('Controls')
+        this.#tabStorage = devtools.addTab('Controls')
     }
     render() {
-        const inputState = this.game.core.inputManager.getInputState();
-        this.tabStorage.update('left', inputState.moveLeft);
-        this.tabStorage.update('right', inputState.moveRight);
-        this.tabStorage.update('jump', inputState.jump);
-        this.tabStorage.update('fire', inputState.fire);
+        const inputState = this.#game.core.inputManager.getInputState();
+        this.#tabStorage.update('left', inputState.moveLeft);
+        this.#tabStorage.update('right', inputState.moveRight);
+        this.#tabStorage.update('jump', inputState.jump);
+        this.#tabStorage.update('fire', inputState.fire);
     }
 }

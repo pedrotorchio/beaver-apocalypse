@@ -25,34 +25,33 @@ export interface WeaponManagerOptions {
  * and aim angle into projectile trajectory parameters.
  */
 export class WeaponManager {
-  private options: WeaponManagerOptions;
-  private currentPower: number;
+  #options: WeaponManagerOptions;
+  #currentPower: number;
 
   constructor(options: WeaponManagerOptions) {
-    this.options = options;
-    this.currentPower = options.minPower;
+    this.#options = options;
+    this.#currentPower = options.minPower;
   }
 
   updatePower(charging: boolean, justFired: boolean): void {
     if (charging) {
-      this.currentPower = Math.min(
-        this.options.maxPower,
-        this.currentPower + this.options.powerAccumulationRate
+      this.#currentPower = Math.min(
+        this.#options.maxPower,
+        this.#currentPower + this.#options.powerAccumulationRate
       );
     } else {
-      // Reset power when not charging (but don't reset if we just fired)
       if (!justFired) {
-        this.currentPower = this.options.minPower;
+        this.#currentPower = this.#options.minPower;
       }
     }
   }
 
   getCurrentPower(): number {
-    return this.currentPower;
+    return this.#currentPower;
   }
 
   resetPower(): void {
-    this.currentPower = this.options.minPower;
+    this.#currentPower = this.#options.minPower;
   }
 
   calculateFireAngle(aimAngle: CCWRad, facing: number): CCWRad {
@@ -61,7 +60,7 @@ export class WeaponManager {
 
   calculateVelocity(fireAngle: CCWRad): { x: number; y: number } {
     const direction = vec.fromAngle(fireAngle);
-    const velocity = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), this.currentPower);
+    const velocity = planck.Vec2.mul(planck.Vec2(direction.x, direction.y), this.#currentPower);
     return { x: velocity.x, y: velocity.y };
   }
 
@@ -73,9 +72,9 @@ export class WeaponManager {
 
   getPowerConfig(): { minPower: number; maxPower: number; currentPower: number } {
     return {
-      minPower: this.options.minPower,
-      maxPower: this.options.maxPower,
-      currentPower: this.currentPower,
+      minPower: this.#options.minPower,
+      maxPower: this.#options.maxPower,
+      currentPower: this.#currentPower,
     };
   }
 }

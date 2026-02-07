@@ -10,7 +10,7 @@
  * Use areAllAssetsLoaded() to check if all registered assets have finished loading.
  */
 export class AssetLoader {
-  private static assets: Map<string, Asset<unknown>> = new Map();
+  static #assets: Map<string, Asset<unknown>> = new Map();
 
   /**
    * Loads an image asset asynchronously.
@@ -19,7 +19,7 @@ export class AssetLoader {
    * @returns Promise that resolves to the loaded unknown
    */
   static async loadImage(key: string, path: string) {
-    if (this.assets.has(key)) return;
+    if (AssetLoader.#assets.has(key)) return;
     const assetObject = createAssetShell<HTMLImageElement>();
     const promise = new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
@@ -38,14 +38,14 @@ export class AssetLoader {
       assetObject.isLoaded = true;
       assetObject.isLoading = false;
     });
-    this.assets.set(key, assetObject);
+    AssetLoader.#assets.set(key, assetObject);
   }
 
   static getAsset<T>(key: string): Readonly<Asset<T>> {
-    if (!this.assets.has(key)) {
-      this.assets.set(key, createAssetShell<T>());
+    if (!AssetLoader.#assets.has(key)) {
+      AssetLoader.#assets.set(key, createAssetShell<T>());
     }
-    return this.assets.get(key) as Asset<T>;
+    return AssetLoader.#assets.get(key) as Asset<T>;
   }
 
   /**
@@ -53,7 +53,7 @@ export class AssetLoader {
    * @returns Promise that resolves when all assets are loaded
    */
   static async areAllAssetsLoaded(): Promise<void> {
-    const allPromises = Array.from(this.assets).map(async ([, asset]) => asset.promise);
+    const allPromises = Array.from(AssetLoader.#assets).map(async ([, asset]) => asset.promise);
     await Promise.all(allPromises);
   }
 }

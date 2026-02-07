@@ -44,7 +44,7 @@ export abstract class Projectile implements Renders, Updates {
     const bodyDef: planck.BodyDef = {
       type: "dynamic",
       position: args.position,
-      bullet: true, // Continuous collision detection
+      bullet: false,
     };
 
     this.#body = game.world.createBody(bodyDef);
@@ -59,7 +59,6 @@ export abstract class Projectile implements Renders, Updates {
     this.#body.createFixture(fixtureDef);
     this.#body.setLinearVelocity(args.velocity);
 
-    // Store reference to this projectile on the body for contact detection
     this.#body.setUserData({ type: 'projectile', instance: this });
     this.#groundDetection = new GroundDetection(this.game, this.#body, this.args.radius);
   }

@@ -24,40 +24,37 @@ export interface PhaseManagerOptions {
  * be called each frame to check for phase transition conditions.
  */
 export class PhaseManager {
-  private options: PhaseManagerOptions;
+  #options: PhaseManagerOptions;
 
   constructor(options: PhaseManagerOptions) {
-    this.options = options;
+    this.#options = options;
   }
 
   handlePhaseTransitions(): void {
-    const hasActiveProjectiles = this.options.entityManager.hasActiveProjectiles();
+    const hasActiveProjectiles = this.#options.entityManager.hasActiveProjectiles();
 
-    // Check if projectile phase is complete
-    if (this.options.turnManager.checkPhase(TurnPhase.ProjectileFlying) && !hasActiveProjectiles) {
-      this.options.turnManager.beginPhysicsSettling();
+    if (this.#options.turnManager.checkPhase(TurnPhase.ProjectileFlying) && !hasActiveProjectiles) {
+      this.#options.turnManager.beginPhysicsSettling();
     }
 
-    // Check if physics has settled
     if (
-      this.options.turnManager.checkPhase(TurnPhase.PhysicsSettling) &&
-      this.options.physicsWorld.isSettled()
+      this.#options.turnManager.checkPhase(TurnPhase.PhysicsSettling) &&
+      this.#options.physicsWorld.isSettled()
     ) {
       this.handleTurnEnd();
     }
   }
 
   handleDeadBeaver(): void {
-    this.options.turnManager.endTurn();
-    this.options.turnManager.beginPlayerInput();
+    this.#options.turnManager.endTurn();
+    this.#options.turnManager.beginPlayerInput();
   }
 
   private handleTurnEnd(): void {
-    // Check for game over
-    const aliveBeavers = this.options.entityManager.getBeavers().getAlive();
+    const aliveBeavers = this.#options.entityManager.getBeavers().getAlive();
     if (aliveBeavers.length <= 1) alert("Beaver wins!");
 
-    this.options.turnManager.endTurn();
-    this.options.turnManager.beginPlayerInput();
+    this.#options.turnManager.endTurn();
+    this.#options.turnManager.beginPlayerInput();
   }
 }

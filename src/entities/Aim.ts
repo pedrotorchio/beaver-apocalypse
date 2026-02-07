@@ -29,15 +29,15 @@ export class Aim {
   #maxAngle: RelativeRad = MAX_ANGLE_RADIANS;
   #minAngle: RelativeRad = MIN_ANGLE_RADIANS;
 
-  #angle = RelativeRad(0, DIRECTION_RIGHT); // Aim angle (0 = right, π/2 = up, -π/2 = down)
+  #angleState = RelativeRad(0, DIRECTION_RIGHT); // Aim angle (0 = right, π/2 = up, -π/2 = down)
   set facing(facing: Direction) {
-    if (facing === this.#angle.facing) return;
-    this.#angle.facing = facing;
+    if (facing === this.#angleState.facing) return;
+    this.#angleState.facing = facing;
     this.#maxAngle.facing = facing;
     this.#minAngle.facing = facing;
   }
   set angle(angle: number) {
-    this.#angle.angle = angle;
+    this.#angleState.angle = angle;
   }
 
   #power: number;
@@ -51,7 +51,7 @@ export class Aim {
   }
 
   getAngle(): CCWRad {
-    return relativerad2ccwrad(this.#angle);
+    return relativerad2ccwrad(this.#angleState);
   }
 
   getPower(): number {
@@ -67,8 +67,7 @@ export class Aim {
   }
 
   adjustAngle(delta: number): void {
-    // clamp angle to min and max
-    this.#angle.angle = Math.min(this.#maxAngle.angle, Math.max(this.#minAngle.angle, this.#angle.angle + delta));
+    this.#angleState.angle = Math.min(this.#maxAngle.angle, Math.max(this.#minAngle.angle, this.#angleState.angle + delta));
   }
 
   angleUp(delta: number): void {
@@ -86,6 +85,6 @@ export class Aim {
     this.#power = this.#args.minPower;
   }
   resetAngle(): void {
-    this.#angle.angle = 0;
+    this.#angleState.angle = 0;
   }
 }

@@ -15,33 +15,34 @@ import type { Renders } from "../core/types/Renders.type";
  */
 export class ControlsRenderer implements Renders {
 
-  // Colors
-  private readonly inactiveColor = "#808080"; // Grey
-  private readonly activeColor = "#8B4A4A"; // Desaturated bloody red
+  readonly #inactiveColor = "#808080"; // Grey
+  readonly #activeColor = "#8B4A4A"; // Desaturated bloody red
 
-  // Grid configuration
-  private readonly gridSize = 3; // 3x3 grid
-  private readonly squareSize = 30;
-  private readonly squareSpacing = 5;
-  private readonly gridPadding = 10;
+  readonly #gridSize = 3;
+  readonly #squareSize = 30;
+  readonly #squareSpacing = 5;
+  readonly #gridPadding = 10;
 
   private get totalGridSize(): number {
-    return this.gridSize * this.squareSize + (this.gridSize - 1) * this.squareSpacing;
+    return this.#gridSize * this.#squareSize + (this.#gridSize - 1) * this.#squareSpacing;
   }
 
   private get startX(): number {
-    const canvas = this.game.canvas.canvas;
-    return canvas.width - 2 * this.totalGridSize - this.gridPadding;
+    const canvas = this.#game.canvas.canvas;
+    return canvas.width - 2 * this.totalGridSize - this.#gridPadding;
   }
   private get startY(): number {
-    const canvas = this.game.canvas.canvas;
-    return canvas.height - this.totalGridSize - this.gridPadding - 20;
+    const canvas = this.#game.canvas.canvas;
+    return canvas.height - this.totalGridSize - this.#gridPadding - 20;
   }
 
-  constructor(private game: GameModules) { }
+  #game: GameModules;
+  constructor(game: GameModules) {
+    this.#game = game;
+  }
 
   render(): void {
-    const input = this.game.core.inputManager.getInputState();
+    const input = this.#game.core.inputManager.getInputState();
 
     // Draw Up (top middle) - grid position (1, 0), 1 square wide
     this.drawRectangle(1, 0, 1, 1, input.jump);
@@ -55,7 +56,7 @@ export class ControlsRenderer implements Renders {
     // Draw Fire (bottom row - all 3 positions) - grid position (0, 2), 3 squares wide
     this.drawRectangle(0, 2, 3, 1, input.fire || input.charging);
 
-    const currentBeaver = this.game.core.entityManager.getBeaver(this.game.core.turnManager.getCurrentPlayerIndex());
+    const currentBeaver = this.#game.core.entityManager.getBeaver(this.#game.core.turnManager.getCurrentPlayerIndex());
     this.writeText(currentBeaver?.isGrounded ? "Grounded" : "In the air");
 
   }
@@ -71,17 +72,14 @@ export class ControlsRenderer implements Renders {
   private drawRectangle(gridCol: number, gridRow: number, width: number, height: number, isActive: boolean): void {
 
     // Convert grid coordinates to pixel coordinates
-    const pixelX = this.startX + gridCol * (this.squareSize + this.squareSpacing);
-    const pixelY = this.startY + gridRow * (this.squareSize + this.squareSpacing);
+    const pixelX = this.startX + gridCol * (this.#squareSize + this.#squareSpacing);
+    const pixelY = this.startY + gridRow * (this.#squareSize + this.#squareSpacing);
 
-    // Calculate pixel width: width squares + (width - 1) spacings
-    const pixelWidth = width * this.squareSize + (width - 1) * this.squareSpacing;
-    // Calculate pixel height: height squares + (height - 1) spacings
-    const pixelHeight = height * this.squareSize + (height - 1) * this.squareSpacing;
+    const pixelWidth = width * this.#squareSize + (width - 1) * this.#squareSpacing;
+    const pixelHeight = height * this.#squareSize + (height - 1) * this.#squareSpacing;
 
-    // Draw the rectangle
-    const ctx = this.game.canvas;
-    ctx.fillStyle = isActive ? this.activeColor : this.inactiveColor;
+    const ctx = this.#game.canvas;
+    ctx.fillStyle = isActive ? this.#activeColor : this.#inactiveColor;
     ctx.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
 
     // Draw border
@@ -97,7 +95,7 @@ export class ControlsRenderer implements Renders {
   private writeText(text: string): void {
     const textY = this.startY + this.totalGridSize + 10; // Position just below the grid
 
-    const ctx = this.game.canvas;
+    const ctx = this.#game.canvas;
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "14px Arial";
     ctx.textAlign = "center";

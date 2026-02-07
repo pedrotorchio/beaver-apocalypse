@@ -18,32 +18,32 @@ import { BeaverList } from "./BeaverList";
  * for entity state.
  */
 export class EntityManager {
-  private beavers: BeaverList = new BeaverList();
-  private projectiles: Projectile[] = [];
+  #beavers: BeaverList = new BeaverList();
+  #projectiles: Projectile[] = [];
 
   addBeaver(beaver: Beaver): void {
-    this.beavers.push(beaver);
+    this.#beavers.push(beaver);
   }
 
   getBeavers(): BeaverList {
-    return this.beavers;
+    return this.#beavers;
   }
 
   getProjectiles(): Projectile[] {
-    return this.projectiles;
+    return this.#projectiles;
   }
 
   getBeaver(currentPlayerIndex: number): Beaver | undefined {
-    return this.beavers.get(currentPlayerIndex);
+    return this.#beavers.get(currentPlayerIndex);
   }
 
   addProjectile(projectile: Projectile): void {
-    this.projectiles.push(projectile);
+    this.#projectiles.push(projectile);
   }
 
   updateProjectiles(): void {
     const activeProjectiles: Projectile[] = [];
-    for (const projectile of this.projectiles) {
+    for (const projectile of this.#projectiles) {
       if (projectile.isActive()) {
         projectile.update();
         if (projectile.isActive()) {
@@ -51,14 +51,14 @@ export class EntityManager {
         }
       }
     }
-    this.projectiles = activeProjectiles;
+    this.#projectiles = activeProjectiles;
   }
   updateBeavers(): void {
     for (const beaver of this.getBeavers()) beaver.update();
   }
 
   hasActiveProjectiles(): boolean {
-    return this.projectiles.length > 0;
+    return this.#projectiles.length > 0;
   }
 }
 

@@ -17,46 +17,46 @@ import { DevtoolsTab, useDevtoolsStore } from "../devtools/store";
  */
 export class PhysicsWorld {
   public static readonly GRAVITY = 50;
-  private world: planck.World;
-  private velocityIterations: number = 8;
-  private positionIterations: number = 3;
-  private timeStep: number = 1 / 60;
-  private readonly devtoolsTab: DevtoolsTab;
+  #world: planck.World;
+  #velocityIterations: number = 8;
+  #positionIterations: number = 3;
+  #timeStep: number = 1 / 60;
+  readonly #devtoolsTab: DevtoolsTab;
 
   constructor() {
-    this.world = planck.World({
+    this.#world = planck.World({
       gravity: planck.Vec2(0, PhysicsWorld.GRAVITY),
     });
-    this.devtoolsTab = useDevtoolsStore().addTab("Physics");
+    this.#devtoolsTab = useDevtoolsStore().addTab("Physics");
   }
 
   getWorld(): planck.World {
-    return this.world;
+    return this.#world;
   }
   
   step(): void {
-    this.world.step(this.timeStep, this.velocityIterations, this.positionIterations);
+    this.#world.step(this.#timeStep, this.#velocityIterations, this.#positionIterations);
   }
 
   isSettled(): boolean {
     const threshold = 0.5;
-    const bodyList = this.world.getBodyList();
+    const bodyList = this.#world.getBodyList();
     let isSettled = true;
     for (let body = bodyList; body; body = body.getNext()) {
       const vel = body.getLinearVelocity();
       const velMagnitude = Math.hypot(vel.x, vel.y);
       if (velMagnitude > threshold) isSettled = false;
     }
-    this.devtoolsTab.update('bodyCount', this.world.getBodyCount());
-    this.devtoolsTab.update('isSettled', isSettled);
+    this.#devtoolsTab.update('bodyCount', this.#world.getBodyCount());
+    this.#devtoolsTab.update('isSettled', isSettled);
     return isSettled;
   }
 
   clear(): void {
     // Clear all bodies from the world
-    for (let body = this.world.getBodyList(); body; ) {
+    for (let body = this.#world.getBodyList(); body; ) {
       const next = body.getNext();
-      this.world.destroyBody(body);
+      this.#world.destroyBody(body);
       body = next;
     }
   }

@@ -11,7 +11,6 @@ export interface HealthArguments {
 }
 
 export class Health implements Updates, Renders {
-  // Private properties
   #health: number;
   get health(): number {
     return this.#health;

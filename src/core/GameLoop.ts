@@ -16,31 +16,31 @@ export interface GameLoopOptions {
  * logic itself, but provides the timing infrastructure for game execution.
  */
 export class GameLoop {
-  private options: GameLoopOptions;
-  private running: boolean = false;
+  #options: GameLoopOptions;
+  #running: boolean = false;
 
   constructor(options: GameLoopOptions) {
-    this.options = options;
+    this.#options = options;
   }
 
   get isRunning(): boolean {
-    return this.running;
+    return this.#running;
   }
 
   start(): void {
-    this.running = true;
+    this.#running = true;
     this.loop();
   }
 
   stop(): void {
-    this.running = false;
+    this.#running = false;
   }
 
   private loop(): void {
-    if (!this.running) return;
+    if (!this.#running) return;
 
-    this.options.onUpdate();
-    this.options.onRender();
+    this.#options.onUpdate();
+    this.#options.onRender();
 
     requestAnimationFrame(() => this.loop());
   }

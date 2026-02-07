@@ -9,9 +9,9 @@ export interface ShotSample {
 
 export class ShotMemory {
 
-  private readonly samples: ShotSample[] = [];
+  readonly #samples: ShotSample[] = [];
   get sampleCount(): number {
-    return this.samples.length;
+    return this.#samples.length;
   }
   constructor(private readonly maxSamples: number = 32) { }
 
@@ -20,12 +20,12 @@ export class ShotMemory {
     const distance = Math.hypot(delta.x, delta.y);
     const sample: ShotSample = { distance, power, angle };
     const index = this.findInsertIndex(distance);
-    this.samples.splice(index, 0, sample);
-    if (this.samples.length > this.maxSamples) this.samples.pop();
+    this.#samples.splice(index, 0, sample);
+    if (this.#samples.length > this.maxSamples) this.#samples.pop();
   }
 
   getSamples(): readonly ShotSample[] {
-    return this.samples;
+    return this.#samples;
   }
 
   findNearest(targetDistance: number): {
@@ -33,7 +33,7 @@ export class ShotMemory {
     lower: ShotSample | null;
     upper: ShotSample | null;
   } {
-    if (!this.samples.length) {
+    if (!this.#samples.length) {
       return {
         closest: null,
         lower: null,
@@ -48,8 +48,8 @@ export class ShotMemory {
     let lower: ShotSample | null = null;
     let upper: ShotSample | null = null;
 
-    if (lowerIndex >= 0) lower = this.samples[lowerIndex];
-    if (upperIndex < this.samples.length) upper = this.samples[upperIndex];
+    if (lowerIndex >= 0) lower = this.#samples[lowerIndex];
+    if (upperIndex < this.#samples.length) upper = this.#samples[upperIndex];
 
     if (!lower && !upper) {
       return {
@@ -88,11 +88,11 @@ export class ShotMemory {
 
   private findInsertIndex(distance: number): number {
     let low = 0;
-    let high = this.samples.length;
+    let high = this.#samples.length;
 
     while (low < high) {
       const mid = (low + high) >> 1;
-      const midDistance = this.samples[mid].distance;
+      const midDistance = this.#samples[mid].distance;
       if (midDistance < distance) low = mid + 1;
       else high = mid;
     }

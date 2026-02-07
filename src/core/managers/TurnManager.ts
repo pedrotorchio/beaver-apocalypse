@@ -23,33 +23,33 @@ export enum TurnPhase {
  * and whether certain actions (like input processing) are permitted.
  */
 export class TurnManager {
-  private currentPlayerIndex: number = -1;
-  private phase: TurnPhase = TurnPhase.PlayerInput;
-  private playerCount: number;
+  #currentPlayerIndex: number = -1;
+  #phase: TurnPhase = TurnPhase.PlayerInput;
+  #playerCount: number;
 
-  private readonly devtoolsTab: DevtoolsTab;
+  readonly #devtoolsTab: DevtoolsTab;
 
   constructor(playerCount: number = 2) {
-    this.playerCount = playerCount;
-    this.devtoolsTab = useDevtoolsStore().addTab("Turn");
+    this.#playerCount = playerCount;
+    this.#devtoolsTab = useDevtoolsStore().addTab("Turn");
   }
 
   checkPhase(phase: TurnPhase): boolean {
-    this.devtoolsTab.update('phase', TurnPhase[this.phase]);
-    return this.phase === phase;
+    this.#devtoolsTab.update('phase', TurnPhase[this.#phase]);
+    return this.#phase === phase;
   }
 
   getCurrentPlayerIndex(): number {
-    this.devtoolsTab.update('currentPlayer', this.currentPlayerIndex + 1);
-    return this.currentPlayerIndex;
+    this.#devtoolsTab.update('currentPlayer', this.#currentPlayerIndex + 1);
+    return this.#currentPlayerIndex;
   }
 
   getPhase(): TurnPhase {
-    return this.phase;
+    return this.#phase;
   }
 
   setPhase(phase: TurnPhase): void {
-    this.phase = phase;
+    this.#phase = phase;
   }
 
   startTurn(): void {
@@ -57,29 +57,29 @@ export class TurnManager {
   }
 
   beginPlayerInput(): void {
-    this.phase = TurnPhase.PlayerInput;
+    this.#phase = TurnPhase.PlayerInput;
   }
 
   fireWeapon(): void {
-    this.phase = TurnPhase.ProjectileFlying;
+    this.#phase = TurnPhase.ProjectileFlying;
   }
 
   beginPhysicsSettling(): void {
-    this.phase = TurnPhase.PhysicsSettling;
+    this.#phase = TurnPhase.PhysicsSettling;
   }
 
   endTurn(): void {
-    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.playerCount;
+    this.#currentPlayerIndex = (this.#currentPlayerIndex + 1) % this.#playerCount;
   }
 
   canAcceptInput(): boolean {
-    return this.phase === TurnPhase.PlayerInput;
+    return this.#phase === TurnPhase.PlayerInput;
   }
 
   isProjectileActive(): boolean {
     return (
-      this.phase === TurnPhase.ProjectileFlying ||
-      this.phase === TurnPhase.PhysicsSettling
+      this.#phase === TurnPhase.ProjectileFlying ||
+      this.#phase === TurnPhase.PhysicsSettling
     );
   }
 }

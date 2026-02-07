@@ -39,41 +39,28 @@ export interface BeaverArguments {
  * health) is managed internally and queried by other systems.
  */
 export class Beaver implements Updates, Renders {
-  // Private properties
   #name: string;
-  get name(): string {
-    return this.#name;
-  }
+  get name(): string { return this.#name; }
 
   #body: planck.Body;
-  get body(): planck.Body {
-    return this.#body;
-  }
+  get body(): planck.Body { return this.#body; }
 
   #radius: number = 20;
-  get radius(): number {
-    return this.#radius;
-  }
+  get radius(): number { return this.#radius; }
 
   #health: Health;
-  get health(): Health {
-    return this.#health;
-  }
+  get health(): Health { return this.#health; }
 
   get aim(): Aim {
     return this.#args.aim;
   }
 
   #brain: BaseBrain;
-  get brain(): BaseBrain {
-    return this.#brain;
-  }
+  get brain(): BaseBrain { return this.#brain; }
 
   #mass: number = 125;
   #direction: Direction = DIRECTION_RIGHT;
-  get direction(): Direction {
-    return this.#direction;
-  }
+  get direction(): Direction { return this.#direction; }
   set direction(direction: Direction) {
     if (this.#direction === direction) return;
     this.#direction = direction;
@@ -127,7 +114,6 @@ export class Beaver implements Updates, Renders {
       friction: 1,
       restitution: 0,
     });
-    // Store reference to this beaver on the body for contact detection
     this.#body.setUserData({ type: 'beaver', instance: this });
     this.#groundDetection = new GroundDetection(this.#game, this.#body, this.#radius);
     this.#health = new Health({
@@ -152,13 +138,10 @@ export class Beaver implements Updates, Renders {
     const ctx = this.#game.canvas;
     const pos = this.#body.getPosition();
 
-    // Draw beaver sprite using tilesheet
     this.#entityState.draw(ctx, pos, this.#direction);
 
-    // Draw health bar
     this.#health.render();
 
-    // Draw velocity arrow
     const velocity = this.#body.getLinearVelocity();
     if (velocity.length() > 0) {
       const velocityEnd = planck.Vec2.add(pos, velocity);
@@ -221,8 +204,7 @@ export class Beaver implements Updates, Renders {
     const pos = this.#body.getPosition();
     const aim = this.#args.aim;
     const aimAngle = aim.getAngle();
-    // Calculate spawn offset - spawn outside beaver circle (beaver radius + projectile radius + buffer)
-    const projectileRadius = 4; // Projectile.radius
+    const projectileRadius = 4;
     const baseOffsetDistance = this.#radius + projectileRadius;
 
     // Scale distance based on power (normalized between min and max power)
@@ -245,7 +227,6 @@ export class Beaver implements Updates, Renders {
     this.#body.applyLinearImpulse(planck.Vec2.clone(direction), planck.Vec2.clone(this.#body.getWorldCenter()), true);
   }
 
-  // Private methods
   private kill(): void {
     this.#entityState.setState("dead");
     this.#health.kill();
