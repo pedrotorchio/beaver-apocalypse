@@ -1,6 +1,6 @@
 import { DIRECTION_RIGHT, Direction } from "../core/types/Entity.type";
 import type { GameModules } from "../core/types/GameModules.type";
-import { CCWRad, RelativeRad, relativerad2ccwrad } from "../general/coordinateSystem";
+import { CCWDeg, CCWRad, RelativeRad, relativerad2ccwrad, toRadians } from "../general/coordinateSystem";
 
 export interface AimArguments {
   minPower: number;
@@ -9,9 +9,9 @@ export interface AimArguments {
 }
 
 /** Max aim angle in radians (≈90°). */
-export const MAX_ANGLE_RADIANS = RelativeRad(90 * Math.PI / 180, DIRECTION_RIGHT);
+export const MAX_ANGLE_RADIANS = RelativeRad(toRadians(CCWDeg(90)), DIRECTION_RIGHT);
 /** Min aim angle in radians (-90°). */
-export const MIN_ANGLE_RADIANS = RelativeRad(-90 * Math.PI / 180, DIRECTION_RIGHT);
+export const MIN_ANGLE_RADIANS = RelativeRad(toRadians(CCWDeg(-90)), DIRECTION_RIGHT);
 /**
  * Represents the aiming state of a beaver, including direction and power.
  *
