@@ -1,5 +1,6 @@
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
+import { COLOR_ANGLE_REFERENCE } from "../constants";
 import type { Aim } from "../entities/Aim";
 import { CCWDeg, ccwdeg2rad } from "../general/coordinateSystem";
 import { PowerIndicatorRenderer } from "./PowerIndicatorRenderer";
@@ -46,7 +47,7 @@ export class AimIndicatorRenderer implements Renders {
     const dashInner = 30;
     const dashOuter = 40;
     const dashDegrees: CCWDeg[] = [0, 45, 90, 120, -45, -90].map(CCWDeg);
-    const shapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.6)", strokeWidth: 1 });
+    const shapes = this.game.core.shapes.with({ strokeColor: COLOR_ANGLE_REFERENCE, strokeWidth: 1 });
     for (const deg of dashDegrees) {
       const rad = ccwdeg2rad(deg);
       const cos = Math.cos(rad) * facing;
@@ -82,7 +83,7 @@ export class AimIndicatorRenderer implements Renders {
   private drawDegreeLabels(pos: { x: number; y: number }, facing: number): void {
     const labelRadius = 46;
     const labelFontSize = 10;
-    const labelShapes = this.game.core.shapes.with({ strokeColor: "rgba(0,0,0,0.8)" });
+    const labelShapes = this.game.core.shapes.with({ strokeColor: COLOR_ANGLE_REFERENCE });
     const labels = [
       { deg: CCWDeg(0), text: "0" },
       { deg: CCWDeg(45), text: "45" },

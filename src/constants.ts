@@ -8,4 +8,4 @@ export const COLOR_MOVEMENT = "#3B82F6";
 export const COLOR_AI_TARGETING = "#A855F7";
 export const COLOR_ASSET_ERROR = "#EF4444";
 export const COLOR_WORLD_COORDINATE_REFERENCE = "rgba(255, 255, 255, 0.6)";
-export const COLOR_ANGLE_REFERENCE = "#FACC15";
+export const COLOR_ANGLE_REFERENCE = "black";
