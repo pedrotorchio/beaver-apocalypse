@@ -1,5 +1,6 @@
 import * as planck from "planck-js";
 import { tilesheet } from "../../assets";
+import { COLOR_MOVEMENT } from "../../constants";
 import { PhysicsWorld } from "../../core/PhysicsWorld";
 import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
@@ -146,7 +147,7 @@ export class Beaver implements Updates, Renders {
     if (velocity.length() > 0) {
       const velocityEnd = planck.Vec2.add(pos, velocity);
       this.#game.core.shapes
-        .with({ strokeColor: "green" })
+        .with({ strokeColor: COLOR_MOVEMENT })
         .arrow(pos, velocityEnd);
     }
 

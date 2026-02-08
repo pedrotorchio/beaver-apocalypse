@@ -4,6 +4,7 @@ import { PhysicsWorld } from "../../core/PhysicsWorld";
 import { GameModules } from "../../core/types/GameModules.type";
 import { Renders } from "../../core/types/Renders.type";
 import { Updates } from "../../core/types/Updates.type";
+import { COLOR_COLLISION_ACTIVE, COLOR_COLLISION_INACTIVE } from "../../constants";
 import flags from "../../flags";
 import { CCWRad } from "../../general/coordinateSystem";
 import { iterate, makeEnumArray } from "../../general/utils";
@@ -68,15 +69,15 @@ export class GroundDetection implements Updates, Renders {
     const position = this.#body.getPosition();
     this.#game.core.shapes.with({
       strokeWidth: 1,
-      strokeColor: this.#isGroundedSignal.value ? 'red' : 'grey'
+      strokeColor: this.#isGroundedSignal.value ? COLOR_COLLISION_ACTIVE : COLOR_COLLISION_INACTIVE
     }).circle(position, this.#radius);
 
     for (const point of this.#collisionCheckPoints) {
       const isGrounded = this.checkPointTouchesGround(point);
-      const color = isGrounded ? 'red' : 'grey';
+      const color = isGrounded ? COLOR_COLLISION_ACTIVE : COLOR_COLLISION_INACTIVE;
       this.#game.core.shapes.with({ strokeColor: color, strokeWidth: 1 }).line(position, point);
     }
-    this.#game.core.shapes.with({ strokeColor: "orange", strokeWidth: 1 }).arrow(position, planck.Vec2.add(position, planck.Vec2.mul(this.#groundNormalDirection, 50)));
+    this.#game.core.shapes.with({ strokeColor: COLOR_COLLISION_ACTIVE, strokeWidth: 1 }).arrow(position, planck.Vec2.add(position, planck.Vec2.mul(this.#groundNormalDirection, 50)));
   }
 
   private checkPointTouchesGround(point: Vec2Like): boolean {

@@ -3,6 +3,7 @@ import { TurnPhase } from "../core/managers/TurnManager";
 import { DIRECTION_LEFT } from "../core/types/Entity.type";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
+import { COLOR_ANGLE_REFERENCE, COLOR_WORLD_COORDINATE_REFERENCE } from "../constants";
 import { CWDeg, cwdeg2rad } from "../general/coordinateSystem";
 import type { Beaver } from "../entities/beaver/Beaver";
 
@@ -182,14 +183,14 @@ export class HUDRenderer implements Renders {
     const labelRadius = radius + 14;
     const baseVec = planck.Vec2(1, 0);
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.strokeStyle = COLOR_ANGLE_REFERENCE;
     ctx.lineWidth = 1;
     ctx.font = "12px sans-serif";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillStyle = COLOR_ANGLE_REFERENCE;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    this.game.core.shapes.with({ strokeColor: "rgba(255, 255, 255, 0.8)" }).circle({ x: centerX, y: centerY }, radius);
+    this.game.core.shapes.with({ strokeColor: COLOR_ANGLE_REFERENCE }).circle({ x: centerX, y: centerY }, radius);
 
     for (let deg = 0; deg < 360; deg += 30) {
       const angleRad = cwdeg2rad(CWDeg(deg));
@@ -233,10 +234,10 @@ export class HUDRenderer implements Renders {
     const longDashLen = 10;
     const labelSkipNearEnd = 20;
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.strokeStyle = COLOR_WORLD_COORDINATE_REFERENCE;
     ctx.lineWidth = 1;
     ctx.font = "10px sans-serif";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillStyle = COLOR_WORLD_COORDINATE_REFERENCE;
 
     // Horizontal ruler at bottom: vertical dashes
     const hRulerY = height - 1;

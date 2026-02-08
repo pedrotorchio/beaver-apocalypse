@@ -1,6 +1,7 @@
 import * as planck from 'planck-js';
 import { DIRECTION_LEFT, DIRECTION_NONE, DIRECTION_RIGHT, Direction } from '../../../core/types/Entity.type';
 import { GameModules } from '../../../core/types/GameModules.type';
+import { COLOR_AI_TARGETING } from '../../../constants';
 import { throwError } from '../../../general/errors';
 import { Beaver } from '../Beaver';
 import { AimingSkill } from './AimingSkill';
@@ -19,7 +20,7 @@ export class AlgorithmicBasedBrain extends BaseBrain {
     }
     render(): void {
         if (this.#lookingAt) {
-            this.game.core.shapes.with({ strokeColor: 'purple' }).line(this.character.body.getPosition(), this.#lookingAt);
+            this.game.core.shapes.with({ strokeColor: COLOR_AI_TARGETING }).line(this.character.body.getPosition(), this.#lookingAt);
         }
         this.#lookingAt = null;
     }

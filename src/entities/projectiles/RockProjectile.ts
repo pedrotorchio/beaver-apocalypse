@@ -1,6 +1,7 @@
 import { tilesheet } from "../../assets";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
+import { COLOR_COLLISION_INACTIVE } from "../../constants";
 import flags from "../../flags";
 import { TileSheet } from "../../general/TileSheet";
 import { Projectile } from "../Projectile";
@@ -39,7 +40,7 @@ export class RockProjectile extends Projectile implements Renders {
         this.#tilesheet.drawImage(this.game.canvas, "rock", pos.x, pos.y);
 
         if (flags.renderCollisionBoundaries) {
-            this.game.core.shapes.with({ strokeWidth: 1, strokeColor: "#FFD700" }).circle(pos, this.args.radius + 2);
+            this.game.core.shapes.with({ strokeWidth: 1, strokeColor: COLOR_COLLISION_INACTIVE }).circle(pos, this.args.radius + 2);
         }
     }
 }

@@ -1,4 +1,5 @@
 import { DIRECTION_LEFT, DIRECTION_RIGHT, Direction } from "../core/types/Entity.type";
+import { COLOR_ASSET_ERROR } from "../constants";
 import { Asset } from "./AssetLoader";
 
 type SpriteDefinition<StateKey extends string = string> = {
@@ -133,7 +134,7 @@ export class TileSheet<const StateKey extends string> {
 
   private drawRectangle(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     ctx.save();
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = COLOR_ASSET_ERROR;
     ctx.strokeRect(x, y, this.#renderWidth, this.#renderHeight);
     ctx.restore();
   }
