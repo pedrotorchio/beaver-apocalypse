@@ -75,17 +75,9 @@ export abstract class Projectile implements Renders, Updates {
     return this.#active;
   }
 
-  get explosionRadius(): number {
-    return this.args.radius * 2 + this.args.damage * 0.3;
-  }
-
-  get beaverKnockback(): number {
-    return this.args.damage * 0.25 + this.args.radius * 0.75;
-  }
-
-  get maxDamageDistance(): number {
-    return this.explosionRadius * 1.1;
-  }
+  abstract get explosionRadius(): number;
+  abstract get beaverKnockback(): number;
+  abstract get maxDamageDistance(): number;
 
   private checkBeaverCollisions(beavers: Beaver[]): Beaver | null {
     let contact = this.game.world.getContactList();

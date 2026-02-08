@@ -51,7 +51,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         return true;
     }
     move({ target, until, direction }: ActionDetails<'move'>) {
-        if (!target && !until && !direction) throw new Error('Move action must have a target, direction or until function');
+        if (!target && !until && typeof direction !== 'number') throw new Error('Move action must have a target, direction or until function');
         this.resetCommands();
         const targetX = target?.[0] ?? 0;
         const targetY = target?.[1] ?? 0;

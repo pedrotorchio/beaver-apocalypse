@@ -22,6 +22,18 @@ export class RockProjectile extends Projectile implements Renders {
         this.#tilesheet = tilesheet.smallRock({ size: this.args.radius * 2 });
     }
 
+    get explosionRadius(): number {
+        return this.args.radius * 2 + this.args.damage * 0.3;
+    }
+
+    get beaverKnockback(): number {
+        return this.args.damage * 0.25 + this.args.radius * 0.75;
+    }
+
+    get maxDamageDistance(): number {
+        return this.explosionRadius * 1.1;
+    }
+
     render(): void {
         const pos = this.getPosition();
         this.#tilesheet.drawImage(this.game.canvas, "rock", pos.x, pos.y);
