@@ -2,6 +2,7 @@ import * as planck from "planck-js";
 import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
 import type { Updates } from "../core/types/Updates.type";
+import flags from "../flags";
 import { useObservable } from "../general/observable";
 import { Beaver } from "./beaver/Beaver";
 import { GroundDetection } from "./properties/GroundDetection";
@@ -31,7 +32,6 @@ export interface ProjectileArguments {
 export abstract class Projectile implements Renders, Updates {
   #body: planck.Body;
   #active: boolean = true;
-  public static bounceOffMode = false;
   public readonly on = useObservable({
     collision: () => null,
   });
@@ -193,7 +193,8 @@ export abstract class Projectile implements Renders, Updates {
 
     const beavers = this.game.core.entityManager.getBeavers();
     const beaversArray = beavers.toArray();
-    const hitBeaver = !Projectile.bounceOffMode && this.checkBeaverCollisions(beaversArray);
+    const hitBeaver = !flags.bounceOffMode && this.checkBeaverCollisions(beaversArray);
+
     if (hitBeaver) {
       this.explode(beaversArray, hitBeaver);
       this.on.notify("collision");
