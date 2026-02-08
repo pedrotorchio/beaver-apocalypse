@@ -1,4 +1,4 @@
-import { tilesheet } from "../../assets";
+import { createTilesheet } from "../../assets";
 import { COLOR_COLLISION_INACTIVE } from "../../constants";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
@@ -20,7 +20,7 @@ export class RockProjectile extends Projectile implements Renders {
             damage: args.damage,
             radius: 5,
         });
-        this.#tilesheet = tilesheet.smallRock({ size: this.args.radius * 2 });
+        this.#tilesheet = createTilesheet('smallRock', { size: this.args.radius * 2 });
     }
 
     get explosionRadius(): number {

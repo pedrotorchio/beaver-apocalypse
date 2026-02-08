@@ -1,28 +1,29 @@
 import { AssetLoader } from "../general/AssetLoader";
-import { TileSheet } from "../general/TileSheet";
+import { SpriteDefinition, StatesField, TileSheet } from "../general/TileSheet";
+import * as tilesheets from "../tilesheets";
 
-export const tilesheet = Object.freeze({
-    breaver1: (args: { size: number }) => new TileSheet({
-        renderHeight: args.size,
-        renderWidth: args.size,
-        image: AssetLoader.getAsset<HTMLImageElement>("beaver1_sprites"),
-        tileWidth: 223,
-        tileHeight: 223,
-        states: [
-            { key: "idle", x: 0, y: 18, width: 210, height: 220 },
-            { key: "walking", x: 261, y: 25, width: 235, height: 209 },
-            { key: "jumping", x: 526, y: 10, width: 241, height: 224 },
-            { key: "attacking", x: 786, y: 0, width: 296, height: 229 },
-            { key: "dead", x: 1078, y: 110, width: 366, height: 138 },
-            ["hit", "idle"],
-        ]
-    }),
-    smallRock: (args: { size: number }) => new TileSheet({
-        image: AssetLoader.getAsset("small_rock"),
-        tileWidth: 419,
-        tileHeight: 366,
-        states: ["rock"],
-        renderWidth: args.size,
-        renderHeight: args.size,
-    })
-})
+type Tilesheets = typeof tilesheets;
+type TilesheetName = keyof Tilesheets;
+type TilesheetSpec<K extends TilesheetName> = ReturnType<Tilesheets[K]>;
+type CreateTilesheetParams<K extends TilesheetName> = Parameters<(typeof tilesheets)[K]>[0];
+type InferStates<K extends TilesheetName> =
+    TilesheetSpec<K>['states'][number] extends infer S
+    ? S extends readonly [infer StateKey, ...unknown[]]
+    ? StateKey
+    : S extends SpriteDefinition<infer StateKey>
+    ? StateKey
+    : S extends string
+    ? S
+    : never
+    : never
+
+export function createTilesheet<K extends TilesheetName>(
+    key: K,
+    args: CreateTilesheetParams<K>
+): TileSheet<InferStates<K>> {
+    type States = InferStates<K>;
+    const spec = tilesheets[key](args);
+    const image = AssetLoader.getAsset<HTMLImageElement>(spec.image);
+    const states = [...spec.states] as StatesField<States>;
+    return new TileSheet({ ...spec, states, image })
+}

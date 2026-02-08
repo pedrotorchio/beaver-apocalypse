@@ -1,8 +1,8 @@
-import { DIRECTION_LEFT, DIRECTION_RIGHT, Direction } from "../core/types/Entity.type";
 import { COLOR_ASSET_ERROR } from "../constants";
+import { DIRECTION_LEFT, DIRECTION_RIGHT, Direction } from "../core/types/Entity.type";
 import { Asset } from "./AssetLoader";
 
-type SpriteDefinition<StateKey extends string = string> = {
+export type SpriteDefinition<StateKey extends string = string> = {
   key: StateKey;
   x: number;
   y: number;
@@ -25,10 +25,12 @@ export interface TileSheetOptions<StateKey extends string> {
   image: Asset<HTMLImageElement>;
   tileWidth: number;
   tileHeight: number;
-  states: (StateKey | SpriteDefinition<StateKey> | [key: StateKey, aliasFor: StateKey])[];
+  states: StatesField<StateKey>;
   renderHeight?: number;
   renderWidth?: number;
 }
+
+export type StatesField<StateKey extends string> = (StateKey | SpriteDefinition<StateKey> | [key: StateKey, aliasFor: StateKey])[];
 
 export class TileSheet<const StateKey extends string> {
   #imageAsset: Asset<HTMLImageElement>;

@@ -16,6 +16,7 @@ export const spy = (fn: (...args: any[]) => void, message?: string) => {
 };
 
 export const expose = <K extends keyof DevtoolsData>(key: K, value: DevtoolsData[K]) => {
+  window[SYMBOL_DEVTOOLS] ??= {};
   window[SYMBOL_DEVTOOLS][key] ??= [] as DevtoolsData[K][];
   window[SYMBOL_DEVTOOLS][key].push(value);
 }
