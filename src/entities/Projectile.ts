@@ -4,6 +4,7 @@ import type { Renders } from "../core/types/Renders.type";
 import type { Updates } from "../core/types/Updates.type";
 import flags from "../flags";
 import { useObservable } from "../general/observable";
+import { ZERO } from "../general/vector";
 import { Beaver } from "./beaver/Beaver";
 import { GroundDetection } from "./properties/GroundDetection";
 
@@ -163,9 +164,12 @@ export abstract class Projectile implements Renders, Updates {
       if (distance >= maxDistance) continue;
 
       const damage = this.calculateDamage(distance, maxDistance, directHitBeaver === beaver);
-      const delta = planck.Vec2.sub(beaverPos, explosionPos);
-      const len = planck.Vec2.lengthOf(delta);
-      const direction = len < 1e-9 ? planck.Vec2.zero() : planck.Vec2.mul(delta, this.beaverKnockback / len);
+      const explosionDistanceDirection = planck.Vec2.sub(beaverPos, explosionPos);
+      const explosionDistance = explosionDistanceDirection.normalize();
+      // Knockback strength drops linearly with the distance from the explosion
+      const direction = explosionDistance < this.explosionRadius
+        ? planck.Vec2.mul(explosionDistanceDirection, this.beaverKnockback / explosionDistance)
+        : ZERO();
       beaver.hit(damage, direction);
     }
   }

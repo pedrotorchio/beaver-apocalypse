@@ -1,7 +1,7 @@
 import { tilesheet } from "../../assets";
+import { COLOR_COLLISION_INACTIVE } from "../../constants";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
-import { COLOR_COLLISION_INACTIVE } from "../../constants";
 import flags from "../../flags";
 import { TileSheet } from "../../general/TileSheet";
 import { Projectile } from "../Projectile";
@@ -24,15 +24,15 @@ export class RockProjectile extends Projectile implements Renders {
     }
 
     get explosionRadius(): number {
-        return this.args.radius * 2 + this.args.damage * 0.3;
+        return this.args.radius * 2 + this.args.damage * 0.5;
     }
 
     get beaverKnockback(): number {
-        return this.args.damage * 0.25 + this.args.radius * 0.75;
+        return 0;
     }
 
     get maxDamageDistance(): number {
-        return this.explosionRadius * 1.1;
+        return this.explosionRadius * 1.5;
     }
 
     render(): void {
