@@ -6,7 +6,7 @@ import prompt from "./llmprompt";
 export class LLMBasedBrain extends BaseBrain {
     #logarea = document.getElementById("thinking") as HTMLDivElement;
 
-    protected async executeThink(): Promise<Action[]> {
+    protected async decidePlanOfAction(): Promise<Action[]> {
         const character = this.character;
         const enemies = this.game.core.entityManager.getBeavers().getEnemies(character);
         this.#logarea.innerHTML = "";

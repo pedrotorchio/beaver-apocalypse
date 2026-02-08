@@ -6,7 +6,7 @@ import type { Beaver } from "../Beaver";
 import { BaseBrain } from "./BaseBrain";
 
 class TestBrain extends BaseBrain {
-  executeThink = vi.fn().mockResolvedValue([]);
+  decidePlanOfAction = vi.fn().mockResolvedValue([]);
 }
 
 describe("BaseBrain.attack", () => {

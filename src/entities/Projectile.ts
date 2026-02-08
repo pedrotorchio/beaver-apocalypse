@@ -161,8 +161,8 @@ export abstract class Projectile implements Renders, Updates {
     for (const beaver of beavers) {
       const beaverPos = beaver.body.getPosition();
       const distance = planck.Vec2.distance(explosionPos, beaverPos);
-      // If distance is greater than affectingDistance, or the beaver is not directly hit, skip the damage calculation
-      if (distance >= maxDistance || directHitBeaver !== beaver) continue;
+      // If distance is greater than affectingDistance, and the beaver is not directly hit, skip the damage calculation
+      if (distance >= maxDistance && directHitBeaver !== beaver) continue;
 
       const damage = this.calculateDamage(distance, maxDistance, directHitBeaver === beaver);
       const explosionDistanceDirection = planck.Vec2.sub(beaverPos, explosionPos);

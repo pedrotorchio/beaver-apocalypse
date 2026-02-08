@@ -39,6 +39,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         if (!this.#actionPlan.hasActiveAction()) {
             this.#actionPlan.clear();
             this.resetCommands();
+            this.onActionsCompleted();
         }
         else if (this.#actionPlan.doAction()) this.#actionPlan.nextAction();
     }
@@ -102,12 +103,13 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         this.resetCommands();
         this.#actionPlan.clear();
         this.#isThinking = true;
-        this.#actionPlan.actions = await this.executeThink();
+        this.#actionPlan.actions = await this.decidePlanOfAction();
         this.#hasCommands = true;
         this.#isThinking = false;
     }
 
-    protected abstract executeThink(): Promise<ActionList> | ActionList;
+    protected abstract decidePlanOfAction(): Promise<ActionList> | ActionList;
+    protected abstract onActionsCompleted(): void;
 
     setCommand(key: keyof InputState) {
         this.#hasCommands = true;
