@@ -1,11 +1,12 @@
 import * as planck from "planck-js";
-import { tilesheet } from "../../assets";
+import { createTilesheet } from "../../assets";
 import { COLOR_MOVEMENT } from "../../constants";
 import { PhysicsWorld } from "../../core/PhysicsWorld";
 import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
+import { expose } from "../../general/devtools";
 import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
 import { Projectile } from "../Projectile";
@@ -73,7 +74,7 @@ export class Beaver implements Updates, Renders {
   #groundDetection: GroundDetection;
   #entityState = new EntityState({
     defaultState: 'idle',
-    tilesheet: tilesheet.breaver1({ size: this.#radius * 2 }),
+    tilesheet: createTilesheet('beaver1', { size: this.#radius * 2 }),
     states: {
       dead: {
         persist: true,
@@ -97,8 +98,7 @@ export class Beaver implements Updates, Renders {
   readonly #args: BeaverArguments;
 
   constructor(name: string, game: GameModules, args: BeaverArguments) {
-    window.beavers ??= {}
-    window.beavers[name] = this;
+    expose('beavers', this);
     this.#name = name;
     this.#game = game;
     this.#args = args;
