@@ -8,7 +8,7 @@ import { AimingSkill } from './AimingSkill';
 import { Action, ActionList, BaseBrain } from "./BaseBrain";
 import { ShotMemory } from './ShotMemory';
 
-export class AlgorithmicBasedBrain extends BaseBrain {
+export class AlgorithmicBrain extends BaseBrain {
     #aimingSkill: AimingSkill;
     #EFFECTIVE_ATTACK_RANGE = 200;
     #lookingAt: planck.Vec2 | null = null;

@@ -13,7 +13,7 @@ import { RockProjectile, RockProjectileArguments } from "../projectiles/RockProj
 import { EntityState } from "../properties/EntityState";
 import { GroundDetection } from "../properties/GroundDetection";
 import { Health } from "../properties/Health";
-import { AlgorithmicBasedBrain } from "./brain/AlgorithmicBasedBrain";
+import { AlgorithmicBrain } from "./brain/AlgorithmicBrain";
 import { BaseBrain } from "./brain/BaseBrain";
 
 export interface BeaverArguments {
@@ -123,7 +123,7 @@ export class Beaver implements Updates, Renders {
       body: this.#body,
       game: this.#game,
     });
-    this.#brain = new AlgorithmicBasedBrain(this.#game, this);
+    this.#brain = new AlgorithmicBrain(this.#game, this);
   }
 
   // Updates implementation

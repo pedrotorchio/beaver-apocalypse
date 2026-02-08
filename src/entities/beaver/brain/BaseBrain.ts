@@ -107,7 +107,7 @@ export abstract class BaseBrain implements Updates, Renders, Behaviours, InputSt
         this.#isThinking = false;
     }
 
-    protected abstract executeThink(): Promise<ActionList>;
+    protected abstract executeThink(): Promise<ActionList> | ActionList;
 
     setCommand(key: keyof InputState) {
         this.#hasCommands = true;
