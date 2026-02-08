@@ -16,8 +16,8 @@ import { PhysicsWorld } from "./PhysicsWorld";
 import { EntityManager } from "./managers/EntityManager";
 import { InputManager, InputStateManager } from "./managers/InputManager";
 import { TurnManager, TurnPhase } from "./managers/TurnManager";
-import { WeaponManager } from "./managers/WeaponManager";
 import type { GameModules } from "./types/GameModules.type";
+
 /**
  * Main game coordinator class responsible for orchestrating all game systems.
  *
@@ -46,8 +46,6 @@ export class Game {
   #hudRenderer: HUDRenderer;
   #powerIndicator: PowerIndicatorRenderer;
 
-  #weaponManager: WeaponManager;
-
   readonly #minPower: number = 10;
   readonly #maxPower: number = 1000;
   readonly #powerAccumulationRate: number = 10;
@@ -69,7 +67,6 @@ export class Game {
     this.#turnManager = core.turnManager;
     this.#entityManager = core.entityManager;
     this.#inputManager = core.inputManager;
-    this.#weaponManager = core.weaponManager;
 
     // Load assets
     AssetLoader.loadImage("beaver1_sprites", beaverSpriteUrl);
@@ -100,6 +97,7 @@ export class Game {
         x,
         y,
         aim,
+        onDeath: b => this.processDeadBeaver(b),
       });
     });
 
@@ -181,6 +179,15 @@ export class Game {
 
   }
 
+  private processDeadBeaver(beaver: Beaver): void {
+    const ctx = this.#terrain.ctx;
+    const position = beaver.body.getPosition();
+    beaver.getTilesheet().drawImage(ctx, 'dead', position.x, position.y, beaver.direction);
+    beaver.destroy();
+    this.#entityManager.removeBeaver(beaver);
+    this.#turnManager.playerCount--;
+  }
+
   private getCurrentBeaver(): Beaver | null {
     const currentPlayerIndex: number = this.#turnManager.getCurrentPlayerIndex();
     const currentBeaver = this.#entityManager.getBeaver(currentPlayerIndex);
@@ -197,7 +204,7 @@ export class Game {
       this.#turnManager.startTurn();
     }
 
-    if (this.#entityManager.getBeavers().getAlive().length <= 1) throw new Error("No beavers left to play. This shouldn't have happened.");
+    if (this.#entityManager.getBeavers().getAlive().length === 0) throw new Error("No beavers left to play. This shouldn't have happened.");
   }
 
   private updatePlayerInputPhase(): boolean {

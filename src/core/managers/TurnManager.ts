@@ -25,12 +25,12 @@ export enum TurnPhase {
 export class TurnManager {
   #currentPlayerIndex: number = -1;
   #phase: TurnPhase = TurnPhase.PlayerInput;
-  #playerCount: number;
+  playerCount: number;
 
   readonly #devtoolsTab: DevtoolsTab;
 
   constructor(playerCount: number = 2) {
-    this.#playerCount = playerCount;
+    this.playerCount = playerCount;
     this.#devtoolsTab = useDevtoolsStore().addTab("Turn");
   }
 
@@ -69,7 +69,7 @@ export class TurnManager {
   }
 
   endTurn(): void {
-    this.#currentPlayerIndex = (this.#currentPlayerIndex + 1) % this.#playerCount;
+    this.#currentPlayerIndex = (this.#currentPlayerIndex + 1) % this.playerCount;
   }
 
   canAcceptInput(): boolean {

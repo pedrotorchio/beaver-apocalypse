@@ -8,6 +8,7 @@ export interface HealthArguments {
   radius: number;
   body: planck.Body;
   game: GameModules;
+  onDeath?: () => void;
 }
 
 export class Health implements Updates, Renders {
@@ -24,6 +25,7 @@ export class Health implements Updates, Renders {
   readonly #radius: number;
   readonly #body: planck.Body;
   readonly #game: GameModules;
+  readonly #onDeath?: () => void;
 
   constructor(args: HealthArguments) {
     this.#maxHealth = args.maxHealth;
@@ -31,6 +33,7 @@ export class Health implements Updates, Renders {
     this.#radius = args.radius;
     this.#body = args.body;
     this.#game = args.game;
+    this.#onDeath = args.onDeath;
   }
 
   // Updates implementation
@@ -58,11 +61,8 @@ export class Health implements Updates, Renders {
     return this.#health > 0;
   }
 
-  kill(): void {
-    this.#health = 0;
-  }
-
   damage(amount: number): void {
     this.#health = Math.max(0, this.#health - amount);
+    if (this.#health === 0 && this.#onDeath) this.#onDeath();
   }
 }

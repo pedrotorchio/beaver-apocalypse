@@ -6,6 +6,7 @@ import { DIRECTION_RIGHT, Direction } from "../../core/types/Entity.type";
 import type { GameModules } from "../../core/types/GameModules.type";
 import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
+import { TileSheet } from "../../general/TileSheet";
 import { expose } from "../../general/devtools";
 import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
@@ -21,6 +22,7 @@ export interface BeaverArguments {
   x: number;
   y: number;
   aim: Aim;
+  onDeath: (beaver: Beaver) => void;
 }
 
 /**
@@ -72,28 +74,8 @@ export class Beaver implements Updates, Renders {
   #jumpStrength: number = -PhysicsWorld.GRAVITY * this.#mass;
   #moveSpeed: number = 20;
   #groundDetection: GroundDetection;
-  #entityState = new EntityState({
-    defaultState: 'idle',
-    tilesheet: createTilesheet('beaver1', { size: this.#radius * 2 }),
-    states: {
-      dead: {
-        persist: true,
-      },
-      walking: {
-        autoDetect: () => {
-          const isGrounded = this.#groundDetection.isGrounded;
-          const isMovingSideways = Math.abs(this.#body.getLinearVelocity().x) > SPEED_THRESHOLD;
-          return isMovingSideways && isGrounded;
-        },
-      },
-      attacking: {
-        frameCountCooldown: 30,
-      },
-      hit: {
-        frameCountCooldown: 30,
-      },
-    }
-  });
+  readonly #tilesheet: TileSheet<string>;
+  #entityState: EntityState<string>;
   readonly #game: GameModules;
   readonly #args: BeaverArguments;
 
@@ -117,13 +99,38 @@ export class Beaver implements Updates, Renders {
     });
     this.#body.setUserData({ type: 'beaver', instance: this });
     this.#groundDetection = new GroundDetection(this.#game, this.#body, this.#radius);
+    this.#tilesheet = createTilesheet('beaver1', { size: this.#radius * 2 });
+    this.#entityState = new EntityState({
+      defaultState: 'idle',
+      tilesheet: this.#tilesheet,
+      states: {
+        dead: { persist: true },
+        walking: {
+          autoDetect: () => {
+            const isGrounded = this.#groundDetection.isGrounded;
+            const isMovingSideways = Math.abs(this.#body.getLinearVelocity().x) > SPEED_THRESHOLD;
+            return isMovingSideways && isGrounded;
+          },
+        },
+        attacking: { frameCountCooldown: 30 },
+        hit: { frameCountCooldown: 30 },
+      },
+    });
     this.#health = new Health({
       maxHealth: 100,
       radius: this.#radius,
       body: this.#body,
       game: this.#game,
+      onDeath: () => {
+        this.#entityState.setState("dead");
+        this.#args.onDeath(this);
+      },
     });
     this.#brain = new AlgorithmicBrain(this.#game, this);
+  }
+
+  getTilesheet(): TileSheet<string> {
+    return this.#tilesheet;
   }
 
   // Updates implementation
@@ -228,12 +235,8 @@ export class Beaver implements Updates, Renders {
     this.#body.applyLinearImpulse(planck.Vec2.clone(direction), planck.Vec2.clone(this.#body.getWorldCenter()), true);
   }
 
-  private kill(): void {
-    this.#entityState.setState("dead");
-    this.#health.kill();
-  }
 
-  private destroy(): void {
+  destroy(): void {
     if (this.#body) {
       this.#game.world.destroyBody(this.#body);
     }

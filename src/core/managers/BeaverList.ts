@@ -66,4 +66,11 @@ export class BeaverList implements Iterable<Beaver> {
     get(index: number): Beaver | undefined {
         return this.#beavers[index];
     }
+
+    remove(beaver: Beaver): number | undefined {
+        const index = this.#beavers.indexOf(beaver);
+        if (index === -1) return undefined;
+        this.#beavers.splice(index, 1);
+        return index;
+    }
 }

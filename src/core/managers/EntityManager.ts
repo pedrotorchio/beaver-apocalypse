@@ -37,6 +37,10 @@ export class EntityManager {
     return this.#beavers.get(currentPlayerIndex);
   }
 
+  removeBeaver(beaver: Beaver): number | undefined {
+    return this.#beavers.remove(beaver);
+  }
+
   addProjectile(projectile: Projectile): void {
     this.#projectiles.push(projectile);
   }
