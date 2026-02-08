@@ -4,6 +4,7 @@ import { PhysicsWorld } from "../../core/PhysicsWorld";
 import { GameModules } from "../../core/types/GameModules.type";
 import { Renders } from "../../core/types/Renders.type";
 import { Updates } from "../../core/types/Updates.type";
+import flags from "../../flags";
 import { CCWRad } from "../../general/coordinateSystem";
 import { iterate, makeEnumArray } from "../../general/utils";
 import * as vec from "../../general/vector";
@@ -63,6 +64,7 @@ export class GroundDetection implements Updates, Renders {
   }
 
   render(): void {
+    if (!flags.renderCollisionBoundaries) return;
     const position = this.#body.getPosition();
     this.#game.core.shapes.with({
       strokeWidth: 1,

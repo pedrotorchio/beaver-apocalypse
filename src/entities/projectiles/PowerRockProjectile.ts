@@ -1,5 +1,6 @@
-import { RockProjectile, RockProjectileArguments } from "./RockProjectile";
 import type { GameModules } from "../../core/types/GameModules.type";
+import flags from "../../flags";
+import { RockProjectile, RockProjectileArguments } from "./RockProjectile";
 
 export class PowerRockProjectile extends RockProjectile {
     constructor(game: GameModules, args: RockProjectileArguments) {
@@ -8,12 +9,9 @@ export class PowerRockProjectile extends RockProjectile {
 
     render(): void {
         super.render();
+        if (!flags.renderCollisionBoundaries) return;
         const pos = this.getPosition();
-        
-        // Draw main projectile body
         this.game.core.shapes.with({ strokeWidth: 2, strokeColor: "#FFD700", bgColor: "#FFA500" }).circle(pos, this.args.radius);
-
-        // Draw border
         this.game.core.shapes.with({ strokeWidth: 2, strokeColor: "#FFD700" }).circle(pos, this.args.radius + 2);
     }
 }
