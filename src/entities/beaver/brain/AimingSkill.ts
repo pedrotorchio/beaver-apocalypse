@@ -18,11 +18,33 @@ export interface ShotSuggestion {
 
 export class AimingSkill {
 
+
+  #BEST_GUESS_MAX_DISTANCE = 500;
+
   constructor(private readonly game: GameModules, private readonly args: { character: Beaver, shotMemory: ShotMemory }) { }
 
   aimAt(enemy: Beaver): ShotSuggestion {
     if (this.args.shotMemory.sampleCount === 0) return this.suggestInitialShot({ enemy });
     return this.suggestFromMemory({ enemy });
+  }
+
+  getDistanceOutOfRange(enemyPos: planck.Vec2): number {
+    const { character, shotMemory } = this.args;
+    const maxPower = character.aim.getMaxPower();
+    const samples = shotMemory.getSamples();
+
+    const maxPowerThreshold = maxPower * 0.9;
+    const maxPowerShots = samples.filter(s => s.power >= maxPowerThreshold);
+
+    const maxAchievedDistance = maxPowerShots.length === 0 ? this.#BEST_GUESS_MAX_DISTANCE : Math.max(...maxPowerShots.map(s => s.distance));
+
+    const shooterPos = character.body.getPosition();
+    const delta = planck.Vec2.sub(enemyPos, shooterPos);
+    const currentDistance = Math.hypot(delta.x, delta.y);
+
+    const excessDistance = currentDistance - maxAchievedDistance;
+
+    return excessDistance > 0 ? excessDistance : 0;
   }
 
   private suggestInitialShot(args: { enemy: Beaver }): ShotSuggestion {

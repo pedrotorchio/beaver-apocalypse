@@ -10,7 +10,6 @@ import { ShotMemory } from './ShotMemory';
 
 export class AlgorithmicBrain extends BaseBrain {
     #aimingSkill: AimingSkill;
-    #EFFECTIVE_ATTACK_RANGE = 200;
     #currentFocusedEnemy: Beaver | null = null;
 
     constructor(game: GameModules, character: Beaver) {
@@ -54,13 +53,10 @@ export class AlgorithmicBrain extends BaseBrain {
         const characterPos = this.character.body.getPosition();
         const delta = planck.Vec2.sub(enemyPosition, characterPos);
         const enemyDirection: Direction = delta.x > 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
-        const TOLERANCE = this.#EFFECTIVE_ATTACK_RANGE * .2;
-        const absoluteDelta = Math.abs(delta.x);
 
-        const isTooFar = absoluteDelta > this.#EFFECTIVE_ATTACK_RANGE + TOLERANCE;
-        const isTooClose = absoluteDelta < this.#EFFECTIVE_ATTACK_RANGE - TOLERANCE;
-        if (isTooFar) return { type: 'move', direction: enemyDirection };
-        if (isTooClose) return { type: 'move', direction: <Direction>-enemyDirection };
+        const requiredApproach = this.#aimingSkill.getDistanceOutOfRange(enemyPosition);
+        if (requiredApproach > 0) return { type: 'move', direction: enemyDirection };
+
         // If already at the right distance, simply turn towards the enemy, but don't move
         this.character.direction = enemyDirection;
         return { type: 'move', direction: DIRECTION_NONE };
