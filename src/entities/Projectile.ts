@@ -3,7 +3,7 @@ import type { GameModules } from "../core/types/GameModules.type";
 import type { Renders } from "../core/types/Renders.type";
 import type { Updates } from "../core/types/Updates.type";
 import flags from "../flags";
-import { useObservable } from "../general/observable";
+import { EventHub } from "../general/eventHub";
 import { ZERO } from "../general/vector";
 import { Beaver } from "./beaver/Beaver";
 import { GroundDetection } from "./properties/GroundDetection";
@@ -33,9 +33,9 @@ export interface ProjectileArguments {
 export abstract class Projectile implements Renders, Updates {
   #body: planck.Body;
   #active: boolean = true;
-  public readonly on = useObservable({
-    collision: () => null,
-  });
+  public readonly events = new EventHub<{
+    "projectile:exploded": { projectile: Projectile; damagedEnemies: Beaver[]; directHitEnemy?: Beaver };
+  }>();
   readonly #groundDetection: GroundDetection;
 
   constructor(
@@ -150,13 +150,16 @@ export abstract class Projectile implements Renders, Updates {
   private explode(beavers: Beaver[], directHitBeaver?: Beaver): void {
     const pos = this.#body.getPosition();
     this.game.terrain.destroyCircle(pos.x, pos.y, this.explosionRadius);
-    this.damageBeavers(beavers, pos, directHitBeaver);
+    const damagedEnemies = this.damageBeavers(beavers, pos, directHitBeaver);
+
+    this.events.emit("projectile:exploded", { projectile: this, damagedEnemies, directHitEnemy: directHitBeaver });
 
     this.#active = false;
   }
 
-  private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): void {
+  private damageBeavers(beavers: Beaver[], explosionPos: planck.Vec2, directHitBeaver?: Beaver): Beaver[] {
     const maxDistance = this.maxDamageDistance;
+    const damagedEnemies: Beaver[] = [];
 
     for (const beaver of beavers) {
       const beaverPos = beaver.body.getPosition();
@@ -172,7 +175,10 @@ export abstract class Projectile implements Renders, Updates {
         ? planck.Vec2.mul(explosionDistanceDirection, this.beaverKnockback / explosionDistance)
         : ZERO();
       beaver.hit(damage, direction);
+      damagedEnemies.push(beaver);
     }
+
+    return damagedEnemies;
   }
 
   private calculateDamage(distance: number, maxDistance: number, isDirectHit: boolean): number {
@@ -192,21 +198,18 @@ export abstract class Projectile implements Renders, Updates {
 
     if (hitBeaver) {
       this.explode(beaversArray, hitBeaver);
-      this.on.notify("collision");
       this.destroy();
       return;
     }
 
     if (this.#groundDetection.isGrounded) {
       this.explode(beaversArray);
-      this.on.notify("collision");
       this.destroy();
       return;
     }
 
     if (this.checkOutOfBounds()) {
       this.#active = false;
-      this.on.notify("collision");
       this.destroy();
       return;
     }
@@ -217,6 +220,6 @@ export abstract class Projectile implements Renders, Updates {
     if (this.#body) {
       this.game.world.destroyBody(this.#body);
     }
-    this.on.destroy();
+    this.events.destroy();
   }
 }

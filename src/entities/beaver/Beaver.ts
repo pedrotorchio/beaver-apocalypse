@@ -8,6 +8,7 @@ import type { Renders } from "../../core/types/Renders.type";
 import type { Updates } from "../../core/types/Updates.type";
 import { TileSheet } from "../../general/TileSheet";
 import { expose } from "../../general/devtools";
+import { EventHub } from "../../general/eventHub";
 import * as vec from "../../general/vector";
 import { Aim } from "../Aim";
 import { Projectile } from "../Projectile";
@@ -61,6 +62,10 @@ export class Beaver implements Updates, Renders {
 
   #brain: BaseBrain;
   get brain(): BaseBrain { return this.#brain; }
+
+  public readonly events = new EventHub<{
+    "projectile:exploded": { projectile: Projectile; damagedEnemies: Beaver[]; directHitEnemy?: Beaver };
+  }>();
 
   #mass: number = 125;
   #direction: Direction = DIRECTION_RIGHT;
@@ -203,7 +208,10 @@ export class Beaver implements Updates, Renders {
 
     // Create projectile
     const projectile = this.createProjectile(spawnPoint, velocity);
-    projectile.on('collision', () => this.#entityState.setState('idle'));
+    projectile.events.on('projectile:exploded', (data) => {
+      this.#entityState.setState('idle');
+      this.events.emit('projectile:exploded', data);
+    });
 
     return projectile;
   }
