@@ -1,9 +1,10 @@
 import * as planck from "planck-js";
 import type { CCWRad } from "../../../general/coordinateSystem";
+import type { Beaver } from "../Beaver";
 
 export interface ShotSample {
   distance: number;
-  target: string;
+  target: Beaver | null;
   power: number;
   angle: CCWRad;
 }
@@ -16,7 +17,7 @@ export class ShotMemory {
   }
   constructor(private readonly maxSamples: number = 32) { }
 
-  addSample(shooterPos: planck.Vec2, impactPos: planck.Vec2, power: number, angle: CCWRad, target: string): void {
+  addSample(shooterPos: planck.Vec2, impactPos: planck.Vec2, power: number, angle: CCWRad, target: Beaver | null): void {
     const delta = planck.Vec2.sub(impactPos, shooterPos);
     const distance = Math.hypot(delta.x, delta.y);
     const sample: ShotSample = { distance, target, power, angle };

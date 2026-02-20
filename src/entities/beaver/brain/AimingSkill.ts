@@ -28,16 +28,13 @@ export class AimingSkill {
     return this.suggestFromMemory({ enemy });
   }
 
-  getDistanceOutOfRange(enemyPos: planck.Vec2): number {
+  getRequiredApproachDistance(enemyPos: planck.Vec2): number {
     const { character, shotMemory } = this.args;
-    const maxPower = character.aim.getMaxPower();
     const samples = shotMemory.getSamples();
-
-    const maxPowerThreshold = maxPower * 0.9;
-    const maxPowerShots = samples.filter(s => s.power >= maxPowerThreshold);
-
-    const maxAchievedDistance = maxPowerShots.length === 0 ? this.#BEST_GUESS_MAX_DISTANCE : Math.max(...maxPowerShots.map(s => s.distance));
-
+    const minDistance = character.radius * 4;
+    const hitList = samples.filter(s => s.target);
+    const maxHitDistance = hitList.length > 0 ? Math.max(...hitList.map(s => s.distance)) : undefined;
+    const maxAchievedDistance = Math.max(minDistance, maxHitDistance ?? this.#BEST_GUESS_MAX_DISTANCE);
     const shooterPos = character.body.getPosition();
     const delta = planck.Vec2.sub(enemyPos, shooterPos);
     const currentDistance = Math.hypot(delta.x, delta.y);

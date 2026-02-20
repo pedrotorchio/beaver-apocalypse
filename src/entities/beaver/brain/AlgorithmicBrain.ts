@@ -11,11 +11,23 @@ import { ShotMemory } from './ShotMemory';
 export class AlgorithmicBrain extends BaseBrain {
     #aimingSkill: AimingSkill;
     #currentFocusedEnemy: Beaver | null = null;
+    #shotMemory: ShotMemory;
 
     constructor(game: GameModules, character: Beaver) {
         super(game, character)
-        const shotMemory = new ShotMemory();
-        this.#aimingSkill = new AimingSkill(game, { character, shotMemory });
+        this.#shotMemory = new ShotMemory();
+        this.#aimingSkill = new AimingSkill(game, { character, shotMemory: this.#shotMemory });
+
+        character.events.on('projectile:exploded', ({ projectile, directHitEnemy }) => {
+            const shooterPos = character.body.getPosition();
+            const impactPos = projectile.getPosition();
+
+            const power = character.aim.getPower();
+            const angle = character.aim.getAngle();
+            const target = directHitEnemy ?? null;
+
+            this.#shotMemory.addSample(shooterPos, impactPos, power, angle, target);
+        });
     }
     render(): void {
         if (this.#currentFocusedEnemy) {
@@ -54,7 +66,7 @@ export class AlgorithmicBrain extends BaseBrain {
         const delta = planck.Vec2.sub(enemyPosition, characterPos);
         const enemyDirection: Direction = delta.x > 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
 
-        const requiredApproach = this.#aimingSkill.getDistanceOutOfRange(enemyPosition);
+        const requiredApproach = this.#aimingSkill.getRequiredApproachDistance(enemyPosition);
         if (requiredApproach > 0) return { type: 'move', direction: enemyDirection };
 
         // If already at the right distance, simply turn towards the enemy, but don't move
