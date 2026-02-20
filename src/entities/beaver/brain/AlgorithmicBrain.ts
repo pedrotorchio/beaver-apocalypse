@@ -26,7 +26,12 @@ export class AlgorithmicBrain extends BaseBrain {
             const angle = character.aim.getAngle();
             const target = directHitEnemy ?? null;
 
-            this.#shotMemory.addSample(shooterPos, impactPos, power, angle, target);
+            // Distance from shooter to the enemy it was aiming at when the shot was fired
+            const targetDistance = this.#currentFocusedEnemy
+                ? planck.Vec2.distance(shooterPos, this.#currentFocusedEnemy.body.getPosition())
+                : 0;
+
+            this.#shotMemory.addSample(shooterPos, impactPos, power, angle, target, targetDistance);
         });
     }
     render(): void {

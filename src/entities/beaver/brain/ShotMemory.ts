@@ -3,7 +3,10 @@ import type { CCWRad } from "../../../general/coordinateSystem";
 import type { Beaver } from "../Beaver";
 
 export interface ShotSample {
+  /** How far the projectile actually traveled (shooter → impact). */
   distance: number;
+  /** How far the enemy was when the shot was fired (shooter → enemy). */
+  targetDistance: number;
   target: Beaver | null;
   power: number;
   angle: CCWRad;
@@ -17,10 +20,10 @@ export class ShotMemory {
   }
   constructor(private readonly maxSamples: number = 32) { }
 
-  addSample(shooterPos: planck.Vec2, impactPos: planck.Vec2, power: number, angle: CCWRad, target: Beaver | null): void {
+  addSample(shooterPos: planck.Vec2, impactPos: planck.Vec2, power: number, angle: CCWRad, target: Beaver | null, targetDistance: number): void {
     const delta = planck.Vec2.sub(impactPos, shooterPos);
     const distance = Math.hypot(delta.x, delta.y);
-    const sample: ShotSample = { distance, target, power, angle };
+    const sample: ShotSample = { distance, targetDistance, target, power, angle };
     const index = this.findInsertIndex(distance);
     this.#samples.splice(index, 0, sample);
     if (this.#samples.length > this.maxSamples) this.#samples.pop();
