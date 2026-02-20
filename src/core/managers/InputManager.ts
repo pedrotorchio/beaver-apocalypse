@@ -1,4 +1,4 @@
-import { EventHub, useEventHub } from "../../general/eventHub";
+import { SingleEventHub, useEventHub } from "../../general/eventHub";
 
 export type InputKey = "moveLeft" | "moveRight" | "jump" | "aimUp" | "aimDown" | "fire" | "charging" | "pause" | "stop" | "yield" | "wait";
 export type InputState = Record<InputKey, boolean>
@@ -22,7 +22,7 @@ export class InputManager implements InputStateManager {
   #down: Set<string> = new Set();
   #up: Set<string> = new Set(); // up states only lasts for one update and gets removed after reading
   #eventHub = useEventHub<InputState>();
-  get eventHub(): EventHub<InputState> {
+  get eventHub(): SingleEventHub<InputState> {
     return this.#eventHub;
   }
 
